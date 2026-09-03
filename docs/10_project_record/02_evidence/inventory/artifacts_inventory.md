@@ -1,14 +1,14 @@
 # 산출물 인벤토리
 
-생성: 2026-09-03 16:05 · **작업 트리 실측**(커밋 시점 아님)
+생성: 2026-09-03 16:37 · **작업 트리 실측**(커밋 시점 아님)
 
 ## 규모
 ```
-추적 파일(git)       115
-변경/신규(미커밋) 134
+추적 파일(git)       170
+변경/신규(미커밋) 1
 backend .py              54
 frontend .vue            18
-docs 파일              102
+docs 파일              105
 OpenAPI paths            12
 ERD 테이블            8
 ```
@@ -174,12 +174,12 @@ views/safety/ManageRequestsView.vue
 06_erd/.omc/state/sessions/ebc68298-23ec-4bf3-9dbf-25ec1b5b8049/last-tool-error-state.json
 06_erd/.omc/state/sessions/ebc68298-23ec-4bf3-9dbf-25ec1b5b8049/pre-tool-advisory-throttle.json
 06_erd/.omc/state/sessions/ebc68298-23ec-4bf3-9dbf-25ec1b5b8049/subagent-tracking-state.json
+06_erd/argus.dbml
 06_erd/erd_phase2.mmd
 06_erd/erd_phase2.svg
 06_erd/erd.md
 06_erd/erd.mmd
 06_erd/erd.svg
-06_erd/argus.dbml
 06_erd/schema_postgres.sql
 06_erd/seed_data.sql
 06_erd/supabase_apply.md
@@ -208,17 +208,17 @@ views/safety/ManageRequestsView.vue
 10_project_record/01_timeline/incident_log.md
 10_project_record/02_evidence/inventory/artifacts_inventory.md
 10_project_record/02_evidence/inventory/git_log.txt
-10_project_record/02_evidence/screenshots/v1.0_01_목록대시보드_구버전.jpg
-10_project_record/02_evidence/screenshots/v1.0_02_상세_체크리스트_구버전.jpg
-10_project_record/02_evidence/screenshots/v3.0_WRA_C_00_로그인.jpg
-10_project_record/02_evidence/screenshots/v3.0_WRA_E_01_엔지니어메인.jpg
-10_project_record/02_evidence/screenshots/v3.0_WRA_E_02_요청등록_동적스펙.jpg
-10_project_record/02_evidence/screenshots/v3.0_WRA_E_03_AI검증진행_폴링.jpg
-10_project_record/02_evidence/screenshots/v3.0_WRA_E_04_결과확인수정.jpg
-10_project_record/02_evidence/screenshots/v3.0_WRA_E_05_내요청목록_nextAction.jpg
-10_project_record/02_evidence/screenshots/v3.0_WRA_S_01_요청관리_역할전환.jpg
-10_project_record/02_evidence/screenshots/v3.0_WRA_S_02_상세_AI결과물_읽기전용.jpg
-10_project_record/02_evidence/screenshots/v3.0_WRA_S_02_상세_승인처리.jpg
+10_project_record/02_evidence/screenshots/argus_WRA_C_00_로그인.jpg
+10_project_record/02_evidence/screenshots/argus_WRA_E_01_엔지니어메인.jpg
+10_project_record/02_evidence/screenshots/argus_WRA_E_02_요청등록_동적스펙.jpg
+10_project_record/02_evidence/screenshots/argus_WRA_E_03_AI검증진행_폴링.jpg
+10_project_record/02_evidence/screenshots/argus_WRA_E_04_결과확인수정.jpg
+10_project_record/02_evidence/screenshots/argus_WRA_E_05_내요청목록_nextAction.jpg
+10_project_record/02_evidence/screenshots/argus_WRA_S_01_요청관리_역할전환.jpg
+10_project_record/02_evidence/screenshots/argus_WRA_S_02_상세_AI결과물_읽기전용.jpg
+10_project_record/02_evidence/screenshots/argus_WRA_S_02_상세_승인처리.jpg
+10_project_record/02_evidence/screenshots/v1.0_01_목록대시보드_구버전_구명칭ReplaceFlow.jpg
+10_project_record/02_evidence/screenshots/v1.0_02_상세_체크리스트_구버전_구명칭ReplaceFlow.jpg
 10_project_record/02_evidence/test_results/e2e_live_v3_20260903_1527.log
 10_project_record/02_evidence/test_results/e2e_live_v3_20260903_1534.log
 10_project_record/02_evidence/test_results/e2e_live_v3_20260903_1537.log
@@ -227,18 +227,21 @@ views/safety/ManageRequestsView.vue
 10_project_record/02_evidence/test_results/e2e_live_v3_20260903_1558.log
 10_project_record/02_evidence/test_results/e2e_live_v3_20260903_1601.log
 10_project_record/02_evidence/test_results/e2e_live_v3_20260903_1605.log
+10_project_record/02_evidence/test_results/e2e_live_v3_20260903_1637.log
 10_project_record/02_evidence/test_results/fe_build_20260903_1527.log
 10_project_record/02_evidence/test_results/fe_build_20260903_1534.log
 10_project_record/02_evidence/test_results/fe_build_20260903_1537.log
 10_project_record/02_evidence/test_results/fe_build_20260903_1555.log
 10_project_record/02_evidence/test_results/fe_build_20260903_1558.log
 10_project_record/02_evidence/test_results/fe_build_20260903_1605.log
+10_project_record/02_evidence/test_results/fe_build_20260903_1637.log
 10_project_record/02_evidence/test_results/pytest_20260903_1527.log
 10_project_record/02_evidence/test_results/pytest_20260903_1534.log
 10_project_record/02_evidence/test_results/pytest_20260903_1537.log
 10_project_record/02_evidence/test_results/pytest_20260903_1555.log
 10_project_record/02_evidence/test_results/pytest_20260903_1558.log
 10_project_record/02_evidence/test_results/pytest_20260903_1605.log
+10_project_record/02_evidence/test_results/pytest_20260903_1637.log
 10_project_record/03_contract_history/README.md
 10_project_record/04_team/rnr_and_contributions.md
 10_project_record/05_retrospective/retrospective.md
