@@ -5,6 +5,8 @@
 
 **v3.0 갱신**: `docs/10_project_record/RECORD_KEEPING.md` 상시 지침 반영. E2E 대상을 `scripts/e2e_live.sh`(v1.0, `docs/CONTRACT.md` v3.0 기준 무효)에서 **`scripts/e2e_live_v3.sh`**로 교체했다. 이하 1절은 v3.0 기준으로 다시 쓴다 — v1.0 수치(35/35, PORT 8801)는 **틀린 게 아니라 대상이 바뀐 것**이라 삭제하지 않고 이 문단에 남긴다.
 
+**프로젝트명 `Argus` 확정 갱신 (2026-09-03, D-11)**: 저장소 전체 치환 후 CI 재예행. `.github/workflows/ci.yml`·`scripts/e2e_live_v3.sh`·`scripts/collect_evidence.sh` 3개 파일을 `replaceflow`(대소문자 무시) 기준으로 재검색했고 **하드코딩된 참조 0건** — 파일명·경로를 직접 박아둔 곳이 없어 이름 변경에 영향받지 않았다. `postman/Argus.postman_collection.json`, `docs/06_erd/argus.dbml`, 시드 계정 `engineer@argus.test`/`safety@argus.test` 로 바뀐 것도 확인. 아래 표는 이름 변경 이후 재실측치다.
+
 ---
 
 ## 1. CI 잡별 로컬 예행 결과 (v3.0)
@@ -15,13 +17,13 @@
 |---|---|---|---|---|
 | YAML 문법 검증 | `backend/.venv/bin/python -c "yaml.safe_load(...)"` | 0 | <1s | 파싱 성공, `jobs: [backend-test, frontend-build, e2e]`, e2e 스텝 5개(`upload-artifact` 포함) 확인 |
 | backend-test | `pip install -q -r requirements.txt` | 0 | 0s (이미 설치됨) | OK |
-| backend-test | `pytest -q` | 0 | 1s | **8 passed**, warning 2건(starlette httpx deprecation, 기능 영향 없음) |
+| backend-test | `pytest -q` | 0 | 2.33s | **30 passed**, warning 2건(starlette httpx deprecation, 기능 영향 없음) — v1.0 대비 22건 늘어남(v3.0 계약 커버리지 확대, 대상이 바뀐 것이지 이전 수치가 틀렸던 게 아니다) |
 | frontend-build | `npm ci --silent` | 0 | 1s | OK (`package-lock.json` 존재 확인) |
-| frontend-build | `npm run build` | 0 | 2s | `dist/` 생성, gzip 결과 index.js 69.39kB |
-| e2e | `bash scripts/e2e_live_v3.sh` (기본 PORT=8820, 스크립트 자체 기본값 — CI와 동일 조건) | 0 | 4s | **64 / 64 통과**, 실패 0 |
+| frontend-build | `npm run build` | 0 | 2s | `dist/` 생성, gzip 결과 index.js 81.98kB (118 modules) |
+| e2e | `bash scripts/e2e_live_v3.sh` (기본 PORT=8820, 스크립트 자체 기본값 — CI와 동일 조건) | 0 | 5s | **72 / 72 통과**, 실패 0 |
 | e2e (파이프라인 exit code 검증) | `bash -eo pipefail -c 'bash scripts/e2e_live_v3.sh \| tee log'` | 0 | 4s | GitHub Actions `run:` 기본 셸(`bash --noprofile --norc -eo pipefail`)과 동일 조건으로 재현 — `tee`를 거쳐도 스크립트 실패 시 파이프라인이 실패로 잡히는 것 확인 |
 
-(v1.0 참고용 이전 실측 — 대상 무효화됨: `PORT=8801 bash scripts/e2e_live.sh` → 35/35 통과, 1s, 2026-09-03. `docs/10_project_record/02_evidence/test_results/e2e_live_v3_*.log` 3건이 팀장 쪽 `collect_evidence.sh` 실행으로 이미 64/0 실측을 남겨뒀고, 위 표의 수치는 그것과 별개로 이 세션에서 CI 워크플로 예행 목적으로 직접 재실측한 것 — 값이 일치함을 교차 확인했다.)
+(과거 참고용 실측 — 대상 무효화됨, 삭제하지 않고 남긴다: v1.0 `PORT=8801 bash scripts/e2e_live.sh` → 35/35, 2026-09-03 초. v3.0 개명 전 `pytest 8/8`·`e2e 64/64` → 위 표의 30/30·72/72로 갱신. `docs/10_project_record/02_evidence/test_results/`의 팀장 쪽 `collect_evidence.sh` 실측치와 이 세션 재실측치가 같은 추세로 늘어난 것을 교차 확인했다.)
 
 **주의(정직하게 기록)**: `backend-test`/`e2e` 로컬 예행은 기존 `backend/.venv`(이미 의존성 설치됨)로 돌렸다. CI에서는 `e2e` 잡이 `python -m venv .venv`로 **매번 새로 venv를 만든다** — 이 스텝 자체는 로컬에서 별도로 새 venv를 만들어 재현하지는 않았고, `pip install -r requirements.txt`가 멱등하게 성공하는 것과 동일 명령이 기존 venv에서 통과하는 것으로 간접 확인했다. 최초 PR이 올라가면 Actions 로그에서 fresh-venv 케이스를 1회 직접 확인할 것.
 
@@ -55,7 +57,7 @@ brew install python@3.11
 cd backend
 /opt/homebrew/opt/python@3.11/bin/python3.11 -m venv .venv
 .venv/bin/pip install -r requirements.txt
-.venv/bin/pytest -q          # 8 passed 나오면 OK
+.venv/bin/pytest -q          # 30 passed 나오면 OK
 
 # 4. Node 버전 확인 — 18 이상 (CI는 20 사용)
 node --version
@@ -87,21 +89,24 @@ bash scripts/e2e_live_v3.sh          # 마지막 줄 "실패 0" 이면 OK (기�
 
 ---
 
-## 4. `.gitignore` 실측 점검 — 후속 조치 반영 (2026-09-03 갱신)
+## 4. `.gitignore` 실측 점검 — 해결됨 (2026-09-03 최종 갱신)
 
-**최초 발견(위 발견 시점 실측)**: `git status --porcelain=v1` 에서 `.omc/state/hud-stdin-cache.json` 이 tracked 상태로 수정 표시되고, 이 세션이 만든 `frontend/.omc/` 가 untracked 로 새로 생겼다. `.gitignore`에 `.omc/` 항목이 없어서 `git add .` 시 그대로 커밋될 위험이 있었다.
+**최초 발견**: `git status --porcelain=v1` 에서 `.omc/state/hud-stdin-cache.json` 이 tracked 상태로 수정 표시되고, `frontend/.omc/` 가 untracked 로 새로 생겼다. `.gitignore`에 `.omc/` 항목이 없어서 `git add .` 시 그대로 커밋될 위험이 있었다.
 
-**조치 완료 (팀장)**: `.gitignore` 에 `.omc/` · `**/.omc/` 2줄 추가 + 인덱스에서 제거. 이번 세션에서 재확인:
+**조치 1 — 인덱스**: `.gitignore` 에 `.omc/` · `**/.omc/` 추가 + 인덱스에서 제거 (팀장). 재확인 완료.
+
+**조치 2 — 커밋 이력 purge — 완료**: 팀장이 `git filter-branch --index-filter` 로 전체 이력에서 `.omc/` 제거 → `refs/original` 삭제 → reflog 만료 → `git gc --prune=now`. 이 세션에서 최종 재검증:
 ```
-$ grep -n omc .gitignore
-44:.omc/
-45:**/.omc/
-$ git ls-files | grep '^\.omc'
-(출력 없음 — 더 이상 추적되지 않음)
+$ git log --all --oneline -- '.omc' | wc -l
+0
+$ git for-each-ref refs/original
+(출력 없음)
+$ git fsck --full --unreachable
+(출력 없음, 클린)
+$ git ls-files | grep -c '^\.omc'
+0
 ```
-`git status --porcelain` 에도 이제 `.omc/` 관련 항목이 전혀 안 뜬다. **인덱스 기준으로는 해결됨.**
-
-**미해결 — 커밋 이력**: 과거 커밋에 `.omc/state/*` 가 이미 들어가 있어 `git log`로 보면 여전히 남아 있다. 팀장이 `git filter-branch --index-filter` 로 이력에서 purge 시도했으나 **다른 트랙(팀원)이 동시에 파일을 쓰고 있어 거부됨** — 팀장 승인은 받았고, 작업 트리가 조용해지는 시점에 재시도 예정. **발표 전까지 이 purge가 안 끝나도 기능·데모에는 영향 없음**(인덱스에서는 이미 빠졌으므로 새 커밋에는 안 실림) — 다만 `git clone` 직후 레포 크기나 `.omc/state/*` 이력 노출이 남아있다는 점은 알아둘 것.
+**이력·인덱스 양쪽 다 0건으로 확인 — 해결됨.** 재작성 이후 pytest 30/30·E2E 72/72 재검증도 이 세션에서 통과 확인(1절 표).
 
 ---
 
@@ -129,9 +134,10 @@ $ git ls-files | grep '^\.omc'
 
 ## 요약
 
+- 프로젝트명 `Argus` 확정 후 CI 재예행 — ci.yml·e2e_live_v3.sh·collect_evidence.sh에 옛 이름(`replaceflow`) 하드코딩 0건, 이름 변경에 영향 없음 확인
 - `.github/workflows/ci.yml` v3.0 갱신 — e2e 잡이 `scripts/e2e_live_v3.sh` 실행(v1.0은 CONTRACT 무효), 로그를 `actions/upload-artifact`로 남기고 리포에는 커밋 안 함
-- 로컬 예행 전부 통과: pytest 8/8, npm build OK, E2E v3.0 64/64 (기본 PORT=8820), pipefail 조건에서도 파이프라인 exit code 정상 전파 확인
+- 로컬 예행 전부 통과(Argus 개명 후 재실측): pytest **30/30**, npm build OK, E2E v3.0 **72/72** (기본 PORT=8820), pipefail 조건에서도 파이프라인 exit code 정상 전파 확인
 - Python 3.9·bash 3.2(둘 다 macOS 기본) 함정 문서화, 포트 8820 충돌·E2E 상태 오염 복구 명령 추가
-- `.gitignore`의 `.omc/` 누락은 팀장이 인덱스 기준 해결(재확인 완료) — 커밋 이력 purge만 트리가 조용해지면 재시도 예정, 발표 전 기능에는 영향 없음
+- `.gitignore`의 `.omc/` — 인덱스·커밋 이력 양쪽 다 **해결됨**(filter-branch + gc 재검증: 이력 0건, fsck 클린)
 - 브랜치 보호 규칙은 GitHub 웹 UI 전용이라 클릭 순서 12단계로 문서화 (Settings → Branches → Add rule)
 - `collect_evidence.sh`는 CI에 넣지 않기로 판단(잡 중복·워킹트리 오염 위험) — 이유를 1절에 기록
