@@ -1,0 +1,38 @@
+# --- Python / FastAPI ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+*.db
+*.sqlite
+*.sqlite3
+backend/.env
+
+# --- Node / Vite ---
+node_modules/
+frontend/dist/
+frontend/.vite/
+npm-debug.log*
+yarn-error.log*
+*.log
+
+# --- 환경 · 비밀 ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# --- IDE / OS ---
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# --- 발표 산출물 중 대용량 ---
+docs/08_presentation/*.pptx
+docs/08_presentation/*.mp4
