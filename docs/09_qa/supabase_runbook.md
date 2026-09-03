@@ -14,7 +14,7 @@
 1. https://supabase.com → **Start your project** → GitHub 계정으로 로그인
 2. **New project** 클릭
 3. 입력값
-   - **Name**: `replaceflow`
+   - **Name**: `argus`
    - **Database Password**: 생성 버튼으로 강한 비밀번호 만들고 **반드시 안전한 곳에 복사해 둔다.** 이후 다시 볼 수 없다
    - **Region**: `Northeast Asia (Seoul)` — 데모 지연시간이 가장 짧다
    - **Pricing Plan**: Free
@@ -34,7 +34,7 @@
 ## 3. `.env` 반영 (1분)
 
 ```bash
-cd ~/projects/replaceflow/backend
+cd ~/projects/argus/backend
 # .env 가 없으면
 cp .env.example .env
 ```
@@ -52,7 +52,7 @@ DATABASE_URL=postgresql://postgres.xxxxxxxx:실제비밀번호@aws-0-ap-northeas
 SQLite 폴백만 쓰던 상태라 PostgreSQL 드라이버가 없다.
 
 ```bash
-cd ~/projects/replaceflow/backend
+cd ~/projects/argus/backend
 .venv/bin/pip install "psycopg[binary]"
 # 또는 SQLAlchemy 2.x 구버전 URL 을 쓰면: .venv/bin/pip install psycopg2-binary
 ```
@@ -88,13 +88,13 @@ select status, count(*) from work_requests group by status order by status;
 ### 5-3. 비밀번호 해시 덮어쓰기
 시드 SQL 의 `password_hash` 는 플레이스홀더다. 실제 해시는 백엔드가 넣는다:
 ```bash
-cd ~/projects/replaceflow/backend
+cd ~/projects/argus/backend
 .venv/bin/python -m app.seed        # 또는 서버를 한 번 기동하면 자동 시드
 ```
 
 ### 5-4. 백엔드 기동 확인
 ```bash
-cd ~/projects/replaceflow/backend
+cd ~/projects/argus/backend
 .venv/bin/python -m uvicorn app.main:app --port 8000
 # 다른 터미널에서
 curl -s localhost:8000/api/v1/dashboard/summary | head -c 200
@@ -106,7 +106,7 @@ curl -s localhost:8000/api/v1/dashboard/summary | head -c 200
 
 | 리스크 | 대응 |
 |---|---|
-| 현장 네트워크에서 Supabase 접속 불가 | `.env` 의 `DATABASE_URL` 을 `sqlite:///./replaceflow.db` 로 한 줄만 되돌리면 즉시 로컬 폴백. **이 전환을 리허설에서 최소 1회 연습할 것** |
+| 현장 네트워크에서 Supabase 접속 불가 | `.env` 의 `DATABASE_URL` 을 `sqlite:///./argus.db` 로 한 줄만 되돌리면 즉시 로컬 폴백. **이 전환을 리허설에서 최소 1회 연습할 것** |
 | Free 플랜 프로젝트 일시정지(7일 미사용) | 발표 당일 아침에 대시보드 한 번 열어 깨워 둔다 |
 | 비밀번호 분실 | Settings → Database → **Reset database password** |
 

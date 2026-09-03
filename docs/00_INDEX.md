@@ -1,11 +1,11 @@
-# ReplaceFlow 산출물 인덱스 (v3.0 최종 사양)
+# Argus 산출물 인덱스 (v3.0 최종 사양)
 
 **기준 계약: `docs/CONTRACT.md` v3.0 (255줄).** 팀 노션 「API 명세서 v1.0 (REQ-F-0001)」 + 「FixGuide 데이터 모델 정의서 v3.0」 + 「WRA 화면정의서 v2.0」 원문 이관본.
 
 표기: **☑** 검증 완료 · **⏳** 구현 중 · **🔄** 갱신 중 · **☐** 미착수 · **✖** 미충족
 ⚠️ **경로와 판정만 적는다.** 여러 트랙이 동시에 파일을 고치는 중이라 내용을 복사해 두면 몇 분 뒤 틀린다.
 
-> ⚠️ **명칭 미확정** — ERD 문서는 **FixGuide**, 저장소·기획서는 **ReplaceFlow**, API 명세서는 "부품 교체 요청·승인 시스템".
+> ⚠️ **명칭 미확정** — ERD 문서는 **FixGuide**, 저장소·기획서는 **Argus**, API 명세서는 "부품 교체 요청·승인 시스템".
 > **발표 표지에 들어가므로 슬라이드 제작 전 반드시 하나로 확정할 것.**
 
 ---
@@ -34,7 +34,7 @@
 ## 2일차 — 시스템 설계 & Scaffolding
 | 가이드 요구 | 산출물 | 위치 | 상태 |
 |---|---|---|---|
-| 데이터 모델링(ERD) | DBML · DDL · 시드 · 설명 · **ER 다이어그램** | `docs/06_erd/` (`replaceflow.dbml`, `schema_postgres.sql`, `seed_data.sql`, `erd.md`, `erd.mmd`, `erd.svg`) | ☑ **8테이블**(7+`ai_configs` 제안) · sqlglot·dbml2sql 통과 |
+| 데이터 모델링(ERD) | DBML · DDL · 시드 · 설명 · **ER 다이어그램** | `docs/06_erd/` (`argus.dbml`, `schema_postgres.sql`, `seed_data.sql`, `erd.md`, `erd.mmd`, `erd.svg`) | ☑ **8테이블**(7+`ai_configs` 제안) · sqlglot·dbml2sql 통과 |
 | ├ 1:N 관계 | 8개 | `erd.md` §3 | ☑ |
 | ├ **N:M 관계** | **0개** | `erd.md` §3, `erd_phase2.mmd` | ✖ **범위 내 없음 — 정직 표기.** Phase 2 예비 설계로 대응 |
 | └ 정규화 | 사실/추론/행동 3층 · 대리키+업무키 UNIQUE · append-only | `CONTRACT.md` §5 | ☑ |
@@ -107,7 +107,7 @@ PM 책임: `README.md` 상태 한 줄 + 실측 표(하루 1회 이상) · `01_ti
 노션 사본: https://app.notion.com/p/3d0a7f29102a812cbafee720e548f73c (로컬이 원본, 노션이 사본)
 
 ## 남은 수동 항목 (사람이 직접)
-**Figma 또는 Stitch 제작(미착수)** · **Supabase DDL 실행(미검증)** · 발표 슬라이드 조판 · **명칭 통일 결정(FixGuide/ReplaceFlow)** · 회고 §3·§4 작성 · 리허설 3회 · **커밋(변경분 134개 미커밋)** · `.omc` 이력 purge
+**Figma 또는 Stitch 제작(미착수)** · **Supabase DDL 실행(미검증)** · 발표 슬라이드 조판 · **명칭 통일 결정(FixGuide/Argus)** · 회고 §3·§4 작성 · 리허설 3회 · **커밋(변경분 134개 미커밋)** · `.omc` 이력 purge
 
 ---
 *스캔 시점: 2026-09-03 저녁. 6개 트랙 동시 작업 중 — 판정이 아니라 경로를 신뢰하라.*

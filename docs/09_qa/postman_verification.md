@@ -1,7 +1,7 @@
 # Postman ↔ 실제 BE 대조 검증 (D3-1)
 
 담당: 정구현 (API Architect / BE) · 검증일: 2026-09-03
-대상: `postman/ReplaceFlow.postman_collection.json` vs `backend` (uvicorn, `--port 8802`, `DATABASE_URL=sqlite:///./guhyun_test.db`, `AI_PROVIDER=MOCK`, `BACKGROUND_ADVANCE=false`)
+대상: `postman/Argus.postman_collection.json` vs `backend` (uvicorn, `--port 8802`, `DATABASE_URL=sqlite:///./guhyun_test.db`, `AI_PROVIDER=MOCK`, `BACKGROUND_ADVANCE=false`)
 방법: `backend/tests/test_flow.py` · `scripts/e2e_live.sh` 의 상태머신 순서를 그대로 따라 실서버에 36회 HTTP 호출 후 Postman 예시와 필드 단위로 대조. 서버는 검증 종료 후 kill, 임시 DB 삭제 완료.
 
 ## 0. 예시 응답 개수
@@ -94,7 +94,7 @@ BE에는 실존하고(`backend/app/api/v1/routers/work_requests.py`), `test_flow
 
 ## 7. 수정 완료 (2026-09-03, 2차) — 소유 경로만 직접 수정
 
-대상: `docs/07_api/openapi.yaml` · `postman/ReplaceFlow.postman_collection.json` · `docs/CONTRACT.md`. `docs/06_erd/`·`backend/`·`frontend/`·`docs/04_architecture/`는 건드리지 않았다.
+대상: `docs/07_api/openapi.yaml` · `postman/Argus.postman_collection.json` · `docs/CONTRACT.md`. `docs/06_erd/`·`backend/`·`frontend/`·`docs/04_architecture/`는 건드리지 않았다.
 방법: §0~§6에서 지적한 항목을 실제 구현에 맞춰 수정 → 서버(`--port 8802`, `DATABASE_URL=sqlite:///./guhyun_fix.db`)를 다시 띄워 36개 호출을 재실행 → 모든 예시를 실측값으로 교체 → 서버 kill·DB 삭제 완료.
 
 ### 7-1. 수정 전 / 후
@@ -123,7 +123,7 @@ BE에는 실존하고(`backend/app/api/v1/routers/work_requests.py`), `test_flow
 
 ## 8. v2.0 전면 개정 (2026-09-03) — openapi.yaml · Postman 컬렉션
 
-팀이 v2.0 전면 채택을 확정하고 `docs/CONTRACT.md` 가 오케스트레이터 전용 소유로 v2.0(291줄)으로 개정됨에 따라, `docs/07_api/openapi.yaml` 과 `postman/ReplaceFlow.postman_collection.json` 을 CONTRACT v2.0 §2~§3 기준으로 전면 개정했다. **BE(`backend/`)가 아직 이 계약대로 구현 중이라 실측 대조는 못 했다** — 신규/변경분 예시는 CONTRACT §3 JSON 을 그대로 옮겼다. v1.0 그대로 유지된 엔드포인트(documents/parts/equipments/laws/tenants ai-config 구조)는 §7 에서 실측 검증한 예시를 그대로 살렸다.
+팀이 v2.0 전면 채택을 확정하고 `docs/CONTRACT.md` 가 오케스트레이터 전용 소유로 v2.0(291줄)으로 개정됨에 따라, `docs/07_api/openapi.yaml` 과 `postman/Argus.postman_collection.json` 을 CONTRACT v2.0 §2~§3 기준으로 전면 개정했다. **BE(`backend/`)가 아직 이 계약대로 구현 중이라 실측 대조는 못 했다** — 신규/변경분 예시는 CONTRACT §3 JSON 을 그대로 옮겼다. v1.0 그대로 유지된 엔드포인트(documents/parts/equipments/laws/tenants ai-config 구조)는 §7 에서 실측 검증한 예시를 그대로 살렸다.
 
 ### 8-1. 신규 (openapi 19 paths, Postman 29 requests / 111 examples — 이전 22 requests / 87 examples)
 
@@ -153,7 +153,7 @@ BE에는 실존하고(`backend/app/api/v1/routers/work_requests.py`), `test_flow
 | `GET /dashboard/summary` | `DashboardSummary` 단일 | **`role` 쿼리 추가** — 미지정 시 기존 `DashboardSummary`(하위호환), `role=engineer`→`EngineerDashboard`, `role=safety`→`SafetyDashboard` |
 | `AiConfig`/`AiConfigListExample` | 4개 항목(VENDOR 포함) | **3개 항목** |
 | 인증 | 없음(전 엔드포인트 무인증) | `bearerAuth` 전 엔드포인트 적용(`/auth/signup`·`/auth/login` 제외). Postman 컬렉션은 이미 collection-level bearer(`{{token}}`)로 구성돼 있어 구조 변경 없이 재사용, signup/login 요청만 `auth: noauth` 로 개별 오버라이드 |
-| `prompt_version` 예시 | `replaceflow-v0.1` | `replaceflow-v0.2` |
+| `prompt_version` 예시 | `argus-v0.1` | `argus-v0.2` |
 
 ### 8-3. 검증
 
@@ -167,7 +167,7 @@ BE에는 실존하고(`backend/app/api/v1/routers/work_requests.py`), `test_flow
 
 `docs/CONTRACT.md` 가 v3.0(255줄)으로 다시 개정됐다 — 팀 노션의 진짜 권위 문서 **「API 명세서 v1.0 (REQ-F-0001)」**·**「FixGuide 데이터 모델 정의서 v3.0」**·「WRA 화면정의서 v2.0」을 그대로 옮긴 것이다. 오케스트레이터가 화면정의서에서 **추론**해 만든 v2.0 계약은 팀 권위 문서와 충돌해 **폐기**됐다(`CONTRACT_v2.0_superseded.md`). §8 절(v2.0 전면 개정)과 아래 "v2.0 API 델타" 절은 **이 시점부터 전부 구버전**이다 — 삭제하지 않고 이력으로 남긴다.
 
-`docs/07_api/openapi.yaml` 과 `postman/ReplaceFlow.postman_collection.json` 을 CONTRACT v3.0 기준으로 **전면 재작성**했다(패치가 아니라 새로 씀 — API 15개 중 유지된 것은 3개뿐이라 부분 수정보다 저비용·저위험).
+`docs/07_api/openapi.yaml` 과 `postman/Argus.postman_collection.json` 을 CONTRACT v3.0 기준으로 **전면 재작성**했다(패치가 아니라 새로 씀 — API 15개 중 유지된 것은 3개뿐이라 부분 수정보다 저비용·저위험).
 
 ### 9-1. v1.0 → v2.0 → v3.0 변경 이력
 
@@ -278,7 +278,7 @@ UC-05(사진 업로드)가 API #9·#10 을 전혀 검증하지 않던 구멍을 
 
 ### 10-5. 사고
 
-이 재검증 작업 중 `backend/*.db` 를 와일드카드로 정리하다가 다른 사람이 쓰던 `backend/replaceflow.db` 를 실수로 삭제했다. git 이력이 없는(`*.db` gitignore) 파일이라 복구 불가 — 삭제 시점엔 8000 포트에 뜬 서버가 없어 진행 중이던 세션이 끊기진 않았고, 앱이 시작 시 자동 시드하므로 다음 기동 때 CONTRACT.md 시드 데이터로는 재생성된다. 다만 시드 이상으로 누적됐을 수 있는 다른 사람의 테스트 데이터는 복구 안 됨. 팀리더에게 즉시 보고함.
+이 재검증 작업 중 `backend/*.db` 를 와일드카드로 정리하다가 다른 사람이 쓰던 `backend/argus.db` 를 실수로 삭제했다. git 이력이 없는(`*.db` gitignore) 파일이라 복구 불가 — 삭제 시점엔 8000 포트에 뜬 서버가 없어 진행 중이던 세션이 끊기진 않았고, 앱이 시작 시 자동 시드하므로 다음 기동 때 CONTRACT.md 시드 데이터로는 재생성된다. 다만 시드 이상으로 누적됐을 수 있는 다른 사람의 테스트 데이터는 복구 안 됨. 팀리더에게 즉시 보고함.
 
 ---
 

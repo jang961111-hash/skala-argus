@@ -1,4 +1,4 @@
-# ReplaceFlow Backend (FastAPI)
+# Argus Backend (FastAPI)
 
 부품 교체 요청·승인 시스템 (REQ-F-0001) — BE.
 계약: `../docs/CONTRACT.md` **v3.0** (Enum·엔드포인트·필드명·에러 코드 고정). 계약과 다르면 계약이 맞다.
@@ -21,8 +21,8 @@ uvicorn app.main:app --reload --port 8810
 
 | 이메일 | 역할 | 로그인 후 이동 |
 |---|---|---|
-| `engineer@replaceflow.test` | `ENGINEER` | `/home` |
-| `safety@replaceflow.test` | `SAFETY_MANAGER` | `/manage/requests` |
+| `engineer@argus.test` | `ENGINEER` | `/home` |
+| `safety@argus.test` | `SAFETY_MANAGER` | `/manage/requests` |
 
 시드는 6개 상태(`DRAFT`·`AI_RUNNING`·`AI_DONE`·`PENDING`·`APPROVED`·`REJECTED`)를 각 1건씩 만든다.
 
@@ -74,7 +74,7 @@ app/
 
 | 키 | 기본 | 설명 |
 |---|---|---|
-| `DATABASE_URL` | `sqlite:///./replaceflow.db` | Supabase: `postgresql+psycopg2://...` (`psycopg2-binary` 설치) |
+| `DATABASE_URL` | `sqlite:///./argus.db` | Supabase: `postgresql+psycopg2://...` (`psycopg2-binary` 설치) |
 | `SECRET_KEY` | (개발용 기본값) | JWT 서명 키. **운영 배포 전 반드시 교체** — 기본값이면 기동 시 경고 |
 | `TOKEN_TTL_HOURS` | `72` | 액세스 토큰 유효시간 |
 | `AI_PROVIDER` | `MOCK` | `MOCK` / `LOCAL_LLM` / `AX_PLATFORM` / `OPENAI` |

@@ -56,7 +56,7 @@ async function submit() {
     <form class="card auth-card stack" @submit.prevent="submit">
       <div class="head">
         <h1>회원가입</h1>
-        <p class="muted small">ReplaceFlow 계정을 만듭니다</p>
+        <p class="muted small">Argus 계정을 만듭니다</p>
       </div>
 
       <div>

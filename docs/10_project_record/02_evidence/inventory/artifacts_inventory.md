@@ -179,7 +179,7 @@ views/safety/ManageRequestsView.vue
 06_erd/erd.md
 06_erd/erd.mmd
 06_erd/erd.svg
-06_erd/replaceflow.dbml
+06_erd/argus.dbml
 06_erd/schema_postgres.sql
 06_erd/seed_data.sql
 06_erd/supabase_apply.md

@@ -1,9 +1,9 @@
-# ReplaceFlow(FixGuide) ERD 설명서
+# Argus(FixGuide) ERD 설명서
 
-- 서비스: **ReplaceFlow(FixGuide)** — 부품 교체 요청·승인 시스템(REQ-F-0001). 명칭 미확정(CONTRACT §0 각주) — 저장소·본 문서는 `ReplaceFlow` 를 유지
+- 서비스: **Argus(FixGuide)** — 부품 교체 요청·승인 시스템(REQ-F-0001). 명칭 미확정(CONTRACT §0 각주) — 저장소·본 문서는 `Argus` 를 유지
 - 기준 문서: `docs/CONTRACT.md` **v3.0**(단일 진실 원천) §5 "DB — 테이블 7개 + 제안 1개". CONTRACT §0 이 명시하듯 이 절은 팀 「FixGuide 데이터 모델 정의서 v3.0」 원문을 **그대로 옮긴 것**이며, 이 erd.md·DBML·DDL 은 그 설계의 **번역**이다 — 새로 설계하지 않았다.
 - 산출물
-  - `replaceflow.dbml` — dbdiagram.io 용 DBML (테이블 8개, Enum 7개, Ref 8개, TableGroup 5개)
+  - `argus.dbml` — dbdiagram.io 용 DBML (테이블 8개, Enum 7개, Ref 8개, TableGroup 5개)
   - `schema_postgres.sql` — PostgreSQL(Supabase) DDL: UUID PK(`gen_random_uuid()`), ENUM 7종, jsonb, UNIQUE 4개 + 부분 유니크 1개, 인덱스 5개
   - `seed_data.sql` — `WorkRequestStatus` 6종 각 1건(CONTRACT 에 샘플 데이터 절은 없어 이 파일이 직접 설계)
   - `erd.mmd`/`erd.svg` — 8테이블 ERD 렌더(Mermaid, §2 임베드) · `erd_phase2.mmd`/`erd_phase2.svg` — Phase 2 N:M 포함 예비 설계 렌더(§3 임베드)
@@ -87,9 +87,9 @@ v1.0/v2.0 은 `WR-YYYYMMDD-NNN`, `RUN-0042` 같은 **자연키/접두어 문자�
 
 ### ERD 다이어그램 (렌더링됨)
 
-소스: `erd.mmd` · 렌더: `erd.svg`(`npx -y @mermaid-js/mermaid-cli mmdc -i erd.mmd -o erd.svg` 로 실제 생성, 아래에 검증 로그). 컬럼은 PK/FK·업무 식별자(`request_no`, `email`)·상태 컬럼만 표기했다 — 전체 컬럼은 §2 표와 `replaceflow.dbml` 참조.
+소스: `erd.mmd` · 렌더: `erd.svg`(`npx -y @mermaid-js/mermaid-cli mmdc -i erd.mmd -o erd.svg` 로 실제 생성, 아래에 검증 로그). 컬럼은 PK/FK·업무 식별자(`request_no`, `email`)·상태 컬럼만 표기했다 — 전체 컬럼은 §2 표와 `argus.dbml` 참조.
 
-![ReplaceFlow ERD v3.0 — 8테이블](./erd.svg)
+![Argus ERD v3.0 — 8테이블](./erd.svg)
 
 ```mermaid
 erDiagram
@@ -223,7 +223,7 @@ Table part_compatibility {      // N:M 자기참조: parts ↔ parts (호환표,
 
 소스: `erd_phase2.mmd` · 렌더: `erd_phase2.svg`. 지금 범위(8테이블, 위 §2 다이어그램과 동일)에 `PHASE2__` 접두어가 붙은 마스터·N:M 연결 테이블 5개(`equipments`, `parts`, `equipment_parts`, `part_compatibility`, `law_index`, `agent_result_law_refs`)를 얹었다. Mermaid `erDiagram` 은 엔티티별 색상 지정을 지원하지 않아 이름 접두어로 구분했다 — 발표 슬라이드에서는 `PHASE2__` 박스만 옅은 색으로 덧칠하면 된다.
 
-![ReplaceFlow ERD Phase 2 예비 설계](./erd_phase2.svg)
+![Argus ERD Phase 2 예비 설계](./erd_phase2.svg)
 
 전체 소스는 `erd_phase2.mmd` 참조(코드펜스로 다시 넣으면 위 §2 다이어그램과 중복이 커 생략).
 
@@ -264,7 +264,7 @@ ERD 원문에 근거가 있는 세 가지 설계 결정을 옮긴다.
 
 ### 부분 유니크(partial unique) 1개
 
-`uq_ai_configs_active_agent`: `CREATE UNIQUE INDEX ... ON ai_configs (agent_code) WHERE is_active` — `agent_code` 당 **활성(`is_active=true`) 설정은 1개만** 허용하고, 비활성 이력(과거 설정 버전)은 여러 개 남을 수 있다. dbdiagram DBML 문법은 인덱스에 `WHERE` 절을 지원하지 않아 `replaceflow.dbml` 에는 일반 UNIQUE 로 표기하고 실제 DDL(`schema_postgres.sql`)에서만 부분 인덱스로 구현했다 — DBML 주석에 이 차이를 명시했다.
+`uq_ai_configs_active_agent`: `CREATE UNIQUE INDEX ... ON ai_configs (agent_code) WHERE is_active` — `agent_code` 당 **활성(`is_active=true`) 설정은 1개만** 허용하고, 비활성 이력(과거 설정 버전)은 여러 개 남을 수 있다. dbdiagram DBML 문법은 인덱스에 `WHERE` 절을 지원하지 않아 `argus.dbml` 에는 일반 UNIQUE 로 표기하고 실제 DDL(`schema_postgres.sql`)에서만 부분 인덱스로 구현했다 — DBML 주석에 이 차이를 명시했다.
 
 ### 인덱스 5개(CONTRACT §5 명시)
 
@@ -300,7 +300,7 @@ ERD 원문에 근거가 있는 세 가지 설계 결정을 옮긴다.
 
 ## 7. 발표용 요약
 
-ReplaceFlow(FixGuide) 의 데이터 모델은 **8테이블**로 사실(`work_requests`, `work_request_photos`) / AI 추론(`agent_runs`·`agent_steps`·`agent_results`) / 사람의 결정(`approvals`) / 설정(`ai_configs`, 제안)을 분리한다. 5가지 설계 원칙(대리키 PK, 계층 분리, append-only, 가변 구조만 jsonb, 상태는 enum)을 전부 지켰고, 근거를 각각 설명할 수 있다(§1). N:M 관계는 이번 범위에 0개다 — 마스터 테이블(법령·설비·부품)이 아직 없어서고, 숨기지 않고 왜 없는지와 Phase 2 에 어떻게 붙는지(예비 설계, §3)를 먼저 보여준다. v1.0 에서 지적됐던 정규화 이슈 3건은 대상 테이블 자체가 이번 범위에서 빠지며 소멸했다. `agent_steps`/`agent_results` 분리, `reason_category`, `original_json` 은 전부 "왜 이렇게 나눴는가"에 구체적 업무 근거가 있다(§4) — 정규화를 교과서적으로 지키는 것보다, 갱신 경합·집계 요구·감사 추적 같은 실제 사용 패턴을 우선한 설계다.
+Argus(FixGuide) 의 데이터 모델은 **8테이블**로 사실(`work_requests`, `work_request_photos`) / AI 추론(`agent_runs`·`agent_steps`·`agent_results`) / 사람의 결정(`approvals`) / 설정(`ai_configs`, 제안)을 분리한다. 5가지 설계 원칙(대리키 PK, 계층 분리, append-only, 가변 구조만 jsonb, 상태는 enum)을 전부 지켰고, 근거를 각각 설명할 수 있다(§1). N:M 관계는 이번 범위에 0개다 — 마스터 테이블(법령·설비·부품)이 아직 없어서고, 숨기지 않고 왜 없는지와 Phase 2 에 어떻게 붙는지(예비 설계, §3)를 먼저 보여준다. v1.0 에서 지적됐던 정규화 이슈 3건은 대상 테이블 자체가 이번 범위에서 빠지며 소멸했다. `agent_steps`/`agent_results` 분리, `reason_category`, `original_json` 은 전부 "왜 이렇게 나눴는가"에 구체적 업무 근거가 있다(§4) — 정규화를 교과서적으로 지키는 것보다, 갱신 경합·집계 요구·감사 추적 같은 실제 사용 패턴을 우선한 설계다.
 
 ---
 
@@ -334,7 +334,7 @@ ReplaceFlow(FixGuide) 의 데이터 모델은 **8테이블**로 사실(`work_req
 - **`validate_egress()`** 가 `ai_provider ∈ {OPENAI, AX_PLATFORM}` 인데 `egress_allowed=false` 면 `RuntimeError` 로 **기동 자체를 막는다** — v1.0 의 "런타임 409" 보다 fail-fast 라 더 강하다
 - `get_agent()` 팩토리가 `ai_provider` 로 Mock/LLM 구현체를 선택한다(모델별 행 대신 전역 설정 1벌)
 
-**Security & Config Isolation 요구사항은 테이블이 아니라 이 설정 계층으로 이미 충족돼 있다** — 단일 테넌트 PoC 에서는 테이블보다 오히려 더 나은 설계다. `ai_configs`([제안])는 DDL 에서 지우지 않고 **"멀티테넌트로 확장돼 테넌트·에이전트별 설정이 갈라져야 할 때 승격할 자리"**로 남겨 뒀다(`schema_postgres.sql`/`replaceflow.dbml` 에 그 취지의 주석을 추가했다).
+**Security & Config Isolation 요구사항은 테이블이 아니라 이 설정 계층으로 이미 충족돼 있다** — 단일 테넌트 PoC 에서는 테이블보다 오히려 더 나은 설계다. `ai_configs`([제안])는 DDL 에서 지우지 않고 **"멀티테넌트로 확장돼 테넌트·에이전트별 설정이 갈라져야 할 때 승격할 자리"**로 남겨 뒀다(`schema_postgres.sql`/`argus.dbml` 에 그 취지의 주석을 추가했다).
 
 | 항목 | `schema_postgres.sql`(ERD) | `backend/app/models/*.py`(실제) | 판정 |
 |---|---|---|---|
@@ -407,7 +407,7 @@ DDL 5개(`idx_work_requests_requester_status`, `idx_work_requests_status_submitt
 
 | # | 항목 | 판정 |
 |---|---|---|
-| ① | `ai_configs`·`ai_config_id` 미구현(8→7) | **BE 가 맞다.** `core/config.py`(`validate_egress()` fail-fast)로 대체 구현돼 있고 오히려 더 강한 설계 — 감점 아니라 설명거리. DDL 은 지우지 않고 "미구현, 승격 대상" 주석만 추가(`schema_postgres.sql`/`replaceflow.dbml`) |
+| ① | `ai_configs`·`ai_config_id` 미구현(8→7) | **BE 가 맞다.** `core/config.py`(`validate_egress()` fail-fast)로 대체 구현돼 있고 오히려 더 강한 설계 — 감점 아니라 설명거리. DDL 은 지우지 않고 "미구현, 승격 대상" 주석만 추가(`schema_postgres.sql`/`argus.dbml`) |
 | ② | CHECK 제약 8개가 모델에 없음 | **의도된 설계.** 8개 전부 서비스 계층 검증 또는 애초에 위반 불가능한 구조로 대응 확인됨(위 표) — 실제 구멍 없음 |
 | ③ | 인덱스 이름 `idx_*` vs `ix_*` | **무시.** SQLAlchemy 기본 규칙, 기능 동일 |
 | ④ | `users.role` enum 타입명(`user_role` vs `role`) | **코드로 확정 — `pg_enum(Role, "role")`, 오타로 추정.** 값은 같아 순수 DML 은 안전하지만, DDL 원본 스키마와 `create_all()` 이 만드는 스키마가 갈라진다. `backend/`는 다른 담당 소유라 고치지 않았다 — 수정은 BE 트랙에서 `pg_enum(Role, "user_role")` 로 한 글자만 바꾸면 된다(리포트만, 실행 안 함) |

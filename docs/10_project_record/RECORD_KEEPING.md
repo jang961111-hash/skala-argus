@@ -57,14 +57,14 @@
 - ❌ 실패를 성공으로 표시하거나 조용히 지우는 것
 - ❌ 이전 결정 행을 **덮어쓰는 것** (번복은 추가로 기록)
 - ❌ 다른 담당의 파일을 고치는 것 (필요하면 요청한다)
-- ❌ **파일 삭제에 와일드카드를 쓰는 것** — `rm backend/*.db` 같은 명령. 파일명을 명시한다. 각자 DB 는 고유 이름을 쓰고(`e2e_v3.db`·`be_v3_dev.db`), 공유 개발 DB `replaceflow.db` 는 아무도 지우지 않는다 (사고 I-08)
+- ❌ **파일 삭제에 와일드카드를 쓰는 것** — `rm backend/*.db` 같은 명령. 파일명을 명시한다. 각자 DB 는 고유 이름을 쓰고(`e2e_v3.db`·`be_v3_dev.db`), 공유 개발 DB `argus.db` 는 아무도 지우지 않는다 (사고 I-08)
 
 ---
 
 ## 5. 갱신 절차 (기계적으로)
 
 ```bash
-cd ~/projects/replaceflow
+cd ~/projects/argus
 
 # 증거 재수집 — 테스트·빌드·인벤토리를 한 번에
 bash scripts/collect_evidence.sh

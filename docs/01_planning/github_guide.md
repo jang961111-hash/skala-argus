@@ -1,4 +1,4 @@
-# ReplaceFlow — GitHub 운영 가이드
+# Argus — GitHub 운영 가이드
 
 담당: DevOps & Infra 신서현 · 2026-09-02
 목적: 루브릭 "GitHub 관리 · R&R 적절성" 대비 — **누가 무엇을 했는지 커밋·PR·이슈로 남는 상태**를 3일 내내 유지한다.
@@ -9,8 +9,8 @@
 
 | 항목 | 값 |
 |---|---|
-| 레포 이름 | `skala-replaceflow` (대안: `replaceflow-agent`) — 조직 계정이 있으면 `skala4-team-<번호>/skala-replaceflow` |
-| 설명 | ReplaceFlow — 반도체 설비 부품 교체 승인 프로세스 에이전트 (SKALA 4기 Mini-project) |
+| 레포 이름 | `skala-argus` (대안: `argus-agent`) — 조직 계정이 있으면 `skala4-team-<번호>/skala-argus` |
+| 설명 | Argus — 반도체 설비 부품 교체 승인 프로세스 에이전트 (SKALA 4기 Mini-project) |
 | 공개 범위 | Private (발표 후 강사 요청 시 Public 전환) |
 | 기본 브랜치 | `main` (보호: PR 필수, 리뷰 1명, force-push 금지) |
 | 통합 브랜치 | `develop` |
@@ -177,7 +177,7 @@ docs/08_presentation/*.pptx
 docs/08_presentation/*.mp4
 ```
 
-주의: `.env.example` 은 커밋한다 (Security & Config Isolation 증빙). 실제 `.env`·API 키·`replaceflow.db` 는 절대 올리지 않는다.
+주의: `.env.example` 은 커밋한다 (Security & Config Isolation 증빙). 실제 `.env`·API 키·`argus.db` 는 절대 올리지 않는다.
 
 ## 8. `CODEOWNERS` 예시
 

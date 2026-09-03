@@ -1,4 +1,4 @@
-# ReplaceFlow 서비스 기획서 (최종본)
+# Argus 서비스 기획서 (최종본)
 ## 반도체 설비 부품 교체 "승인 프로세스" 에이전트 — AI-Ready 웹 서비스 설계
 
 | 항목 | 내용 |
@@ -6,7 +6,7 @@
 | 과정 | SKALA 4기 Full-Stack Engineering · AI 웹 서비스 설계 Mini-project (2026-09-02 ~ 09-04) |
 | 팀 | PM 은태현 / Product&UX·FE 문승은 / DevOps&Infra 신서현 / API Architect·BE 정구현 / BE·발표 장병헌 |
 | 문서 버전 | **v3.0 (2026-09-03)** — 팀 노션 「API 명세서 v1.0」+「FixGuide 데이터 모델 정의서 v3.0」+「WRA 화면정의서 v2.0」 원문 기준 |
-| ⚠️ 명칭 미확정 | ERD 문서 제목은 **FixGuide**, 저장소·본 기획서는 **ReplaceFlow**, API 명세서는 "부품 교체 요청·승인 시스템". **팀 확인 필요.** 확정 전까지 이 문서는 `ReplaceFlow`를 유지한다(CONTRACT.md v3.0 상단 경고와 동일) |
+| ⚠️ 명칭 미확정 | ERD 문서 제목은 **FixGuide**, 저장소·본 기획서는 **Argus**, API 명세서는 "부품 교체 요청·승인 시스템". **팀 확인 필요.** 확정 전까지 이 문서는 `Argus`를 유지한다(CONTRACT.md v3.0 상단 경고와 동일) |
 | 프레임 | 우리는 SK AX AI 도메인팀 — 유해가스 취급 설비를 가진 반도체 제조사(하이닉스 협력사·후공정)에 B2B AX 솔루션을 제안한다 |
 | 관련 산출물 | `docs/02_usecase`(UC 명세·다이어그램) · `docs/03_wireframe`(와이어프레임, `figma_build_guide.md`) · `docs/04_architecture`(아키텍처·상태머신·시퀀스) · `docs/05_ai_ready`(프롬프트·JSON Schema) · `docs/06_erd`(DBML·DDL·seed) · `docs/07_api`(OpenAPI·API 명세) · `postman/`(Mock) · `frontend/` · `backend/` · `docs/08_presentation`(발표) · `docs/09_qa`(E2E·자체점검·Q&A) |
 
@@ -29,7 +29,7 @@
 
 **"설비 이상이 확인되면, 엔지니어가 작업요청 하나만 올리면 AI 에이전트가 부품 규격·호환 확인, 적용 법령 조사, 안전 서류 초안, 벤더 견적 요청까지 병렬로 처리하고, 안전관리자는 근거가 붙은 승인 패널에서 결재만 하는 — 일주일 걸리던 교체 승인을 하루로 줄이는 에이전트."**
 
-가칭: **ReplaceFlow** (설비 부품 교체 승인 에이전트)
+가칭: **Argus** (설비 부품 교체 승인 에이전트)
 
 - 고객사(1호 레퍼런스): SK하이닉스 협력사 또는 후공정 라인 — 특수가스·유해화학물질 취급 설비(가스 캐비닛, 밸브, 배관, 스크러버)를 가진 제조사 1곳
 - 페르소나 2명: **설비 엔지니어**(요청자) + **안전관리자**(승인자)
@@ -137,7 +137,7 @@ v1.0의 화면 2개(목록/대시보드, 상세=타임라인+승인패널)가 **
 | **사실/추론/행동 3층 분리** | 입력(`work_requests`) · AI 산출(`agent_runs`/`agent_steps`/`agent_results`) · 사람 결정(`approvals`)을 테이블로 분리하고 **위 층이 아래 층을 덮어쓰지 않는다**(팀 ERD 원칙 그대로). `agent_steps`(오케스트레이터가 초 단위 갱신)와 `agent_results`(엔지니어가 편집)를 굳이 나눈 이유도 갱신 주체·주기가 달라 같은 행을 UPDATE 경합시키지 않기 위함 |
 | Asynchronous Pipeline | `POST /agent-runs`(API#11, body `{workRequestId}`) → 202. `GET /agent-runs/{runId}`(API#12) → `steps[]`(`WAITING/RUNNING/DONE/FAILED`) + `allDone` + `pollIntervalMs:2500`(서버가 값을 내려줌). step 하나가 실패해도 HTTP는 200 유지, 해당 step만 `FAILED`+`errorMessage` |
 | **AI 원본 보존 (신규)** | `agent_results.original_json`에 AI 최초 생성 스냅샷을 보존하고 `payload_json`이 수정본이 된다(CONTRACT는 [제안]으로 적었지만 실측: `backend/app/models/agent.py`에 이미 컬럼으로 구현됨) — "`edited:true`만 있으면 무엇이 바뀌었는지 알 수 없다"는 팀 ERD 근거의 DB 구현. `docs/05_ai_ready/prompts.md`의 가드레일(수정본을 AI 원본과 시각적으로 구분)과 한 세트로 서술 |
-| Security & Config Isolation | `ai_configs`[제안]: `agentCode`·`provider`(MOCK/LOCAL_LLM/OPENAI)·`modelName`·`promptVersion`·`temperature`·`maxTokens`·`egressAllowed`(default false)·`isActive`(부분 유니크 `UNIQUE(agentCode) WHERE isActive`). **API 키는 테이블에 없다 — 환경변수로 관리**. `promptVersion`은 `docs/05_ai_ready/prompts.md` 실제 버전(`replaceflow-v0.3`)과 매칭 |
+| Security & Config Isolation | `ai_configs`[제안]: `agentCode`·`provider`(MOCK/LOCAL_LLM/OPENAI)·`modelName`·`promptVersion`·`temperature`·`maxTokens`·`egressAllowed`(default false)·`isActive`(부분 유니크 `UNIQUE(agentCode) WHERE isActive`). **API 키는 테이블에 없다 — 환경변수로 관리**. `promptVersion`은 `docs/05_ai_ready/prompts.md` 실제 버전(`argus-v0.3`)과 매칭 |
 | 인증·역할 분리 | `users.password_hash`(bcrypt), JWT Bearer. 가입 시 역할(`ENGINEER`/`SAFETY_MANAGER`) 선택이 로그인 응답의 `redirectPath`(서버 계산)로 화면을 분기시킨다 |
 | Human-in-the-loop 결과 편집 | 엔지니어가 `A1`/`A2`/`A3` 결과를 `PATCH /agent-results/{id}`(API#13, **전체 치환**)로 편집. `items[]`/`documents[]`의 개별 `edited`가 true가 되어 화면에서 AI 원본과 시각적으로 구분됨. `PENDING`/`APPROVED`에서는 409 `RESULT_LOCKED`로 잠김 |
 | 동적 스펙 | `productType`(밸브/피팅·튜브/레귤레이터/필터/`ETC`) 별로 `specJson` 필수 키가 다르며, 서버가 불일치 시 400 `SPEC_SCHEMA_MISMATCH`로 검증한다 |
@@ -239,7 +239,7 @@ v1.0의 화면 2개(목록/대시보드, 상세=타임라인+승인패널)가 **
 | 루브릭 | 세부 기준 | 산출물 (경로) | 검증 |
 |---|---|---|---|
 | 서비스 기획 & Architecture (30) | Use-Case 정의·UI 와이어프레임 완성도 | `docs/02_usecase/usecase_spec.md`(UC-01~12), `usecase_diagram.svg`, `user_flow.svg` / `docs/03_wireframe/wireframe_spec.md`, `figma_build_guide.md` | ✅ Mermaid 렌더 확인, 9화면 실연동 캡처 11장(`docs/10_project_record/02_evidence/screenshots/`) |
-| | AI 확장 지점 정의·프롬프트/JSON 스키마 타당성 | 본 문서 4·7장 / `docs/05_ai_ready/prompts.md`(A1·A2·A3+오케스트레이터 정책+가드레일, `replaceflow-v0.3`) / `docs/05_ai_ready/schemas/agent_run.schema.json`·`agent_result_items.schema.json`·`agent_result_documents.schema.json`·`approval.schema.json` (VENDOR는 `_phase2/`로 이동) | ✅ jsonschema Draft2020-12 검증 15/15 PASS(`docs/05_ai_ready/prompts.md` §7), `load_prompt()` 파서와 헤딩 포맷 실물 대조 |
+| | AI 확장 지점 정의·프롬프트/JSON 스키마 타당성 | 본 문서 4·7장 / `docs/05_ai_ready/prompts.md`(A1·A2·A3+오케스트레이터 정책+가드레일, `argus-v0.3`) / `docs/05_ai_ready/schemas/agent_run.schema.json`·`agent_result_items.schema.json`·`agent_result_documents.schema.json`·`approval.schema.json` (VENDOR는 `_phase2/`로 이동) | ✅ jsonschema Draft2020-12 검증 15/15 PASS(`docs/05_ai_ready/prompts.md` §7), `load_prompt()` 파서와 헤딩 포맷 실물 대조 |
 | | GitHub 관리·R&R 분담 | `README.md`, `docs/01_planning/rnr_and_schedule.md`, `docs/01_planning/github_guide.md`, `.github/PULL_REQUEST_TEMPLATE.md`, `.gitignore` | ✅ |
 | | FE-BE-DB 전체 시스템 구조 다이어그램 | `docs/04_architecture/`(아키텍처·상태머신·시퀀스, A1/A2/A3 기준 갱신) | 다른 트랙 담당 — 본 문서 §8 요약과 정합 확인 필요 |
 | 시스템 설계 & Scaffolding (30) | ERD 관계(1:N)·정규화 | `docs/06_erd/`(8테이블, N:M 부재는 Phase 2 예비 설계로 방어) | 다른 트랙 담당 |

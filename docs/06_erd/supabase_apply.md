@@ -1,4 +1,4 @@
-# Supabase 적용 절차 — ReplaceFlow(FixGuide) v3.0
+# Supabase 적용 절차 — Argus(FixGuide) v3.0
 
 `schema_postgres.sql` 이 v3.0(8테이블)으로 전면 교체됐다. 직접 Supabase SQL Editor 에 넣을 때 참고할 순서·주의점만 짧게 정리한다. 자세한 설계 근거는 `erd.md` 참조.
 

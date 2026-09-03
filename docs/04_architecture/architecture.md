@@ -1,4 +1,4 @@
-# ReplaceFlow(FixGuide) 시스템 아키텍처
+# Argus(FixGuide) 시스템 아키텍처
 
 문서 버전: v3.0 (2026-09-03) · 기준: `docs/CONTRACT.md` v3.0(단일 진실 원천 — 팀 「API 명세서 v1.0」+「데이터 모델 정의서 v3.0」+「WRA 화면정의서 v2.0」을 그대로 옮긴 문서), `docs/06_erd/erd.md`
 다이어그램: `architecture.mmd`(전체 구성), `state_machine.mmd`(`work_requests.status`), `sequence_agent_run.mmd`(에이전트 실행~승인 시퀀스) — v3.0 상태값(`DRAFT/AI_RUNNING/AI_DONE/PENDING/APPROVED/REJECTED`)·에이전트 3종(A1/A2/A3) 반영은 다이어그램 소유 트랙에서 별도 갱신 필요
@@ -123,7 +123,7 @@ PK 는 전 테이블 **UUID v4**(`gen_random_uuid()`) — v1.0/v2.0 의 `WR-`/`R
 | 원칙 | 설계 | 구체 참조 |
 |---|---|---|
 | **Interface First** | FE와 BE는 API 계약(`WorkRequestDetail`/`AgentRun` JSON)으로만 결합. BE 내부는 `AgentService` 추상 인터페이스에 Mock/LLM 구현체를 꽂는다 | 엔드포인트 #12 `GET /agent-runs/{runId}` → `steps[]`+`allDone` · 코드 `services/agents/base.py`, `services/agents/mock_agents.py`, `services/agents/llm_agents.py`, `services/orchestrator.py`(BE 재구현 진행 중, §2.2 참고) · 문서 `docs/07_api/openapi.yaml`(v3.0 반영은 API 트랙 소유) |
-| **Structured Data** | 에이전트 산출을 `agent_steps`(진행 상태, 오케스트레이터가 초 단위 갱신) / `agent_results`(결과, 엔지니어가 편집) 로 분리해 갱신 경합을 없앤다(`erd.md` §4). 집계 키(`status`, `agent_code`, `reason_category`, `edited`)는 컬럼, 가변 구조(`spec_json`, `payload_json`, `original_json`)만 jsonb | `agent_steps`/`agent_results`(UNIQUE `run_id,agent_code`) · `approvals.reason_category`(TOP5 집계용) · `work_requests.spec_json`(`product_type` 별 동적 스펙) · 문서 `docs/06_erd/replaceflow.dbml` |
+| **Structured Data** | 에이전트 산출을 `agent_steps`(진행 상태, 오케스트레이터가 초 단위 갱신) / `agent_results`(결과, 엔지니어가 편집) 로 분리해 갱신 경합을 없앤다(`erd.md` §4). 집계 키(`status`, `agent_code`, `reason_category`, `edited`)는 컬럼, 가변 구조(`spec_json`, `payload_json`, `original_json`)만 jsonb | `agent_steps`/`agent_results`(UNIQUE `run_id,agent_code`) · `approvals.reason_category`(TOP5 집계용) · `work_requests.spec_json`(`product_type` 별 동적 스펙) · 문서 `docs/06_erd/argus.dbml` |
 | **Asynchronous Pipeline** | `POST /agent-runs` 는 즉시 202, 진행 상태는 폴링(`pollIntervalMs=2500`, 서버 지정)으로 본다. `allDone:true` 시 폴링 중단·`AI_DONE` 전환. step 실패는 HTTP 200 유지, 해당 step 만 `FAILED` | #11 `POST /agent-runs` → 202 · #12 `GET /agent-runs/{runId}`(폴링) · Mock 규칙: 호출마다 A1→A2→A3 순 1 step `DONE` · FE `frontend/src/components/AgentTimeline.vue`(폴링 로직 위치, 간격 값은 v3.0 서버 지정으로 갱신 필요) · 확장: SSE/WebSocket 으로 교체해도 `WorkRequestDetail` 계약 불변 |
 | **Security & Config Isolation** | v3.0 신규: **JWT Bearer 인증**이 전 API(auth 제외) 필수, `ENGINEER`=본인만/`SAFETY_MANAGER`=PENDING 이상 전체라는 권한 분리가 라우터가 아니라 서비스 계층에서 강제된다(위반 403). 비밀번호는 bcrypt 해시로만 저장 | `users.password_hash`(bcrypt, 응답 미포함) · `SECRET_KEY`(JWT 서명, `.env`) · `POST /auth/login`·`GET /auth/me` · `ai_configs.egress_allowed`(기본 `false`) · 프롬프트 파일 `docs/05_ai_ready/prompts.md`(`## <AGENT_TYPE>` 섹션 단위) 버전 관리 |
 

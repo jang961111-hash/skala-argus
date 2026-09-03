@@ -1,5 +1,5 @@
 // ============================================================
-// ReplaceFlow(FixGuide) — 부품 교체 요청·승인 시스템
+// Argus(FixGuide) — 부품 교체 요청·승인 시스템
 // ERD (dbdiagram.io DBML)  — CONTRACT.md v3.0 §5 "DB — 테이블 7개 + 제안 1개" 그대로 옮김
 // 팀 「FixGuide 데이터 모델 정의서 v3.0」이 권위 문서. 이 파일은 그 설계의 번역이며 창작이 아니다.
 // 테이블 8개: users, work_requests, work_request_photos, agent_runs, agent_steps,
@@ -7,10 +7,10 @@
 // N:M 은 이번 범위에 없음(팀 ERD 명시) — 9절 "Phase 2 예비 설계"에 미리 그려 둠(erd.md 참조)
 // ============================================================
 
-Project ReplaceFlow {
+Project Argus {
   database_type: 'PostgreSQL'
   Note: '''
-    부품 교체 요청·승인 시스템(FixGuide/ReplaceFlow, 명칭 미확정 — CONTRACT §0 각주).
+    부품 교체 요청·승인 시스템(FixGuide/Argus, 명칭 미확정 — CONTRACT §0 각주).
     설계 원칙 5가지(CONTRACT §5 원문):
     1) 대리키 PK — 전 테이블 UUID v4. 업무 식별자(users.email, work_requests.request_no,
        agent_steps/agent_results 의 (run_id, agent_code))는 UNIQUE 로만 보장.

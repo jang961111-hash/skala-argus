@@ -15,7 +15,7 @@ PY="$ROOT/backend/.venv/bin/python"
 
 cd "$ROOT/backend"
 [ -f .env ] || cp .env.example .env
-rm -f replaceflow.db                      # 시드부터 재현하기 위해 매번 초기화
+rm -f argus.db                      # 시드부터 재현하기 위해 매번 초기화
 "$PY" -m uvicorn app.main:app --port "$PORT" > /tmp/rf_e2e_uvicorn.log 2>&1 &
 SRV=$!
 trap 'kill $SRV 2>/dev/null' EXIT

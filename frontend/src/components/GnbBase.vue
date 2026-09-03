@@ -21,7 +21,7 @@ function logout() {
     <div class="topbar-inner">
       <span class="brand">
         <span class="logo">RF</span>
-        <strong>ReplaceFlow</strong>
+        <strong>Argus</strong>
       </span>
 
       <span class="role-badge">{{ roleLabel }}</span>
