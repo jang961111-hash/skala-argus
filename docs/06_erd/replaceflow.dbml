@@ -1,0 +1,402 @@
+// ============================================================
+// ReplaceFlow — 반도체 설비 부품 교체 승인 프로세스 에이전트
+// ERD (dbdiagram.io DBML)  — 기획서 9장 · CONTRACT.md 기준
+// 테이블 14개: tenants, users, equipments, parts, equipment_parts,
+//   part_compatibility, work_requests, agent_runs, legal_findings,
+//   documents, approvals, law_index, ai_configs, audit_logs
+// ============================================================
+
+Project ReplaceFlow {
+  database_type: 'PostgreSQL'
+  Note: '''
+    반도체 설비 부품 교체 승인 프로세스 에이전트.
+    3층 분리: 요청(사실) / 에이전트 산출(agent_runs·legal_findings·documents) / 사람의 결정(approvals).
+    법령은 law_index(원문·사전 적재) 와 legal_findings(건별 적용 스냅샷) 로 분리하여 법 개정 시 과거 판단 보존.
+  '''
+}
+
+// ------------------------------------------------------------
+// Enums (CONTRACT.md 상태값과 문자열 동일)
+// ------------------------------------------------------------
+
+Enum work_request_status {
+  REQUESTED        [note: '요청 등록']
+  RUNNING          [note: '에이전트 실행 중']
+  REVIEW           [note: '에이전트 결과 검토 중']
+  PENDING_APPROVAL [note: '승인 요청됨(submit-approval)']
+  APPROVED         [note: '안전관리자 승인']
+  REJECTED         [note: '반려']
+  DONE             [note: '교체 작업 완료']
+}
+
+Enum agent_run_status {
+  RUNNING
+  REVIEW
+  FAILED
+}
+
+Enum step_status {
+  PENDING
+  RUNNING
+  DONE
+  FAILED
+}
+
+Enum agent_type {
+  SPEC       [note: 'A1 규격·호환 확인']
+  LEGAL      [note: 'A2 법령·절차 확인']
+  SAFETY_DOC [note: 'A3 안전 서류 초안']
+  VENDOR     [note: 'A4 벤더 견적 문의']
+}
+
+Enum user_role {
+  ENGINEER
+  SAFETY_MANAGER
+  BUYER
+  ADMIN
+}
+
+Enum approval_decision {
+  APPROVE
+  REJECT
+  REQUEST_INFO
+}
+
+Enum document_type {
+  WORK_PERMIT
+  RISK_ASSESSMENT
+  LOTO_CHECKLIST
+  RFQ
+}
+
+Enum part_grade {
+  OEM
+  EQUIVALENT
+  REFURB
+}
+
+Enum ai_provider {
+  LOCAL_LLM   [note: '온프레미스 LLM(폐쇄망)']
+  AX_PLATFORM [note: 'SK A.X 플랫폼']
+  OPENAI      [note: '외부 API — egress_allowed=true 필요']
+}
+
+// ------------------------------------------------------------
+// 마스터
+// ------------------------------------------------------------
+
+Table tenants {
+  id         varchar(40)  [pk, note: '예: T-001']
+  name       varchar(200) [not null]
+  plan       varchar(40)  [not null, default: 'STANDARD']
+  created_at timestamptz  [not null, default: `now()`]
+
+  Note: '테넌트(협력사 단위). 모든 업무 데이터의 최상위 파티션 키. 1:N users, equipments, parts, work_requests, ai_configs'
+}
+
+Table users {
+  id         varchar(40)  [pk, note: '예: U-001']
+  tenant_id  varchar(40)  [not null]
+  name       varchar(100) [not null]
+  email      varchar(200) [unique]
+  role       user_role    [not null]
+  is_active  boolean      [not null, default: true]
+  created_at timestamptz  [not null, default: `now()`]
+
+  Note: '사용자. role 로 화면·권한 분기 (ENGINEER 요청, SAFETY_MANAGER 승인, BUYER 구매, ADMIN 설정).'
+}
+
+Table equipments {
+  id         varchar(40)  [pk, note: '예: EQ-GC-02']
+  tenant_id  varchar(40)  [not null]
+  name       varchar(200) [not null]
+  type       varchar(40)  [not null, note: 'GAS_CABINET / VALVE / PIPING / SCRUBBER … (개방형)']
+  line       varchar(60)  [note: '설치 라인/베이']
+  substances jsonb        [not null, default: '[]', note: '취급 물질 배열 예: ["SiH4"] — 법령 매칭 입력']
+  created_at timestamptz  [not null, default: `now()`]
+
+  Note: '설비 마스터. substances(JSON) 는 A2 LEGAL 에이전트가 law_index.substance 와 매칭하는 입력값. 1:N work_requests, equipment_parts'
+}
+
+Table parts {
+  id                varchar(40)  [pk, note: '예: P-VLV-001']
+  tenant_id         varchar(40)  [not null]
+  part_no           varchar(100) [not null, note: '제조사 품번 예: VLV-SS316-1/4-NC']
+  name              varchar(200) [not null]
+  spec              jsonb        [not null, default: '{}', note: '규격 예: {"material":"SS316","size":"1/4","seat":"PCTFE"}']
+  grade             part_grade   [not null]
+  toxic_gas_allowed boolean      [not null, default: false, note: '유독가스 라인 사용 가능 여부']
+  stock             int          [not null, default: 0]
+  created_at        timestamptz  [not null, default: `now()`]
+
+  indexes {
+    (tenant_id, part_no) [unique, name: 'uq_parts_tenant_part_no']
+  }
+
+  Note: '부품 마스터. spec(JSON) 은 A1 SPEC 에이전트 비교 입력. 1:N part_compatibility, work_requests'
+}
+
+Table equipment_parts {
+  equipment_id     varchar(40) [not null]
+  part_id          varchar(40) [not null]
+  installed_at     timestamptz
+  last_replaced_at timestamptz
+  qty              int         [not null, default: 1]
+
+  indexes {
+    (equipment_id, part_id) [pk]
+  }
+
+  Note: 'N:M 연결 — 설비에 장착된 부품(BOM). equipments ↔ parts'
+}
+
+Table part_compatibility {
+  part_id               varchar(40) [not null, note: '기준(현재) 부품']
+  alt_part_id           varchar(40) [not null, note: '대체(호환) 부품']
+  diff                  text        [note: '차이 요약 예: 시트 재질 PCTFE→PTFE']
+  allowed_for_toxic_gas boolean     [not null, default: false]
+
+  indexes {
+    (part_id, alt_part_id) [pk]
+  }
+
+  Note: 'N:M 자기참조 — 부품 호환표. parts ↔ parts. A1 SPEC 에이전트 alternatives 원천. CHECK part_id <> alt_part_id'
+}
+
+// ------------------------------------------------------------
+// 트랜잭션 (요청 → 에이전트 산출 → 사람의 결정)
+// ------------------------------------------------------------
+
+Table work_requests {
+  id              varchar(40)          [pk, note: '예: WR-20260902-011']
+  tenant_id       varchar(40)          [not null]
+  equipment_id    varchar(40)          [not null]
+  part_id         varchar(40)          [not null]
+  symptom         text                 [not null, note: '이상 증상']
+  site_check_note text                 [note: '현장 확인 메모']
+  requested_by    varchar(40)          [not null]
+  status          work_request_status  [not null, default: 'REQUESTED']
+  created_at      timestamptz          [not null, default: `now()`]
+  updated_at      timestamptz          [not null, default: `now()`]
+
+  indexes {
+    status [name: 'idx_work_requests_status']
+    (tenant_id, created_at) [name: 'idx_work_requests_tenant_created']
+  }
+
+  Note: '교체 작업 요청(사실 계층). 상태머신 REQUESTED→RUNNING→REVIEW→PENDING_APPROVAL→APPROVED|REJECTED→DONE. 1:N agent_runs, approvals, audit_logs'
+}
+
+Table agent_runs {
+  id                   varchar(40)      [pk, note: '예: RUN-0042 (API의 run_id)']
+  work_request_id      varchar(40)      [not null]
+  overall_status       agent_run_status [not null, default: 'RUNNING']
+  steps_json           jsonb            [not null, default: '[]', note: '4 step 배열 [{agent,status,started_at,completed_at,result}] — CONTRACT AgentRun.steps 그대로']
+  summary              text             [note: '오케스트레이터 요약']
+  approval_required_by user_role        [note: '승인 주체 role, 예: SAFETY_MANAGER']
+  model_name           varchar(100)     [not null, default: 'mock-v1']
+  prompt_version       varchar(60)      [not null, default: 'replaceflow-v0.1']
+  created_at           timestamptz      [not null, default: `now()`]
+  completed_at         timestamptz
+
+  indexes {
+    work_request_id [name: 'idx_agent_runs_work_request_id']
+  }
+
+  Note: '에이전트 실행 1회(산출 계층). steps_json 은 화면 타임라인/폴링 응답 원본. 구조화 조회가 필요한 법령·서류는 legal_findings·documents 로 승격. 1:N legal_findings, documents'
+}
+
+Table legal_findings {
+  id             int         [pk, increment]
+  agent_run_id   varchar(40) [not null]
+  law_index_id   int         [note: '원문 참조(nullable). 개정되어도 본 행의 quote 는 스냅샷 유지']
+  law            varchar(200) [not null, note: '예: 산업안전보건기준에 관한 규칙']
+  article        varchar(60)  [not null, note: '예: 제92조 / 별표']
+  title          varchar(200)
+  quote          text         [note: '인용 조문(빈 문자열 허용) — 인용 없는 결론은 화면에 표시하지 않음']
+  procedure_name varchar(200) [note: '요구 절차 예: 작업허가서(가스 배관 작업)']
+  phase          varchar(10)  [note: 'BEFORE | AFTER']
+  required       boolean      [note: 'true/false, NULL = UNKNOWN(안전관리자 판단 위임)']
+
+  Note: '이 건에 적용된 법령 조문 + 요구 절차 스냅샷. law_index 와 분리하여 법 개정 후에도 과거 판단 보존.'
+}
+
+Table documents {
+  id           varchar(40)   [pk, note: '예: DOC-0101']
+  agent_run_id varchar(40)   [not null]
+  type         document_type [not null]
+  title        varchar(200)
+  body         text          [not null, note: '서류 초안 본문(Markdown)']
+  missing_json jsonb         [not null, default: '[]', note: '누락 항목 배열 예: ["작업자 2명 이름"]']
+  version      int           [not null, default: 1]
+  created_at   timestamptz   [not null, default: `now()`]
+
+  indexes {
+    (agent_run_id, type) [name: 'idx_documents_run_type']
+  }
+
+  Note: 'A3/A4 가 생성한 서류 초안(작업허가서·위험성평가·LOTO 체크리스트·RFQ). missing_json 비어야 submit-approval 통과(422 게이트).'
+}
+
+Table approvals {
+  id              varchar(40)       [pk, note: '예: AP-0007']
+  work_request_id varchar(40)       [not null]
+  approver_id     varchar(40)       [not null]
+  decision        approval_decision [not null]
+  checklist_json  jsonb             [not null, default: '{}', note: '{WORK_PERMIT, RISK_ASSESSMENT, LOTO_GAS_ISOLATION, GAS_DETECTOR_CHECK} 모두 true 여야 APPROVE(409 게이트)']
+  comment         text
+  decided_at      timestamptz       [not null, default: `now()`]
+
+  indexes {
+    work_request_id [name: 'idx_approvals_work_request_id']
+  }
+
+  Note: '사람의 결정 계층. 승인 주체는 사람(SAFETY_MANAGER). 체크리스트 4항목은 감사 증적으로 JSON 보관.'
+}
+
+// ------------------------------------------------------------
+// AI (법령 인덱스 · 에이전트 설정)
+// ------------------------------------------------------------
+
+Table law_index {
+  id             int          [pk, increment]
+  law            varchar(200) [not null, note: '법령명']
+  article        varchar(60)  [not null, note: '조문 번호 예: 제92조, 별표 8']
+  title          varchar(200) [not null, note: '조문 제목']
+  text           text         [not null, note: '조문 본문(요약 적재 시 [요약] 표기)']
+  equipment_type varchar(40)  [note: '적용 설비 유형 필터(NULL=공통)']
+  substance      varchar(40)  [note: '적용 물질 필터(NULL=공통)']
+  effective_date date
+  source_uri     varchar(500) [note: '법제처 국가법령정보 URL']
+  updated_at     timestamptz  [not null, default: `now()`]
+
+  indexes {
+    (law, article) [unique, name: 'uq_law_index_law_article']
+    (equipment_type, substance) [name: 'idx_law_index_type_substance']
+  }
+
+  Note: '법령 조문 인덱스(법제처 사전 적재, Structured Data). A2 LEGAL 에이전트의 검색 원천. 개정 시 재적재. 1:N legal_findings'
+}
+
+// ------------------------------------------------------------
+// 설정 (Security & Config Isolation)
+// ------------------------------------------------------------
+
+Table ai_configs {
+  tenant_id      varchar(40)  [not null]
+  agent_type     agent_type   [not null]
+  provider       ai_provider  [not null, default: 'LOCAL_LLM']
+  model_name     varchar(100) [not null, default: 'mock-v1']
+  prompt_version varchar(60)  [not null, default: 'replaceflow-v0.1']
+  egress_allowed boolean      [not null, default: false, note: '외부망 전송 허용 여부(폐쇄망 기본 false)']
+  updated_at     timestamptz  [not null, default: `now()`]
+
+  indexes {
+    (tenant_id, agent_type) [pk]
+  }
+
+  Note: '테넌트×에이전트별 모델·프롬프트·egress 설정. 온프레미스 제약을 데이터로 표현. CHECK: provider=OPENAI 이면 egress_allowed=true'
+}
+
+Table audit_logs {
+  id          bigint      [pk, increment]
+  tenant_id   varchar(40) [not null]
+  user_id     varchar(40) [note: 'NULL = 시스템/에이전트']
+  entity      varchar(60) [not null, note: '테이블명 예: work_requests']
+  entity_id   varchar(40) [not null]
+  action      varchar(40) [not null, note: 'CREATE / STATUS_CHANGE / APPROVE / CONFIG_UPDATE …']
+  before_json jsonb
+  after_json  jsonb
+  created_at  timestamptz [not null, default: `now()`]
+
+  indexes {
+    (entity, entity_id) [name: 'idx_audit_logs_entity']
+    created_at [name: 'idx_audit_logs_created_at']
+  }
+
+  Note: '감사 로그(변경 전/후 스냅샷). 승인·설정 변경·상태 전이 추적.'
+}
+
+
+// ------------------------------------------------------------
+// Ref (FK) — 1:N 은 ">" (many → one), N:M 은 연결 테이블 2개의 1:N 으로 표현
+// ------------------------------------------------------------
+
+// tenants 1:N
+Ref fk_users_tenant:          users.tenant_id          > tenants.id
+Ref fk_equipments_tenant:     equipments.tenant_id     > tenants.id
+Ref fk_parts_tenant:          parts.tenant_id          > tenants.id
+Ref fk_work_requests_tenant:  work_requests.tenant_id  > tenants.id
+Ref fk_ai_configs_tenant:     ai_configs.tenant_id     > tenants.id
+Ref fk_audit_logs_tenant:     audit_logs.tenant_id     > tenants.id
+
+// N:M equipments ↔ parts (via equipment_parts)
+Ref fk_equipment_parts_equipment: equipment_parts.equipment_id > equipments.id
+Ref fk_equipment_parts_part:      equipment_parts.part_id      > parts.id
+
+// N:M parts ↔ parts self (via part_compatibility)
+Ref fk_part_compat_part:     part_compatibility.part_id     > parts.id
+Ref fk_part_compat_alt_part: part_compatibility.alt_part_id > parts.id
+
+// work_requests 1:N (from equipments / parts / users)
+Ref fk_work_requests_equipment: work_requests.equipment_id > equipments.id
+Ref fk_work_requests_part:      work_requests.part_id      > parts.id
+Ref fk_work_requests_user:      work_requests.requested_by > users.id
+
+// work_requests 1:N agent_runs, approvals
+Ref fk_agent_runs_work_request: agent_runs.work_request_id > work_requests.id
+Ref fk_approvals_work_request:  approvals.work_request_id  > work_requests.id
+Ref fk_approvals_user:          approvals.approver_id      > users.id
+
+// agent_runs 1:N legal_findings, documents
+Ref fk_legal_findings_run: legal_findings.agent_run_id > agent_runs.id
+Ref fk_documents_run:      documents.agent_run_id      > agent_runs.id
+
+// law_index 1:N legal_findings (원문 참조, nullable)
+Ref fk_legal_findings_law: legal_findings.law_index_id > law_index.id
+
+// audit_logs
+Ref fk_audit_logs_user: audit_logs.user_id > users.id
+
+// ------------------------------------------------------------
+// 그룹
+// ------------------------------------------------------------
+
+TableGroup 마스터 {
+  tenants
+  users
+  equipments
+  parts
+  equipment_parts
+  part_compatibility
+}
+
+TableGroup 트랜잭션 {
+  work_requests
+  agent_runs
+  legal_findings
+  documents
+  approvals
+}
+
+TableGroup AI {
+  law_index
+}
+
+TableGroup 설정 {
+  ai_configs
+  audit_logs
+}
+
+// ------------------------------------------------------------
+// 관계 요약 (inline ref 와 중복되지 않는 설명용 주석)
+//   1:N  tenants → users / equipments / parts / work_requests / ai_configs / audit_logs
+//   1:N  equipments → work_requests, equipment_parts
+//   1:N  parts → work_requests, equipment_parts, part_compatibility
+//   1:N  users → work_requests(requested_by), approvals(approver_id), audit_logs
+//   1:N  work_requests → agent_runs, approvals
+//   1:N  agent_runs → legal_findings, documents
+//   1:N  law_index → legal_findings
+//   N:M  equipments ↔ parts        (via equipment_parts)
+//   N:M  parts ↔ parts (self)      (via part_compatibility: part_id / alt_part_id)
+// ------------------------------------------------------------
