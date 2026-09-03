@@ -46,7 +46,7 @@ function fill(email) {
   <div class="auth-wrap">
     <form class="card auth-card stack" @submit.prevent="submit">
       <div class="head">
-        <span class="logo">RF</span>
+        <span class="logo">AR</span>
         <h1>Argus</h1>
         <p class="muted small">부품 교체 요청·승인 시스템</p>
       </div>
