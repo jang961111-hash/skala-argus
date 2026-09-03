@@ -53,10 +53,16 @@ replaceflow/
 
 ## 4. 빠른 시작
 
+> **사전 요구**: Python **3.10 이상** · Node **18 이상**.
+> 모델 정의가 `Mapped[str | None]` (PEP 604) 문법을 쓰므로 Python 3.9 이하에서는
+> `MappedAnnotationError` 로 기동이 실패한다. macOS 기본 `python3` 은 3.9 이므로
+> `python3.11 -m venv` 처럼 버전을 명시해서 만든다.
+
 ### Backend (FastAPI)
 ```bash
 cd backend
-python -m venv .venv && source .venv/bin/activate      # Windows: .venv\Scripts\activate
+python3.11 -m venv .venv && source .venv/bin/activate  # Windows: .venv\Scripts\activate
+python -V                                              # 3.10 이상인지 확인
 pip install -r requirements.txt
 cp .env.example .env                                   # 기본값: SQLite, AI_PROVIDER=MOCK, EGRESS_ALLOWED=false
 uvicorn app.main:app --reload --port 8000
