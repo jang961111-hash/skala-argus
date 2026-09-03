@@ -1,0 +1,91 @@
+%% ReplaceFlow(FixGuide) ERD — Phase 2 확장 포함(예비 설계, 미적용). v3.0 범위(8테이블) + Phase 2 마스터·N:M.
+%% 엔티티 이름 접두어 PHASE2__ 로 지금 범위와 구분했다 — Mermaid erDiagram 은 엔티티별 색상 지정을 지원하지 않는다.
+erDiagram
+    USERS ||--o{ WORK_REQUESTS : "requester_id"
+    USERS ||--o{ APPROVALS : "approver_id"
+    WORK_REQUESTS ||--o{ WORK_REQUEST_PHOTOS : "최대 5장"
+    WORK_REQUESTS ||--o{ AGENT_RUNS : "재실행"
+    WORK_REQUESTS ||--o{ APPROVALS : "재결정"
+    AGENT_RUNS ||--o{ AGENT_STEPS : "고정 3행"
+    AGENT_RUNS ||--o{ AGENT_RESULTS : "고정 3행"
+    AI_CONFIGS ||--o{ AGENT_RUNS : "설정 참조(제안)"
+    PHASE2__EQUIPMENTS ||--o{ PHASE2__EQUIPMENT_PARTS : "BOM(N:M 좌변)"
+    PHASE2__PARTS ||--o{ PHASE2__EQUIPMENT_PARTS : "BOM(N:M 우변)"
+    PHASE2__PARTS ||--o{ PHASE2__PART_COMPATIBILITY : "호환표(N:M 자기참조 좌변)"
+    PHASE2__PARTS ||--o{ PHASE2__PART_COMPATIBILITY : "호환표(N:M 자기참조 우변, alt_part_id)"
+    PHASE2__LAW_INDEX ||--o{ PHASE2__AGENT_RESULT_LAW_REFS : "조문 마스터(N:M 좌변)"
+    AGENT_RESULTS ||--o{ PHASE2__AGENT_RESULT_LAW_REFS : "이 건에 적용된 조문(N:M 우변)"
+    WORK_REQUESTS ||--o{ PHASE2__EQUIPMENTS : "equipment(자유입력) to FK 전환 예정"
+
+    USERS {
+        uuid id PK
+        varchar email UK
+        varchar role
+    }
+    WORK_REQUESTS {
+        uuid id PK
+        varchar request_no UK
+        uuid requester_id FK
+        varchar product_type
+        varchar status
+    }
+    WORK_REQUEST_PHOTOS {
+        uuid id PK
+        uuid work_request_id FK
+    }
+    AGENT_RUNS {
+        uuid id PK
+        uuid work_request_id FK
+        varchar status
+    }
+    AGENT_STEPS {
+        uuid id PK
+        uuid run_id FK
+        varchar agent_code UK
+    }
+    AGENT_RESULTS {
+        uuid id PK
+        uuid run_id FK
+        varchar agent_code UK
+        boolean edited
+    }
+    APPROVALS {
+        uuid id PK
+        uuid work_request_id FK
+        uuid approver_id FK
+        varchar decision
+    }
+    AI_CONFIGS {
+        uuid id PK
+        varchar agent_code
+        varchar provider
+    }
+    PHASE2__EQUIPMENTS {
+        uuid id PK "Phase 2 설비 마스터"
+        varchar name
+        varchar type
+    }
+    PHASE2__PARTS {
+        uuid id PK "Phase 2 부품 마스터"
+        varchar part_no UK
+        varchar grade
+    }
+    PHASE2__EQUIPMENT_PARTS {
+        uuid equipment_id PK "Phase 2 N:M 연결(BOM), 복합 PK 겸 FK"
+        uuid part_id PK "복합 PK 겸 FK"
+    }
+    PHASE2__PART_COMPATIBILITY {
+        uuid part_id PK "Phase 2 N:M 자기참조(호환표), 복합 PK 겸 FK"
+        uuid alt_part_id PK "복합 PK 겸 FK"
+        text diff
+    }
+    PHASE2__LAW_INDEX {
+        uuid id PK "Phase 2 법령 조문 마스터"
+        varchar law
+        varchar article
+    }
+    PHASE2__AGENT_RESULT_LAW_REFS {
+        uuid agent_result_id PK "Phase 2 N:M 연결(agent_results-law_index), 복합 PK 겸 FK"
+        uuid law_index_id PK "복합 PK 겸 FK"
+        text quote "인용 조문 스냅샷"
+    }
