@@ -286,7 +286,7 @@ v2.0(`docs/CONTRACT_v2.0_superseded.md`)은 오케스트레이터가 화면정�
 
 ### 3.3 `prompt_version` ↔ 프롬프트 파일 버전 매칭
 
-`ai_configs.prompt_version`은 실제 프롬프트 파일 버전과 매칭되어야 한다는 것이 ERD 문서에 명시돼 있다. 이 저장소에서는 `docs/05_ai_ready/prompts.md`에 원문을 두고 현재 버전은 **`argus-v0.3`**(A1/A2/A3 3종 통일 구조 기준)이다. `agent_runs.[제안] ai_config_id`가 실행 당시 `ai_configs` 행을 가리켜 `prompt_version`을 고정하므로, 이후 프롬프트를 고쳐도 과거 실행 결과의 재현성이 보존된다.
+`ai_configs.prompt_version`은 실제 프롬프트 파일 버전과 매칭되어야 한다는 것이 팀 데이터 모델 정의서에 명시돼 있다. 이 저장소에서는 `docs/05_ai_ready/prompts.md`에 원문을 두고 현재 버전은 **`argus-v0.3`**(A1/A2/A3 3종 통일 구조 기준)이다. 다만 **`ai_configs`가 미구현(CONTRACT §10)이라 이 매칭은 아직 설계 의도일 뿐 실제로 DB에 기록되지 않는다** — 실측(`backend/app/models/`, `services/agent_service.py`)에 `prompt_version` 필드 자체가 없다. `ai_configs`가 승격되면 `agent_runs.ai_config_id`[제안]가 실행 당시 값을 고정해 재현성을 보존하게 된다.
 
 ### 3.4 사람이 유지하는 곳
 

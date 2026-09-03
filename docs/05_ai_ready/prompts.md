@@ -1,6 +1,6 @@
 # Argus 에이전트 프롬프트 설계서 (v3.0)
 
-- prompt_version: **`argus-v0.3`** (`A1`/`A2`/`A3` 공통, `ai_configs.promptVersion`에 기록되며 이 파일의 버전과 매칭된다)
+- prompt_version: **`argus-v0.3`** (`A1`/`A2`/`A3` 공통). CONTRACT §5는 이 값을 `ai_configs.promptVersion`이 추적한다고 설계했지만, **`ai_configs` 자체가 미구현**이라 실측(`backend/app/models/agent.py`·`schemas/agent.py`·`services/agent_service.py`)엔 `prompt_version`/`promptVersion` 필드가 코드 어디에도 없다 — 지금은 이 문서의 버전 번호만이 유일한 기록이다. `ai_configs`가 승격되면 그때 연결한다(CONTRACT §10).
 - 출력 계약: 각 에이전트의 출력은 `docs/05_ai_ready/schemas/agent_result_items.schema.json`(`A1`·`A2`) 또는 `agent_result_documents.schema.json`(`A3`)을 **반드시** 통과해야 한다. 통과하지 못하면 오케스트레이터가 해당 `agent_steps` 행을 `FAILED`로 표시한다(HTTP는 200 유지, CONTRACT §4-12).
 - 실행 전제: 온프레미스. `ai_configs.egressAllowed=false` 기본. **서버가 `workRequestId`만으로 요청 전체 스냅샷을 구성**해 세 에이전트에 동일하게 전달한다(CONTRACT §4-11) — 에이전트는 DB를 직접 조회하지 않는다.
 - 플레이스홀더 규칙: `{camelCase}` — 오케스트레이터가 스냅샷 필드를 문자열/JSON으로 치환한다. 치환되지 않은 플레이스홀더가 남아 있으면 호출하지 않는다.
@@ -272,8 +272,8 @@ Playground에서 프롬프트가 스키마를 만족하는 출력을 내는지 �
 - `A1`·`A2`·`A3` + 공통 규칙은 하나의 버전으로 묶어 올린다.
 - **minor(+0.1)**: 문구·예시 변경, 출력 스키마 불변. §6 검증 재실행 필수.
 - **major(+1.0)**: `agent_result_items/documents.schema.json` 필드 추가/삭제/타입 변경 동반. FE·BE 계약 동시 개정.
-- 저장 위치: 원문은 이 파일. `ai_configs.promptVersion`이 가리키는 버전만 로드(§3.3, `docs/02_usecase/usecase_spec.md`).
-- 추적: `[제안] agent_runs.aiConfigId` → `ai_configs.promptVersion`으로 실행 당시 값 고정, 이후 프롬프트를 고쳐도 과거 결과 재현 가능.
+- 저장 위치: 원문은 이 파일. `ai_configs.promptVersion`이 가리키는 버전만 로드하는 것이 CONTRACT §5의 설계 의도지만, `ai_configs`가 미구현(CONTRACT §10)이라 지금은 이 파일이 유일한 버전 기록이다(§3.3, `docs/02_usecase/usecase_spec.md`).
+- 추적(설계 의도, 미구현): `agent_runs.aiConfigId`[제안] → `ai_configs.promptVersion`으로 실행 당시 값을 고정해, 이후 프롬프트를 고쳐도 과거 결과를 재현 가능하게 하는 것이 목표다. `ai_configs`가 승격되기 전까지는 실행 시점의 프롬프트 버전이 DB에 남지 않는다는 뜻이므로, 재현성이 필요하면 이 문서의 §8 표(변경 시각)로 대조한다.
 
 | version | 날짜 | 변경 | 검증 |
 |---|---|---|---|

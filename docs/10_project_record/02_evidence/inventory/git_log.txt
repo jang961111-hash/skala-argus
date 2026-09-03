@@ -1,9 +1,30 @@
-967ffcb  09-03 14:30  chore(ops): 에이전트 도구 세션 상태를 레포에서 제외
-1962937  09-03 14:19  chore(ops): 잔여 파일 정리
-f0f731f  09-03 14:19  test(ops): 라이브 E2E 검증 스크립트 + Python 3.10+ 요구사항 명시
-1b3ce21  09-03 14:19  docs(ops): 발표 대본·데모 시나리오 · E2E 체크리스트 · Q&A 25문항
-934d29b  09-03 14:19  feat(fe): Vue3+Vite 화면 2종 — 요청 목록 · 에이전트 타임라인/승인 패널
-417cfab  09-03 14:19  feat(be): FastAPI 15 엔드포인트 · 상태머신 · 에이전트 오케스트레이터
+15584c0  09-03 16:26  Merge develop into main — Argus 시각 반영
+e9d59b1  09-03 16:26  Merge feature/rename-argus-visual into develop
+9d23a9d  09-03 16:26  fix(fe): 로고 이니셜 RF → AR + 실연동 캡처 Argus 로 재촬영
+163a127  09-03 16:22  Merge develop into main — 프로젝트명 Argus 확정
+1702bcb  09-03 16:22  Merge feature/rename-to-argus into develop
+8c04524  09-03 16:22  refactor: 프로젝트명을 ReplaceFlow → Argus 로 전면 변경
+4178c15  09-03 16:09  Merge develop into main — v3.0 릴리스
+f93675b  09-03 16:08  chore(ops): 잔여 산출물 정리
+d83a9aa  09-03 16:08  Merge feature/pm-record-and-contract into develop
+c101472  09-03 16:08  Merge feature/ops-ci-e2e into develop
+757e848  09-03 16:08  docs(contract): 계약 v3.0 확정 + 프로젝트 기록 체계 신설
+745683c  09-03 16:08  test(ops): GitHub Actions CI + 라이브 E2E v3.0 검증 스크립트
+6efa918  09-03 16:08  Merge feature/docs-planning-usecase into develop
+d9feef5  09-03 16:08  Merge feature/db-erd-v3 into develop
+2473ab7  09-03 16:08  docs(planning): 기획서·UC 12종·AI-Ready 프롬프트 v3.0 정렬
+05c0d1b  09-03 16:08  Merge feature/api-openapi-postman into develop
+22775cc  09-03 16:08  docs(db): ERD v3.0 — 8테이블·UUID PK·enum 7종 + Phase 2 N:M 예비 설계
+f50773a  09-03 16:08  docs(api): OpenAPI 3.0 · Postman v3.0 — API 15개, 에러 코드 23종
+451ed37  09-03 16:07  Merge feature/fe-nine-screens into develop
+78f23ec  09-03 16:07  Merge feature/be-v3-implementation into develop
+1cd8eba  09-03 16:07  feat(fe): v3.0 화면 9종 — 역할 분기·동적 스펙·결과 편집
+f98d119  09-03 16:07  feat(be): v3.0 구현 — JWT 인증·에이전트 3종·결과 편집·승인 규칙
+9ee92a5  09-03 14:30  chore(ops): 에이전트 도구 세션 상태를 레포에서 제외
+7f5790a  09-03 14:19  test(ops): 라이브 E2E 검증 스크립트 + Python 3.10+ 요구사항 명시
+4e93092  09-03 14:19  docs(ops): 발표 대본·데모 시나리오 · E2E 체크리스트 · Q&A 25문항
+8a7ecbc  09-03 14:19  feat(fe): Vue3+Vite 화면 2종 — 요청 목록 · 에이전트 타임라인/승인 패널
+ceafbff  09-03 14:19  feat(be): FastAPI 15 엔드포인트 · 상태머신 · 에이전트 오케스트레이터
 5222aed  09-03 14:14  docs(api): OpenAPI 3.0 명세 + Postman Mock 컬렉션
 4060a61  09-03 14:14  docs(db): ERD DBML 14테이블 + PostgreSQL DDL + 시드
 45cb6bd  09-03 14:14  docs(api): 아키텍처 다이어그램·상태머신·시퀀스 + AI-Ready 규격
