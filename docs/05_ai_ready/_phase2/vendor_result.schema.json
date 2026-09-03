@@ -1,9 +1,9 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://replaceflow.local/schemas/vendor_result.schema.json",
-  "title": "VendorResult — A4 벤더 에이전트 출력",
+  "title": "VendorResult — A4 벤더 에이전트 출력 [Phase 2 — v2.0 범위 외]",
   "type": "object",
-  "description": "A4 벤더 에이전트 결과",
+  "description": "Phase 2 — v2.0 범위 외. A4 VENDOR 에이전트는 CONTRACT.md v2.0(§0 변경5)에서 제외되었다. 벤더 견적(RFQ)은 외부 시스템 연동이 전제인데, 이는 온프레미스 전제(ai_configs.provider=LOCAL_LLM, egress_allowed=false)와 충돌하고, 3일 범위에서 Mock으로 흉내 내면 나머지 3개 에이전트(SPEC/LEGAL/SAFETY_DOC)의 근거 품질까지 의심받는다. 상세 사유는 docs/02_usecase/usecase_spec.md §3.5. v2.0의 agent_run.schema.json steps는 이 스키마를 참조하지 않는다.",
   "required": [
     "rfq_doc_id",
     "rfq_summary",

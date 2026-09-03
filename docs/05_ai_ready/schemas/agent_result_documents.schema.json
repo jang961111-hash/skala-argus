@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://replaceflow.local/schemas/agent_result_documents.schema.json",
+  "title": "AgentResultDocuments — A3 결과 / PATCH agent-results 요청 본문 (문서형, v3.0)",
+  "type": "object",
+  "description": "CONTRACT v3.0 §4-13. A3(안전서류) 에이전트의 출력 구조이자 PATCH /agent-results/{id}(API#13)의 요청 본문. 배열은 전체 치환(PUT-like) — 응답에 없는 기존 docId는 삭제, docId 없이 오면 신규 추가로 처리된다.",
+  "required": [
+    "documents"
+  ],
+  "properties": {
+    "documents": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Document"
+      }
+    }
+  },
+  "$defs": {
+    "Document": {
+      "type": "object",
+      "description": "docId는 서버 채번 UUID. PATCH 요청에서 신규 문서를 추가할 때는 docId를 생략한다.",
+      "required": [
+        "type",
+        "name",
+        "content"
+      ],
+      "properties": {
+        "docId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "기존 문서의 식별자. 신규 추가 시 생략 가능(서버가 채번). **실측**: UUID가 아니라 `d-01`, `d-02`… 형식의 짧은 순번 코드다.",
+          "examples": [
+            "d-01"
+          ]
+        },
+        "type": {
+          "type": "string",
+          "description": "문서 유형. CONTRACT v3.0에는 전체 enum이 명시되지 않아(예시는 WORK_PERMIT만 확인) v2.0/화면정의서 관례(작업허가서·위험성평가표 등)를 참고값으로 둔다 — 고정 enum이 아니라 자유 문자열로 검증하며, 팀 확인 시 좁힐 수 있다.",
+          "examples": [
+            "WORK_PERMIT",
+            "RISK_ASSESSMENT",
+            "LOTO_CHECKLIST"
+          ]
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "화면에 표시할 문서명",
+          "examples": [
+            "작업허가서 초안"
+          ]
+        },
+        "content": {
+          "type": "string",
+          "description": "문서 본문(마크다운)",
+          "examples": [
+            "# 작업허가서\n\n- 설비: 가스캐비닛#2\n- 작업자: [ ] , [ ]\n- 사전 조치: 운전 정지, LOTO(산안규칙 제92조)"
+          ]
+        },
+        "edited": {
+          "type": "boolean",
+          "default": false,
+          "description": "엔지니어가 이 문서를 편집했는지. 화면에서 true 항목은 AI 원본과 시각적으로 구분한다(가드레일, prompts.md §0).",
+          "examples": [
+            false
+          ]
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "documents": [
+        {
+          "docId": "d-01",
+          "type": "WORK_PERMIT",
+          "name": "작업허가서 초안",
+          "content": "# 작업허가서\n\n- 설비: 가스캐비닛#2\n- 작업: SS-8-VCR 교체\n- 작업자: [ ] , [ ]\n- 사전 조치: 운전 정지, LOTO(산안규칙 제92조)",
+          "edited": false
+        }
+      ]
+    }
+  ]
+}
