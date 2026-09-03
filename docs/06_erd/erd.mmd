@@ -1,0 +1,68 @@
+%% ReplaceFlow(FixGuide) ERD — v3.0, CONTRACT.md §5 그대로 옮김 (8테이블)
+%% 컬럼은 핵심만: PK/FK, 업무 식별자(request_no/email), 상태·enum 컬럼만 표기.
+%% 타임스탬프·자유텍스트(jsonb 포함)는 슬라이드 가독성을 위해 뺐다 — 전체 컬럼은 replaceflow.dbml/schema_postgres.sql 참조.
+erDiagram
+    USERS ||--o{ WORK_REQUESTS : "requester_id"
+    USERS ||--o{ APPROVALS : "approver_id"
+    WORK_REQUESTS ||--o{ WORK_REQUEST_PHOTOS : "최대 5장"
+    WORK_REQUESTS ||--o{ AGENT_RUNS : "재실행(append-only)"
+    WORK_REQUESTS ||--o{ APPROVALS : "재결정(append-only)"
+    AGENT_RUNS ||--o{ AGENT_STEPS : "고정 3행(A1/A2/A3)"
+    AGENT_RUNS ||--o{ AGENT_RESULTS : "고정 3행(A1/A2/A3)"
+    AI_CONFIGS ||--o{ AGENT_RUNS : "설정 참조(선택, 제안)"
+
+    USERS {
+        uuid id PK
+        varchar email UK
+        varchar role "ENGINEER|SAFETY_MANAGER"
+    }
+
+    WORK_REQUESTS {
+        uuid id PK
+        varchar request_no UK "WR-YYYYMMDD-NNN"
+        uuid requester_id FK
+        varchar product_type "VALVE|FITTING_TUBE|REGULATOR|FILTER|ETC"
+        varchar status "DRAFT|AI_RUNNING|AI_DONE|PENDING|APPROVED|REJECTED"
+    }
+
+    WORK_REQUEST_PHOTOS {
+        uuid id PK
+        uuid work_request_id FK
+        varchar storage_key
+    }
+
+    AGENT_RUNS {
+        uuid id PK
+        uuid work_request_id FK
+        uuid ai_config_id FK "제안"
+        varchar status "RUNNING|DONE|FAILED"
+    }
+
+    AGENT_STEPS {
+        uuid id PK
+        uuid run_id FK
+        varchar agent_code UK "A1|A2|A3, run_id 와 복합 UNIQUE"
+        varchar status "WAITING|RUNNING|DONE|FAILED"
+    }
+
+    AGENT_RESULTS {
+        uuid id PK
+        uuid run_id FK
+        varchar agent_code UK "A1|A2|A3, run_id 와 복합 UNIQUE"
+        boolean edited
+    }
+
+    APPROVALS {
+        uuid id PK
+        uuid work_request_id FK
+        uuid approver_id FK
+        varchar decision "APPROVE|REJECT"
+        varchar reason_category
+    }
+
+    AI_CONFIGS {
+        uuid id PK
+        varchar agent_code "A1|A2|A3, 제안"
+        varchar provider "MOCK|LOCAL_LLM|OPENAI"
+        boolean is_active
+    }
