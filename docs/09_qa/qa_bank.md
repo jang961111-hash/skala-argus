@@ -2,53 +2,106 @@
 
 발표자용. 답은 20초 안에 끝나게, 근거 파일을 같이 말한다.
 
+> **기준: `docs/CONTRACT.md` v3.0 (최종 확정).** v1.0·v2.0 전제로 쓰인 답은 이 개정에서 전부 고쳤다 — 정정 목록은 문서 말미.
+> 답이 긴 5문항은 별도 문서 → `docs/08_presentation/qa_reinforced.md`
+> 방어 논리 3종(A4 제외 · 체크리스트 폐지 · N:M 부재)은 → `docs/08_presentation/v2_framing_notes.md`
+>
+> ✅ **확정 수치 (원본 로그 대조 완료, 3회 실행 동일)**: pytest **30 passed** · 라이브 E2E **64 통과/0 실패** · 빌드 **223.58 kB**(gzip 81.73) · API 15개 · ERD 8테이블 · 에러코드 23종 커버. 출처 `docs/10_project_record/02_evidence/test_results/`
+> ⚠️ **말하면 안 되는 것**: ①**Supabase는 미검증**이다("DB 연동 완료" 금지) ②**Figma는 0건**이다 ③**"각자 계정으로 커밋" 금지**(`git shortlog -sn`이 1인) ④**화면 캡처는 8종**이다(회원가입 `WRA_C_01` 없음) ⑤평균 26.5h·84% 단축·pytest 8·e2e 35는 v1.0 수치로 **무효**
+> ⚠️ **서비스명**: 발표에서는 `ReplaceFlow` 로 통일한다. ERD 문서의 `FixGuide` 는 내부 작업명이다.
+
+---
+
 ## A. 기획·페르소나
 
 | 질문 | 답 | 근거 |
 |---|---|---|
-| 왜 반도체 협력사인가, 하이닉스 본사가 아니라? | 하이닉스는 GaiA·AMOS로 이미 폐쇄망 에이전트를 운영 중. 협력사는 같은 규제(유해가스·중대재해법)를 받지만 AI 조직이 없다. 하이닉스가 2·3차 협력사 스마트팩토리 컨설팅에 1.4조를 배정한 2026-07이 진입 시점. SK AX 채널과도 맞다 | planning_final §3 |
-| 페르소나가 둘인데 화면은 두 개뿐? | 같은 상세 화면을 역할 토글로 다르게 보여준다. 엔지니어는 타임라인·승인 요청, 안전관리자는 승인 패널. 화면 수를 늘리는 것보다 한 화면에서 두 역할이 만나는 걸 보여주는 게 이 서비스의 본질(메신저 왕복 대체) | wireframe.html |
-| 일주일→하루라는 수치 근거는? | As-Is는 팀원 현업 경험 기반 추정이고, 목표치는 가정이다. 벤치마크로 Siemens Industrial Copilot 파일럿 대응정비 25% 단축, 하이닉스 자율형 팹 결함분석 50% 단축을 인용한다. 발표에서 "가정"이라고 명시한다 | §2 |
-| 스마트글라스는 어디 갔나? | 실습교수님 피드백으로 검토했고, 팹 카메라 금지·HoloLens 단종 등 제약을 조사한 뒤 "필수가 아닌 선택 채널"로 내렸다. 같은 API의 `/glass` 라우트로 확장 가능 | E안v2 부록 |
+| 왜 반도체 협력사인가, 본사가 아니라? | 본사는 이미 폐쇄망 AI 조직을 운영 중이다. 협력사는 같은 규제(유해가스·중대재해법)를 받지만 AI 조직이 없다. SK AX 채널과도 맞다 | 기획서 §3 |
+| **화면이 9개면 3일에 과하지 않나?** | 화면 수가 목표가 아니라 **역할 분리가 목표**였다. Day 1엔 화면 2개 + 역할 토글이었는데, 그러면 "안전관리자는 승인만 하면 된다"를 화면으로 증명할 수 없었다. 지금은 **안전관리자 GNB에 요청 생성 메뉴가 아예 없다** | CONTRACT §7 |
+| 페르소나 둘을 화면에서 어떻게 구분하나? | **로그인 응답의 `redirectPath`를 서버가 내려준다.** ENGINEER→`/home`, SAFETY_MANAGER→`/manage/requests`. 프론트가 역할을 해석해 분기하지 않는다 | CONTRACT §4-2 |
+| 일주일→하루라는 수치 근거는? | **현업 경험 기반 추정이고 목표는 가정이다. 측정치가 아니다.** 그래서 v3.0에서 엔지니어 대시보드의 평균 승인시간 KPI를 **API까지 지웠다** — 측정할 데이터가 없는 숫자를 띄우지 않기로 했다 | `qa_reinforced.md` Q5 |
+| 스마트글라스는? | 검토 후 팹 카메라 반입 제약 등으로 "필수가 아닌 선택 채널"로 내렸다. 같은 API의 별도 라우트로 확장 가능 | 기획서 부록 |
 
 ## B. AI-Ready·에이전트
 
 | 질문 | 답 | 근거 |
 |---|---|---|
-| 에이전틱이라면서 사람이 다 승인하면 자동화가 아니지 않나? | 일주일 중 5일이 정보수집·서류·문의고, 그걸 에이전트가 한다. 승인(판단)만 사람. 산업안전 규제상 승인 주체는 사람이어야 하고, 그게 설계 요건이다 | §4 |
-| 에이전트 4개가 병렬인데 의존성은? | A3 안전서류는 A2 법령 결과가 필요하다. 오케스트레이터 정책에 의존 그래프(A1·A2 병렬 → A3 → A4)를 정의했고, Mock은 순차 전이로 단순화했다 | prompts.md §5 |
-| Mock인데 AI 확장 지점이 검증된 건가? | 프롬프트 4개와 출력 JSON Schema를 작성했고, 샘플 출력이 스키마를 통과하는 것과 잘못된 값(`required:"MAYBE"`, step 순서 뒤바뀜)이 거부되는 것을 jsonschema로 검증했다. Playground 검증 절차도 문서화 | 05_ai_ready |
-| 법령 답변이 틀리면 책임은? | 조문 인용 없는 답은 표시하지 않고, 근거 못 찾으면 `required=UNKNOWN`으로 안전관리자에게 넘긴다. `legal_findings`는 건별 스냅샷이라 나중에 감사 가능. AI는 보조수단 | prompts.md §0 |
-| 외부 클라우드 못 쓰면 LLM은 뭘 쓰나? | `ai_configs.provider=LOCAL_LLM`(사내 GPU, OpenAI 호환 엔드포인트) 또는 SK AX A.X 플랫폼. `egress_allowed=false`면 OPENAI 설정 자체가 409로 거부된다. 하이닉스 GaiA가 폐쇄망 선례 | config.py, ai_config router |
-| 법령 데이터는 어떻게 넣나? | 법제처 국가법령정보 Open API(공개)로 산안법·화관법·고압가스법 조문을 사내 `law_index`에 적재. 개정 시 재적재, 과거 판단은 `legal_findings`에 보존 | erd.md |
+| 사람이 다 승인하면 자동화가 아니지 않나? | 일주일 중 대부분이 정보수집·서류·문의고 그걸 에이전트가 한다. **판단만 사람.** 산업안전 규제상 승인 주체가 사람이어야 하고 그게 설계 요건이다 | 기획서 §4 |
+| **에이전트가 왜 3개인가? 4개 아니었나?** | **어제까지 4개였고 돌아갔다. A4 벤더를 뺐다.** 벤더 견적만 유일하게 망 밖 연동이 필요해 온프레미스 전제와 충돌하고, Mock으로 흉내 내면 검증 불가한 숫자가 나머지 3종의 신뢰까지 깎는다 → 전문 `v2_framing_notes.md` §2 | CONTRACT §2 |
+| 에이전트 3종의 의존성은? | A3 안전서류는 A2 법령 결과가 필요하다. 실행 순서는 **A1 → A2 → A3** 고정이고, `agent_steps`가 `UNIQUE(run_id, agent_code)`로 3행 고정이다 | CONTRACT §5 |
+| **step 하나가 실패하면 전체가 죽나?** | 아니다. **해당 step만 `FAILED` + `errorMessage`가 되고 HTTP는 200을 유지한다.** 폴링이 끊기지 않고 화면이 어느 에이전트가 왜 실패했는지 보여준다 | CONTRACT §4-12 |
+| Mock인데 AI 확장 지점이 검증된 건가? | 프롬프트와 출력 구조를 `docs/05_ai_ready/`에 작성했고, **실제 API 응답이 계약과 일치하는지는 e2e로 확인한다.** 스키마 단독 검증 스크립트는 없다 — 계약 준수는 실응답으로 본다 | `scripts/e2e_live.sh` |
+| 법령 답변이 틀리면 책임은? | 4중이다. ①근거 못 찾으면 UNKNOWN으로 넘긴다 ②**엔지니어가 결과를 직접 편집하고 `edited` 플래그로 AI 원본과 구분 저장** ③**제출 시 서버가 A2 적용 법령 1건 이상을 강제**(없으면 422) ④안전관리자 판단, 거절 시 사유 필수 | CONTRACT §4-13·14 |
+| 외부 클라우드 못 쓰면 LLM은? | `ai_configs.provider`를 `LOCAL_LLM`(사내 GPU)로 둔다. **`egress_allowed` 기본 false고, API 키는 이 테이블에 넣지 않는다 — 환경변수다** | CONTRACT §5 표8 |
+| **결과 편집을 허용하면 AI를 쓴 의미가 없지 않나?** | 편집을 허용하되 **흔적을 남긴다.** `edited` 컬럼과 `[제안] original_json`으로 AI 원본이 보존되고, 안전관리자에게는 `editable=false`로 내려간다. **AI가 초안을 쓰고 사람이 저자가 되는 구조**지, 사람이 처음부터 쓰는 게 아니다 | CONTRACT §5 표6, §4-7 |
 
 ## C. 아키텍처·API
 
 | 질문 | 답 | 근거 |
 |---|---|---|
-| 왜 202 + 폴링이지 WebSocket/SSE가 아닌가? | 3일 범위에서 폴링이 가장 단순하고 Mock 서버(Postman)와도 호환된다. 실제 LLM은 분 단위라 3초 폴링이면 충분. SSE는 확장 항목 | api_spec.md |
-| 409와 422 구분 기준? | "내가 보낸 값을 바꾸면 되는가" — 서류 누락은 값을 채우면 되니 422, 체크리스트 미완료 승인·완료된 요청 재실행은 상태를 바꿔야 하니 409 | api_spec.md |
-| Mock을 LLM으로 바꾸면 뭐가 바뀌나? | `services/agents/mock_agents.py` → `llm_agents.py` 구현체 교체와 `ai_configs.provider` 값. 라우터·스키마·FE는 그대로 | architecture.md 확장 표 |
-| 비동기를 큐 없이 했는데 Asynchronous Pipeline 맞나? | 엔드포인트 계약(202→폴링→상태 전이)이 비동기다. 현재는 GET마다 step을 전이시키는 Mock, `BACKGROUND_ADVANCE=true`면 BackgroundTasks로 자동 진행. 큐는 확장 | orchestrator.py |
+| 왜 202 + 폴링인가, WebSocket/SSE가 아니고? | 3일 범위에서 폴링이 가장 단순하고 Postman Mock과도 호환된다. **주기를 프론트가 정하지 않고 서버가 `pollIntervalMs:2500`으로 내려주므로, LLM이 느려지면 서버만 고치면 된다.** SSE는 Phase 2 | CONTRACT §4-12, §8-9 |
+| GET이 상태를 바꾸는데 REST 위반 아닌가? | 위반 맞다. 의도한 Mock 동작이고 플래그로 끌 수 있다 → 전문 `qa_reinforced.md` Q1 | `orchestrator.py` |
+| **403과 409를 왜 나눴나?** | **'권한이 없다'와 '지금 상태에서는 안 된다'는 다른 문제**다. 남의 요청 조회는 `403 FORBIDDEN_NOT_OWNER`, 엔지니어의 승인 시도는 `403 FORBIDDEN_ROLE`. 반면 이미 결정된 건 재결정은 `409 ALREADY_DECIDED`, PENDING 아닌데 승인은 `409 NOT_PENDING` | CONTRACT §6 |
+| **오류 응답 포맷은?** | **전 4xx·5xx 단일 포맷 `{code, message, fieldErrors}`이고 코드 23종을 문서화했다.** FastAPI 기본 `{detail}`이 아니라 예외 핸들러로 강제한다. `fieldErrors`는 입력 검증 오류에서만 붙는다. **프론트는 `code`만 보고 분기하므로 메시지 문구가 바뀌어도 안 깨진다** | CONTRACT §1.1, §6 |
+| 400·422·409 구분 기준은? | **400** 입력 형식·규칙 위반(`SPEC_SCHEMA_MISMATCH`, `REJECT_REASON_REQUIRED`) · **422** 제출 전제 미충족(`SUBMIT_REQUIRED_FIELD_MISSING` — 결과 3종·설명·A2 법령 1건) · **409** 상태 충돌(`IMMUTABLE_STATUS`, `RESULT_LOCKED`, `RUN_ALREADY_IN_PROGRESS`) | CONTRACT §3, §6 |
+| **왜 `POST /agent-runs`가 최상위 경로인가?** | 실행과 승인은 작업요청의 하위 자원이 아니라 **독립적으로 이력이 쌓이는 자원**이라고 봤다. 재실행하면 run이 새로 쌓이고 재제출 후 재결정하면 approval이 새로 쌓인다 — **덮어쓰지 않는다.** body에 `workRequestId`를 담는다 | CONTRACT §4 |
+| Mock을 LLM으로 바꾸면 뭐가 바뀌나? | `services/agents/` 구현체 교체와 `ai_configs.provider` 값. 라우터·스키마·FE는 그대로. 프롬프트는 `docs/05_ai_ready/prompts.md`에서 읽으므로 코드에 없다 | architecture.md |
+| **인증은? 3일에 과하지 않나?** | JWT Bearer, 비밀번호는 **bcrypt** 해시. signup·login 제외 전 API 필수다. **JWT 라이브러리 이상의 인증 스택을 안 쓴 건 의도다** — 필요한 건 "역할이 다르면 다른 화면과 다른 권한"의 증명이지 인증 구현이 아니다 | CONTRACT §1, §5 표1 |
+| 사진 업로드는? | `multipart/form-data`, 파트명 `files`, jpg/png/webp, **파일당 10MB·요청당 5장**, 초과 시 `413 FILE_TOO_LARGE`·`409 PHOTO_LIMIT_EXCEEDED`. **업로드 시 EXIF를 제거하고 320px 썸네일을 만든다** — 현장 사진의 위치정보가 남으면 안 되기 때문 | CONTRACT §4-9 |
 
 ## D. ERD·데이터
 
 | 질문 | 답 | 근거 |
 |---|---|---|
-| 테이블 14개면 3일에 과하지 않나? | 마스터 6 / 트랜잭션 4 / AI 3 / 설정 1로 나뉘고, 데모가 실제로 쓰는 건 work_requests·agent_runs·documents·approvals 4개. 나머지는 DDL·seed로 존재하며 확장 지점을 보여주는 용도 | erd.md |
-| steps_json이 JSON인데 정규화 위반 아닌가? | 에이전트 결과는 스키마가 진화하므로 JSON, 검색·집계가 필요한 것만 승격(overall_status, model_name, legal_findings 테이블). 3NF는 마스터·트랜잭션 테이블에서 지킨다 | erd.md 정규화 절 |
-| N:M은 어디? | equipments↔parts는 `equipment_parts`(설치 이력 속성 포함), parts↔parts는 `part_compatibility`(자기참조, 유독가스 허용 여부 속성) | replaceflow.dbml |
+| **N:M이 하나도 없는데?** | 맞다. **1:N 8개, N:M 0개다. 우리가 먼저 꺼낸다.** N:M이 성립하려면 양쪽에 마스터가 있어야 하는데 이번 범위엔 부품·법령 마스터가 없다(A1이 입력 스펙만으로 판단). **마스터 없이 연결 테이블만 만들면 아무도 안 쓰는 빈 테이블이다.** Phase 2 예비 N:M 3개를 DBML로 첨부했다 → 전문 `v2_framing_notes.md` §4 | `docs/06_erd/erd.md` §3 |
+| 테이블이 8개면 너무 적지 않나? | v1.0은 14개였고 **마스터 계열 9개를 범위에서 뺐다.** 남은 8개는 전부 데모가 실제로 쓴다. **그리고 그때 문서에 적어뒀던 정규화 이슈 3건이 대상 테이블이 빠지며 소멸했다** — 스코프 조정으로 정규화 이슈를 없앤 셈이다 | erd.md 버전 표 |
+| **PK가 왜 UUID인가?** | 업무 식별자를 PK로 쓰면 채번 규칙이 바뀔 때 참조하는 FK를 전부 손대야 한다. **PK는 의미 없는 UUID v4로 고정하고, 사람이 읽는 `request_no`(`WR-YYYYMMDD-NNN`)는 UNIQUE 컬럼으로 분리했다.** 식별자 안정성 원칙 | CONTRACT §5 원칙1 |
+| jsonb를 쓴 게 정규화 위반 아닌가? | 기준이 하나다 — **구조가 바뀔 수 있는 것만 JSON, 조회 조건이 되는 것은 컬럼.** `spec_json`은 유형 5종마다 키가 다르고 `payload_json`은 에이전트마다 구조가 다르다(A1·A2 항목형 / A3 문서형). 반면 `status`·`agent_code`·`edited`·`reason_category`는 컬럼으로 승격해 인덱스를 걸었다 | CONTRACT §5 원칙4 |
+| **`agent_steps`와 `agent_results`를 왜 나눴나?** | 한 테이블이면 **오케스트레이터의 폴링 UPDATE(상태 전이)와 엔지니어의 편집 UPDATE(결과 치환)가 같은 행을 놓고 경합한다.** 분리하면 두 갱신 경로가 다른 행을 건드려 경합이 원천적으로 없다 | erd.md §4 |
+| 이력은 어떻게 남나? | `agent_runs`(재실행)와 `approvals`(재제출 후 재결정)는 **갱신하지 않고 행을 추가한다(append-only).** 화면엔 최신 1건만 노출하고 직전 이력은 보존된다 | CONTRACT §5 원칙3 |
 
 ## E. 구현·데모·팀
 
 | 질문 | 답 | 근거 |
 |---|---|---|
-| 데모가 Mock인데 뭘 검증한 건가? | FE→BE→DB 실연동이다. BE는 SQLite에 실제 행을 쓰고 상태머신·체크리스트 게이트가 코드로 동작한다. Mock인 건 에이전트의 "생각" 부분뿐 | test_flow.py |
-| 백엔드가 죽으면? | FE `dev:mock` 모드(동일 계약)로 30초 내 전환, 그것도 안 되면 wireframe.html 애니메이션 | e2e_test_checklist 리허설 절 |
-| R&R은 어떻게 나눴나, 발표자가 BE인데 | 발표자가 API·에이전트 JSON 설계에 직접 참여해 Q&A 대응. GitHub feature 브랜치로 각자 커밋 확인 가능 | rnr_and_schedule.md |
-| 3일 동안 가장 어려웠던 점은? | (각자 준비) 예: 필드명·상태값을 5명이 동일하게 쓰는 것 → CONTRACT.md 한 장으로 해결 | CONTRACT.md |
+| 데모가 Mock인데 뭘 검증한 건가? | Mock인 건 에이전트의 "판단"뿐이다. **실제 uvicorn을 띄우고 HTTP로 때리는 라이브 E2E 64건 전부 통과, 실패 0건. 백엔드 테스트 30건 통과.** 각 항목이 **계약 조항 번호에 매핑**돼 있다 → 전문 `qa_reinforced.md` Q4 | `scripts/e2e_live.sh`, `02_evidence/test_results/` |
+| **DB는 뭘 쓰나? Supabase 붙었나?** | **스키마는 PostgreSQL DDL로 작성했고, Supabase 실행 검증은 못 했다** — 로컬에 PostgreSQL이 없어 개발·테스트는 SQLite 폴백으로 돌렸다. **"연동 완료"라고 말하지 않는다.** 미검증이라고 회고 문서에도 적어뒀다 | `docs/06_erd/schema_postgres.sql`, `05_retrospective/retrospective.md` §5 |
+| **화면 디자인은 Figma로 했나?** | **아니다. Figma 산출물은 0건이다.** 화면정의서(HTML)와 구현 화면으로 갔다. 실연동 캡처 9장이 `02_evidence/screenshots/`에 있다 | `02_evidence/screenshots/` |
+| **E2E 로그에 `PASS … FAIL:[...]` 이라는 이상한 줄이 있는데?** | 정확한 지적이다. **64건 중 1건은 판정이 값과 무관하게 항상 통과하는 스크립트 결함**이다(bash brace expansion). **유효 판정은 63건**이고 사고 로그 I-12에 원인·증거·조치안까지 기록해 뒀다. 다만 그 항목이 보려던 사실 — 엔지니어 대시보드에 평균 승인시간 키가 없다 — 은 응답 본문으로 따로 확인했다. **검증 스크립트도 코드라 틀릴 수 있다는 게 저희가 얻은 교훈이다** | `01_timeline/incident_log.md` I-12 |
+| **테스트가 30개면 충분한가?** | 개수보다 **무엇을 덮었는지**가 답이라고 본다. 라이브 E2E 64건이 인증 12항목·폴링 3단계·재제출 이력 보존·불변 상태 409 2종·권한 403 2종·오류 포맷(`detail` 키 0건)을 덮는다. **커버리지 수치는 재지 않았다** | e2e 로그 §1~§13 |
+| **체크리스트 강제를 없앤 건 후퇴 아닌가?** | 승인 권한은 여전히 100% 사람에게 있다. 없앤 건 **A2가 뽑은 목록을 사람에게 강제하던 체크박스**다. 대신 제출 전제를 서버가 강제하고(422), 거절 사유가 필수며(400), 권한 위반은 403이다 → 전문 `v2_framing_notes.md` §3 | CONTRACT §4-15 |
+| **어제 설계를 오늘 왜 뒤집었나?** | 역할이 한 화면에 섞여 있으면 "안전관리자는 승인만 하면 된다"를 화면으로 증명할 수 없었다. 되돌리는 비용을 알고 바꿨고, **바꾸면서 A4·체크리스트 강제·평균 승인시간 KPI·마스터 테이블 9개를 뺐다** | `v2_framing_notes.md` §1 |
+| **서비스명이 문서마다 다른데?** | ERD 문서의 `FixGuide`는 데이터 모델을 쓸 때의 내부 작업명이고 **서비스명은 `ReplaceFlow`다. 문서 제목을 못 맞춘 건 저희 실수다** — 변명 없이 한 문장으로 끝낸다 | CONTRACT §0 각주 |
+| 백엔드가 죽으면? | FE `dev:mock` → Postman → 화면 녹화본 순. **`frontend/src/mock/data.js`와 Postman 컬렉션을 v3.0 스키마로 맞추고 실제로 한 번 전환해 본 뒤에만 유효하다** | `pitch_outline_and_script.md` 백업 절 |
+| **R&R은 어떻게 나눴나? 발표자가 BE인데** | 산출물을 5인이 분담했고 각 문서·모듈에 담당자가 명시돼 있다. **통합 커밋은 일정상 팀장 계정으로 단일화했고, 커밋 본문에 담당 역할·이름을 남겨 who-did-what을 이력에서 추적할 수 있게 했다.** 브랜치·PR 규칙은 `github_guide.md`에 정의돼 있다. 발표자는 API·에이전트 JSON 설계에 직접 참여해 Q&A를 맡는다 | `rnr_and_schedule.md`, `github_guide.md`, `git log` 본문 |
+| 3일 중 가장 어려웠던 점은? | (각자 준비) 예: 필드명·상태값을 5명이 동일하게 쓰는 것 → `CONTRACT.md` 한 장으로 해결. 그리고 **Day 2에 그 계약을 v3.0으로 전면 개정하며 6개 트랙을 동시에 맞춘 것** | CONTRACT §9 변경 이력 |
 
 ## F. 우리가 다른 조에 할 질문
-- "Mock을 실제 LLM으로 바꿀 때 프론트 코드는 몇 줄 바뀌나요?"
-- "AI 결과를 사람이 뒤집은 기록은 어디 남고 다음 응답에 반영되나요?"
-- "외부 API를 못 쓰는 고객사라면 어느 설정을 바꾸면 되나요?"
+
+**제출용 1개 (D3-6)**: "AI 에이전트가 만든 결과물을 **사람이 수정할 수 있는 구조인가요?** 수정본과 AI 원본이 **데이터에서 구분되어 저장되는지**, 그리고 다음 단계 승인자가 **'이건 AI가 쓴 것, 이건 사람이 고친 것'을 화면에서 알 수 있는지** 알려주실 수 있을까요?" — 선정 근거는 `docs/08_presentation/pitch_outline_and_script.md` 말미.
+
+**예비**: ①"Mock을 실제 LLM으로 바꿀 때 프론트 코드는 몇 줄 바뀌나요?" ②"외부 API를 못 쓰는 고객사라면 어느 설정을 바꾸면 되나요?"
+
+---
+
+## 부록. 이 문서에서 정정한 사실오류
+
+| 항목 | 고치기 전 (사실과 다름) | v3.0 사실 |
+|---|---|---|
+| **R&R 근거** | "GitHub feature 브랜치로 **각자 커밋** 확인 가능" | 팀장 계정 통합 커밋 + 커밋 본문에 역할·이름. **`git shortlog -sn`이 1명이라 "각자 커밋"은 반박당한다** |
+| 에이전트 | 4종 (A4 벤더 포함) | **3종 `A1`·`A2`·`A3`.** A4는 Phase 2 |
+| 에이전트 코드 | `SPEC`/`LEGAL`/`SAFETY_DOC` | `A1`/`A2`/`A3` |
+| 승인 게이트 | "체크리스트 미완료 승인은 409" | **체크리스트 폐지.** 거절 사유 미입력 400, 제출 전제 미충족 422, 권한 403, 상태 충돌 409 |
+| 상태값 | 7종 (`REQUESTED`·`RUNNING`·`REVIEW`·`PENDING_APPROVAL`·`DONE` 포함) | **6종** `DRAFT`·`AI_RUNNING`·`AI_DONE`·`PENDING`·`APPROVED`·`REJECTED` |
+| 화면 | 2개 + 역할 토글 | **9개** + 서버 `redirectPath` 분기 |
+| 인증 | 없음 전제 | **JWT Bearer**, bcrypt, 전 API 필수 |
+| 테이블 | 14개 (v1.0) / 16개 (v2.0) | **8개** (7 + `ai_configs` 제안) |
+| 관계 | "N:M 2개(`equipment_parts`, `part_compatibility`)" | **N:M 0개.** 마스터 9개가 범위에서 빠지며 함께 제외, Phase 2 예비 설계로 첨부 |
+| 오류 포맷 | FastAPI 기본 `{detail}` | **`{code, message, fieldErrors}` 단일 포맷, 코드 23종** |
+| ID 규칙 | `WR-…`·`RUN-…` 접두어 PK | **UUID v4 PK**, `request_no`는 UNIQUE 컬럼 |
+| 필드 표기 | snake_case (`work_request_id`) | **camelCase** (`workRequestId`) |
+| 정규화 이슈 3건 | "숨기지 않고 문서에 적었다" | **대상 테이블이 범위에서 빠지며 소멸.** 남은 건 위 D섹션 근거들 |
+| AI 확장 검증 | "잘못된 값이 거부되는 것까지 **jsonschema로 검증**했다" | 해당 스크립트가 레포에 없다. **e2e 실응답으로 확인**으로 정정 |
+| 실측치 | pytest 8 · e2e 35/35 · 182.61KB · 26.5h · 84% | **전부 무효. `[실측치 대기]`** |
+
+> **⚠️ 미해결 (담당자 확인 필요)**: R&R 답변의 브랜치 문장은 **`develop` + `feature/{role}-{topic}` 브랜치와 PR이 실제로 생성·푸시된 뒤에만** 쓸 수 있다. 2026-09-03 현재 원격에는 `main` 하나뿐이다(`git branch -a`). 발표 전까지 생성되지 않으면 **"브랜치 규칙을 문서화했으나 3일 일정상 단일 브랜치로 작업했다"로 바꿔 말한다.** 규정 문서가 있다는 것과 규정대로 운영했다는 것은 다르고, 심사자는 GitHub Insights 탭 하나로 확인한다.
