@@ -1,0 +1,4115 @@
+{
+  "info": {
+    "_postman_id": "b1f4c2a0-5e7d-4c3e-9a1b-replaceflow01",
+    "name": "ReplaceFlow API",
+    "description": "**ReplaceFlow** — 반도체 설비 부품 교체 승인 프로세스 에이전트 REST API.\n\n- 작업요청(WorkRequest) 생성 → 오케스트레이터가 4개 에이전트(SPEC/LEGAL/SAFETY_DOC/VENDOR)를 비동기 실행\n- `POST /work-requests/{id}/agent-runs` 는 **202 Accepted** + `run_id` 를 반환하고, 클라이언트는 `GET /agent-runs/{runId}` 를 3초 간격으로 폴링한다.\n- 에이전트는 정보 수집·초안 작성만 수행하며, 승인(APPROVE)은 안전관리자가 체크리스트 4항목을 모두 확인해야 가능하다(Human-in-the-loop).\n- Mock 동작: `POST …/agent-runs` 직후 steps 4개 모두 `PENDING`, 이후 `GET /agent-runs/{runId}` 호출마다 SPEC→LEGAL→SAFETY_DOC→VENDOR 순으로 step 하나가 `DONE`. 4개 모두 DONE 이면 `overall_status=REVIEW`.\n\n\n**Mock Server 사용법**: 저장된 예시(Saved Examples)가 Mock 응답이 된다. 특정 상태코드 예시를 강제하려면 요청 헤더 `x-mock-response-code: 409` 또는 `x-mock-response-name: 200 폴링 2/4 완료 (RUNNING)` 를 사용한다.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000/api/v1"
+    },
+    {
+      "key": "token",
+      "value": "mock-token-U-002"
+    },
+    {
+      "key": "workRequestId",
+      "value": "WR-20260902-011"
+    },
+    {
+      "key": "runId",
+      "value": "RUN-0042"
+    },
+    {
+      "key": "docId",
+      "value": "DOC-0101"
+    },
+    {
+      "key": "partId",
+      "value": "P-VLV-001"
+    },
+    {
+      "key": "tenantId",
+      "value": "T-001"
+    }
+  ],
+  "item": [
+    {
+      "name": "work-requests",
+      "description": "작업요청(설비 부품 교체 요청) 리소스",
+      "item": [
+        {
+          "name": "GET /work-requests — 작업요청 목록 조회",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/work-requests?status=&page=1&size=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "work-requests"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": ""
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "상태 필터·페이지네이션을 지원하는 작업요청 목록. 화면1(목록/대시보드) 테이블에 사용."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/work-requests?status=&page=1&size=20",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "work-requests"
+                  ],
+                  "query": [
+                    {
+                      "key": "status",
+                      "value": ""
+                    },
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "size",
+                      "value": "20"
+                    }
+                  ]
+                },
+                "description": "상태 필터·페이지네이션을 지원하는 작업요청 목록. 화면1(목록/대시보드) 테이블에 사용."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"items\": [\n    {\n      \"id\": \"WR-20260902-011\",\n      \"equipment_id\": \"EQ-GC-02\",\n      \"equipment_name\": \"가스캐비닛#2\",\n      \"part_id\": \"P-VLV-001\",\n      \"part_no\": \"VLV-SS316-1/4-NC\",\n      \"symptom\": \"가스 유량 이상, 밸브 누설 의심\",\n      \"status\": \"REQUESTED\",\n      \"agent_progress\": {\n        \"done\": 0,\n        \"total\": 4\n      },\n      \"approver_id\": null,\n      \"requested_by\": \"U-001\",\n      \"created_at\": \"2026-09-02T15:00:00+09:00\"\n    },\n    {\n      \"id\": \"WR-20260902-010\",\n      \"equipment_id\": \"EQ-VLV-07\",\n      \"equipment_name\": \"공정가스 밸브#7\",\n      \"part_id\": \"P-REG-001\",\n      \"part_no\": \"REG-2S\",\n      \"symptom\": \"2차압 불안정\",\n      \"status\": \"RUNNING\",\n      \"agent_progress\": {\n        \"done\": 2,\n        \"total\": 4\n      },\n      \"approver_id\": null,\n      \"requested_by\": \"U-001\",\n      \"created_at\": \"2026-09-02T13:20:00+09:00\"\n    },\n    {\n      \"id\": \"WR-20260902-009\",\n      \"equipment_id\": \"EQ-SCR-01\",\n      \"equipment_name\": \"스크러버#1\",\n      \"part_id\": \"P-FLT-001\",\n      \"part_no\": \"FLT-INL-01\",\n      \"symptom\": \"차압 상승, 필터 막힘\",\n      \"status\": \"REVIEW\",\n      \"agent_progress\": {\n        \"done\": 4,\n        \"total\": 4\n      },\n      \"approver_id\": null,\n      \"requested_by\": \"U-001\",\n      \"created_at\": \"2026-09-02T10:05:00+09:00\"\n    },\n    {\n      \"id\": \"WR-20260901-008\",\n      \"equipment_id\": \"EQ-GC-02\",\n      \"equipment_name\": \"가스캐비닛#2\",\n      \"part_id\": \"P-REG-001\",\n      \"part_no\": \"REG-2S\",\n      \"symptom\": \"압력조정기 출력 편차\",\n      \"status\": \"PENDING_APPROVAL\",\n      \"agent_progress\": {\n        \"done\": 4,\n        \"total\": 4\n      },\n      \"approver_id\": \"U-002\",\n      \"requested_by\": \"U-001\",\n      \"created_at\": \"2026-09-01T16:40:00+09:00\"\n    },\n    {\n      \"id\": \"WR-20260901-007\",\n      \"equipment_id\": \"EQ-VLV-07\",\n      \"equipment_name\": \"공정가스 밸브#7\",\n      \"part_id\": \"P-VLV-001\",\n      \"part_no\": \"VLV-SS316-1/4-NC\",\n      \"symptom\": \"밸브 개폐 지연\",\n      \"status\": \"APPROVED\",\n      \"agent_progress\": {\n        \"done\": 4,\n        \"total\": 4\n      },\n      \"approver_id\": \"U-002\",\n      \"requested_by\": \"U-001\",\n      \"created_at\": \"2026-09-01T09:15:00+09:00\"\n    }\n  ],\n  \"total\": 5,\n  \"page\": 1,\n  \"size\": 20\n}"
+            },
+            {
+              "name": "401 Unauthorized",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/work-requests?status=&page=1&size=20",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "work-requests"
+                  ],
+                  "query": [
+                    {
+                      "key": "status",
+                      "value": ""
+                    },
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "size",
+                      "value": "20"
+                    }
+                  ]
+                },
+                "description": "상태 필터·페이지네이션을 지원하는 작업요청 목록. 화면1(목록/대시보드) 테이블에 사용."
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"code\": \"UNAUTHORIZED\",\n  \"message\": \"인증이 필요합니다.\"\n}"
+            },
+            {
+              "name": "422 Unprocessable Entity",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/work-requests?status=&page=1&size=20",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "work-requests"
+                  ],
+                  "query": [
+                    {
+                      "key": "status",
+                      "value": ""
+                    },
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "size",
+                      "value": "20"
+                    }
+                  ]
+                },
+                "description": "상태 필터·페이지네이션을 지원하는 작업요청 목록. 화면1(목록/대시보드) 테이블에 사용."
+              },
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"code\": \"VALIDATION_ERROR\",\n  \"message\": \"요청 값이 올바르지 않습니다.\",\n  \"details\": {\n    \"errors\": [\n      {\n        \"field\": \"equipment_id\",\n        \"message\": \"field required\"\n      }\n    ]\n  }\n}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status code is expected\", function () { pm.expect([200,201,202]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /work-requests — 작업요청 생성",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/work-requests",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "work-requests"
+              ]
+            },
+            "description": "설비·부품·증상·현장 확인 결과를 입력해 작업요청을 생성한다 (UC-01). 생성 직후 상태는 `REQUESTED`.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"equipment_id\": \"EQ-GC-02\",\n  \"part_id\": \"P-VLV-001\",\n  \"symptom\": \"가스 유량 이상, 밸브 누설 의심\",\n  \"site_check_note\": \"현장 확인 결과 밸브 시트 마모\",\n  \"requested_by\": \"U-001\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/work-requests",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "work-requests"
+                  ]
+                },
+                "description": "설비·부품·증상·현장 확인 결과를 입력해 작업요청을 생성한다 (UC-01). 생성 직후 상태는 `REQUESTED`.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"equipment_id\": \"EQ-GC-02\",\n  \"part_id\": \"P-VLV-001\",\n  \"symptom\": \"가스 유량 이상, 밸브 누설 의심\",\n  \"site_check_note\": \"현장 확인 결과 밸브 시트 마모\",\n  \"requested_by\": \"U-001\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "Location",
+                  "value": "/api/v1/work-requests/WR-20260902-011"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"id\": \"WR-20260902-011\",\n  \"tenant_id\": \"T-001\",\n  \"equipment_id\": \"EQ-GC-02\",\n  \"part_id\": \"P-VLV-001\",\n  \"symptom\": \"가스 유량 이상, 밸브 누설 의심\",\n  \"site_check_note\": \"현장 확인 결과 밸브 시트 마모\",\n  \"requested_by\": \"U-001\",\n  \"status\": \"REQUESTED\",\n  \"created_at\": \"2026-09-02T15:00:00+09:00\",\n  \"updated_at\": \"2026-09-02T15:00:00+09:00\"\n}"
+            },
+            {
+              "name": "401 Unauthorized",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/work-requests",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "work-requests"
+                  ]
+                },
+                "description": "설비·부품·증상·현장 확인 결과를 입력해 작업요청을 생성한다 (UC-01). 생성 직후 상태는 `REQUESTED`.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"equipment_id\": \"EQ-GC-02\",\n  \"part_id\": \"P-VLV-001\",\n  \"symptom\": \"가스 유량 이상, 밸브 누설 의심\",\n  \"site_check_note\": \"현장 확인 결과 밸브 시트 마모\",\n  \"requested_by\": \"U-001\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"code\": \"UNAUTHORIZED\",\n  \"message\": \"인증이 필요합니다.\"\n}"
+            },
+            {
+              "name": "422 Unprocessable Entity",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/work-requests",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "work-requests"
+                  ]
+                },
+                "description": "설비·부품·증상·현장 확인 결과를 입력해 작업요청을 생성한다 (UC-01). 생성 직후 상태는 `REQUESTED`.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"equipment_id\": \"EQ-GC-02\",\n  \"part_id\": \"P-VLV-001\",\n  \"symptom\": \"가스 유량 이상, 밸브 누설 의심\",\n  \"site_check_note\": \"현장 확인 결과 밸브 시트 마모\",\n  \"requested_by\": \"U-001\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"code\": \"VALIDATION_ERROR\",\n  \"message\": \"요청 값이 올바르지 않습니다.\",\n  \"details\": {\n    \"errors\": [\n      {\n        \"field\": \"equipment_id\",\n        \"message\": \"field required\"\n      }\n    ]\n  }\n}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('workRequestId', pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /work-requests/{id} — 작업요청 상세 조회",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/work-requests/{{workRequestId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "work-requests",
+                "{{workRequestId}}"
+              ]
+            },
+            "description": "요청 정보 + 최신 에이전트 실행(`latest_run`) + 승인 이력(`approvals`)을 한 번에 반환. 화면2(타임라인+승인 패널)의 초기 로딩용."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/work-requests/{{workRequestId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "work-requests",
+                    "{{workRequestId}}"
+                  ]
+                },
+                "description": "요청 정보 + 최신 에이전트 실행(`latest_run`) + 승인 이력(`approvals`)을 한 번에 반환. 화면2(타임라인+승인 패널)의 초기 로딩용."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"id\": \"WR-20260902-011\",\n  \"tenant_id\": \"T-001\",\n  \"equipment_id\": \"EQ-GC-02\",\n  \"part_id\": \"P-VLV-001\",\n  \"symptom\": \"가스 유량 이상, 밸브 누설 의심\",\n  \"site_check_note\": \"현장 확인 결과 밸브 시트 마모\",\n  \"requested_by\": \"U-001\",\n  \"status\": \"REVIEW\",\n  \"created_at\": \"2026-09-02T15:00:00+09:00\",\n  \"updated_at\": \"2026-09-02T15:11:30+09:00\",\n  \"equipment\": {\n    \"id\": \"EQ-GC-02\",\n    \"tenant_id\": \"T-001\",\n    \"name\": \"가스캐비닛#2\",\n    \"type\": \"GAS_CABINET\",\n    \"line\": \"FAB1-L2\",\n    \"substances\": [\n      \"SiH4\"\n    ]\n  },\n  \"part\": {\n    \"id\": \"P-VLV-001\",\n    \"tenant_id\": \"T-001\",\n    \"part_no\": \"VLV-SS316-1/4-NC\",\n    \"name\": \"다이어프램 밸브 SS316 1/4\\\" NC\",\n    \"spec\": {\n      \"body\": \"SS316\",\n      \"size\": \"1/4\\\"\",\n      \"type\": \"NC\",\n      \"seat\": \"PCTFE\"\n    },\n    \"grade\": \"OEM\",\n    \"toxic_gas_allowed\": true,\n    \"stock\": 2\n  },\n  \"requester\": {\n    \"id\": \"U-001\",\n    \"name\": \"김민준\",\n    \"role\": \"ENGINEER\"\n  },\n  \"latest_run\": {\n    \"run_id\": \"RUN-0042\",\n    \"work_request_id\": \"WR-20260902-011\",\n    \"overall_status\": \"REVIEW\",\n    \"steps\": [\n      {\n        \"agent\": \"SPEC\",\n        \"status\": \"DONE\",\n        \"started_at\": \"2026-09-02T15:10:03+09:00\",\n        \"completed_at\": \"2026-09-02T15:10:20+09:00\",\n        \"result\": {\n          \"spec_match\": true,\n          \"current_part\": \"VLV-SS316-1/4-NC\",\n          \"alternatives\": [\n            {\n              \"part_no\": \"VLV-SS316-1/4-NC-EQ\",\n              \"grade\": \"EQUIVALENT\",\n              \"diff\": \"시트 재질 PCTFE→PTFE\",\n              \"allowed_for_toxic_gas\": false\n            }\n          ]\n        }\n      },\n      {\n        \"agent\": \"LEGAL\",\n        \"status\": \"DONE\",\n        \"started_at\": \"2026-09-02T15:10:03+09:00\",\n        \"completed_at\": \"2026-09-02T15:10:45+09:00\",\n        \"result\": {\n          \"applicable_laws\": [\n            {\n              \"law\": \"산업안전보건기준에 관한 규칙\",\n              \"article\": \"제92조\",\n              \"title\": \"정비등의 작업 시의 운전정지 등\",\n              \"quote\": \"…운전을 정지하고 … 잠금장치 및 표지판을…\"\n            },\n            {\n              \"law\": \"화학물질관리법\",\n              \"article\": \"제24조\",\n              \"title\": \"취급시설의 설치·관리 기준\",\n              \"quote\": \"\"\n            },\n            {\n              \"law\": \"고압가스 안전관리법 시행규칙\",\n              \"article\": \"별표\",\n              \"title\": \"특정고압가스 사용시설 기준\",\n              \"quote\": \"\"\n            }\n          ],\n          \"required_procedures\": [\n            {\n              \"name\": \"작업허가서(가스 배관 작업)\",\n              \"phase\": \"BEFORE\",\n              \"required\": true\n            },\n            {\n              \"name\": \"위험성평가\",\n              \"phase\": \"BEFORE\",\n              \"required\": true\n            },\n            {\n              \"name\": \"LOTO·가스 차단·퍼지 확인\",\n              \"phase\": \"BEFORE\",\n              \"required\": true\n            },\n            {\n              \"name\": \"가스 감지기 정상 확인\",\n              \"phase\": \"AFTER\",\n              \"required\": true\n            }\n          ]\n        }\n      },\n      {\n        \"agent\": \"SAFETY_DOC\",\n        \"status\": \"DONE\",\n        \"started_at\": \"2026-09-02T15:10:46+09:00\",\n        \"completed_at\": \"2026-09-02T15:11:05+09:00\",\n        \"result\": {\n          \"documents\": [\n            {\n              \"doc_id\": \"DOC-0101\",\n              \"type\": \"WORK_PERMIT\",\n              \"missing\": [\n                \"작업자 2명 이름\"\n              ]\n            },\n            {\n              \"doc_id\": \"DOC-0102\",\n              \"type\": \"RISK_ASSESSMENT\",\n              \"missing\": []\n            }\n          ]\n        }\n      },\n      {\n        \"agent\": \"VENDOR\",\n        \"status\": \"DONE\",\n        \"started_at\": \"2026-09-02T15:11:06+09:00\",\n        \"completed_at\": \"2026-09-02T15:11:30+09:00\",\n        \"result\": {\n          \"rfq_doc_id\": \"DOC-0103\",\n          \"rfq_summary\": \"VLV-SS316-1/4-NC 2EA 견적·납기 요청\",\n          \"lead_time_est_days\": 3,\n          \"last_purchase\": \"2026-02-14\"\n        }\n      }\n    ],\n    \"summary\": \"OEM 동일 규격 밸브 교체. 유독가스 라인이라 호환품 불가. 작업허가·위험성평가·LOTO 필수. 서류 초안 2건 생성, 작업자 명단만 보완 필요.\",\n    \"approval_required_by\": \"SAFETY_MANAGER\",\n    \"model_name\": \"mock-v1\",\n    \"prompt_version\": \"replaceflow-v0.1\",\n    \"created_at\": \"2026-09-02T15:10:02+09:00\",\n    \"completed_at\": \"2026-09-02T15:11:30+09:00\"\n  },\n  \"approvals\": []\n}"
+            },
+            {
+              "name": "401 Unauthorized",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/work-requests/{{workRequestId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "work-requests",
+                    "{{workRequestId}}"
+                  ]
+                },
+                "description": "요청 정보 + 최신 에이전트 실행(`latest_run`) + 승인 이력(`approvals`)을 한 번에 반환. 화면2(타임라인+승인 패널)의 초기 로딩용."
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"code\": \"UNAUTHORIZED\",\n  \"message\": \"인증이 필요합니다.\"\n}"
+            },
+            {
+              "name": "404 Not Found",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/work-requests/{{workRequestId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "work-requests",
+                    "{{workRequestId}}"
+                  ]
+                },
+                "description": "요청 정보 + 최신 에이전트 실행(`latest_run`) + 승인 이력(`approvals`)을 한 번에 반환. 화면2(타임라인+승인 패널)의 초기 로딩용."
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"code\": \"NOT_FOUND\",\n  \"message\": \"요청한 리소스를 찾을 수 없습니다.\",\n  \"details\": {\n    \"id\": \"WR-99999999-000\"\n  }\n}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status code is expected\", function () { pm.expect([200,201,202]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH /work-requests/{id}/submit-approval — 승인 요청 제출 (REVIEW → PENDING_APPROVAL)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/work-requests/{{workRequestId}}/submit-approval",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "work-requests",
+                "{{workRequestId}}",
+                "submit-approval"
+              ]
+            },
+            "description": "엔지니어가 에이전트 결과를 검토하고 누락 정보를 보완한 뒤 안전관리자에게 승인을 요청한다 (UC-03).\n- 에이전트 run 이 아직 `REVIEW` 가 아니면(미완료) **409**\n- 서류의 `missing` 항목이 남아 있으면 **422** (누락 항목 목록을 `details.missing` 에 반환)\n",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"missing_info\": {\n    \"작업자 2명 이름\": \"김민준, 박수진\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/work-requests/{{workRequestId}}/submit-approval",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "work-requests",
+                    "{{workRequestId}}",
+                    "submit-approval"
+                  ]
+                },
+                "description": "엔지니어가 에이전트 결과를 검토하고 누락 정보를 보완한 뒤 안전관리자에게 승인을 요청한다 (UC-03).\n- 에이전트 run 이 아직 `REVIEW` 가 아니면(미완료) **409**\n- 서류의 `missing` 항목이 남아 있으면 **422** (누락 항목 목록을 `details.missing` 에 반환)\n",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"missing_info\": {\n    \"작업자 2명 이름\": \"김민준, 박수진\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"id\": \"WR-20260902-011\",\n  \"tenant_id\": \"T-001\",\n  \"equipment_id\": \"EQ-GC-02\",\n  \"part_id\": \"P-VLV-001\",\n  \"symptom\": \"가스 유량 이상, 밸브 누설 의심\",\n  \"site_check_note\": \"현장 확인 결과 밸브 시트 마모\",\n  \"requested_by\": \"U-001\",\n  \"status\": \"PENDING_APPROVAL\",\n  \"created_at\": \"2026-09-02T15:00:00+09:00\",\n  \"updated_at\": \"2026-09-02T15:30:00+09:00\"\n}"
+            },
+            {
+              "name": "401 Unauthorized",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/work-requests/{{workRequestId}}/submit-approval",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "work-requests",
+                    "{{workRequestId}}",
+                    "submit-approval"
+                  ]
+                },
+                "description": "엔지니어가 에이전트 결과를 검토하고 누락 정보를 보완한 뒤 안전관리자에게 승인을 요청한다 (UC-03).\n- 에이전트 run 이 아직 `REVIEW` 가 아니면(미완료) **409**\n- 서류의 `missing` 항목이 남아 있으면 **422** (누락 항목 목록을 `details.missing` 에 반환)\n",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"missing_info\": {\n    \"작업자 2명 이름\": \"김민준, 박수진\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"code\": \"UNAUTHORIZED\",\n  \"message\": \"인증이 필요합니다.\"\n}"
+            },
+            {
+              "name": "404 Not Found",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/work-requests/{{workRequestId}}/submit-approval",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "work-requests",
+                    "{{workRequestId}}",
+                    "submit-approval"
+                  ]
+                },
+                "description": "엔지니어가 에이전트 결과를 검토하고 누락 정보를 보완한 뒤 안전관리자에게 승인을 요청한다 (UC-03).\n- 에이전트 run 이 아직 `REVIEW` 가 아니면(미완료) **409**\n- 서류의 `missing` 항목이 남아 있으면 **422** (누락 항목 목록을 `details.missing` 에 반환)\n",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"missing_info\": {\n    \"작업자 2명 이름\": \"김민준, 박수진\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"code\": \"NOT_FOUND\",\n  \"message\": \"요청한 리소스를 찾을 수 없습니다.\",\n  \"details\": {\n    \"id\": \"WR-99999999-000\"\n  }\n}"
+            },
+            {
+              "name": "409 Conflict",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/work-requests/{{workRequestId}}/submit-approval",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "work-requests",
+                    "{{workRequestId}}",
+                    "submit-approval"
+                  ]
+                },
+                "description": "엔지니어가 에이전트 결과를 검토하고 누락 정보를 보완한 뒤 안전관리자에게 승인을 요청한다 (UC-03).\n- 에이전트 run 이 아직 `REVIEW` 가 아니면(미완료) **409**\n- 서류의 `missing` 항목이 남아 있으면 **422** (누락 항목 목록을 `details.missing` 에 반환)\n",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"missing_info\": {\n    \"작업자 2명 이름\": \"김민준, 박수진\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"code\": \"RUN_NOT_COMPLETED\",\n  \"message\": \"에이전트 실행이 완료되지 않아 승인 요청을 제출할 수 없습니다.\",\n  \"details\": {\n    \"run_id\": \"RUN-0042\",\n    \"overall_status\": \"RUNNING\"\n  }\n}"
+            },
+            {
+              "name": "422 Unprocessable Entity",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/work-requests/{{workRequestId}}/submit-approval",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "work-requests",
+                    "{{workRequestId}}",
+                    "submit-approval"
+                  ]
+                },
+                "description": "엔지니어가 에이전트 결과를 검토하고 누락 정보를 보완한 뒤 안전관리자에게 승인을 요청한다 (UC-03).\n- 에이전트 run 이 아직 `REVIEW` 가 아니면(미완료) **409**\n- 서류의 `missing` 항목이 남아 있으면 **422** (누락 항목 목록을 `details.missing` 에 반환)\n",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"missing_info\": {\n    \"작업자 2명 이름\": \"김민준, 박수진\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"code\": \"MISSING_INFORMATION\",\n  \"message\": \"서류 누락 항목을 보완해야 승인 요청을 제출할 수 있습니다.\",\n  \"details\": {\n    \"missing\": [\n      {\n        \"doc_id\": \"DOC-0101\",\n        \"type\": \"WORK_PERMIT\",\n        \"fields\": [\n          \"작업자 2명 이름\"\n        ]\n      }\n    ]\n  }\n}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status code is expected\", function () { pm.expect([200,201,202]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "agent-runs",
+      "description": "에이전트 실행(오케스트레이터 run) 리소스 — 비동기 폴링",
+      "item": [
+        {
+          "name": "POST /work-requests/{id}/agent-runs — 에이전트 실행 시작 (비동기)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/work-requests/{{workRequestId}}/agent-runs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "work-requests",
+                "{{workRequestId}}",
+                "agent-runs"
+              ]
+            },
+            "description": "오케스트레이터가 SPEC/LEGAL/SAFETY_DOC/VENDOR 4개 에이전트 실행을 시작한다 (UC-02).\n처리는 비동기이므로 **202 Accepted** 와 `run_id` 만 즉시 반환하고, 결과는 `GET /agent-runs/{runId}` 로 폴링한다.\n작업요청 상태는 `RUNNING` 으로 전이된다. 이미 `APPROVED`/`DONE` 인 요청에는 실행할 수 없다(409).\n"
+          },
+          "response": [
+            {
+              "name": "202 Accepted",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/work-requests/{{workRequestId}}/agent-runs",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "work-requests",
+                    "{{workRequestId}}",
+                    "agent-runs"
+                  ]
+                },
+                "description": "오케스트레이터가 SPEC/LEGAL/SAFETY_DOC/VENDOR 4개 에이전트 실행을 시작한다 (UC-02).\n처리는 비동기이므로 **202 Accepted** 와 `run_id` 만 즉시 반환하고, 결과는 `GET /agent-runs/{runId}` 로 폴링한다.\n작업요청 상태는 `RUNNING` 으로 전이된다. 이미 `APPROVED`/`DONE` 인 요청에는 실행할 수 없다(409).\n"
+              },
+              "status": "Accepted",
+              "code": 202,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "Location",
+                  "value": "/api/v1/agent-runs/RUN-0042"
+                },
+                {
+                  "key": "Retry-After",
+                  "value": "3"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"run_id\": \"RUN-0042\",\n  \"overall_status\": \"RUNNING\"\n}"
+            },
+            {
+              "name": "401 Unauthorized",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/work-requests/{{workRequestId}}/agent-runs",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "work-requests",
+                    "{{workRequestId}}",
+                    "agent-runs"
+                  ]
+                },
+                "description": "오케스트레이터가 SPEC/LEGAL/SAFETY_DOC/VENDOR 4개 에이전트 실행을 시작한다 (UC-02).\n처리는 비동기이므로 **202 Accepted** 와 `run_id` 만 즉시 반환하고, 결과는 `GET /agent-runs/{runId}` 로 폴링한다.\n작업요청 상태는 `RUNNING` 으로 전이된다. 이미 `APPROVED`/`DONE` 인 요청에는 실행할 수 없다(409).\n"
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"code\": \"UNAUTHORIZED\",\n  \"message\": \"인증이 필요합니다.\"\n}"
+            },
+            {
+              "name": "404 Not Found",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/work-requests/{{workRequestId}}/agent-runs",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "work-requests",
+                    "{{workRequestId}}",
+                    "agent-runs"
+                  ]
+                },
+                "description": "오케스트레이터가 SPEC/LEGAL/SAFETY_DOC/VENDOR 4개 에이전트 실행을 시작한다 (UC-02).\n처리는 비동기이므로 **202 Accepted** 와 `run_id` 만 즉시 반환하고, 결과는 `GET /agent-runs/{runId}` 로 폴링한다.\n작업요청 상태는 `RUNNING` 으로 전이된다. 이미 `APPROVED`/`DONE` 인 요청에는 실행할 수 없다(409).\n"
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"code\": \"NOT_FOUND\",\n  \"message\": \"요청한 리소스를 찾을 수 없습니다.\",\n  \"details\": {\n    \"id\": \"WR-99999999-000\"\n  }\n}"
+            },
+            {
+              "name": "409 Conflict",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/work-requests/{{workRequestId}}/agent-runs",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "work-requests",
+                    "{{workRequestId}}",
+                    "agent-runs"
+                  ]
+                },
+                "description": "오케스트레이터가 SPEC/LEGAL/SAFETY_DOC/VENDOR 4개 에이전트 실행을 시작한다 (UC-02).\n처리는 비동기이므로 **202 Accepted** 와 `run_id` 만 즉시 반환하고, 결과는 `GET /agent-runs/{runId}` 로 폴링한다.\n작업요청 상태는 `RUNNING` 으로 전이된다. 이미 `APPROVED`/`DONE` 인 요청에는 실행할 수 없다(409).\n"
+              },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"code\": \"INVALID_STATE\",\n  \"message\": \"이미 승인(APPROVED) 또는 완료(DONE)된 작업요청에는 에이전트를 실행할 수 없습니다.\",\n  \"details\": {\n    \"current_status\": \"APPROVED\"\n  }\n}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('202 Accepted', () => pm.response.to.have.status(202));",
+                  "const b = pm.response.json();",
+                  "pm.collectionVariables.set('runId', b.run_id);",
+                  "pm.test('overall_status RUNNING', () => pm.expect(b.overall_status).to.eql('RUNNING'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /agent-runs/{runId} — 에이전트 실행 상태·결과 조회 (폴링)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/agent-runs/{{runId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "agent-runs",
+                "{{runId}}"
+              ]
+            },
+            "description": "steps 별 `PENDING/RUNNING/DONE/FAILED` 상태와 결과 JSON. FE 는 이 JSON 만 알면 된다(Interface First).\nMock: 호출마다 다음 step 하나가 `DONE` 으로 전이(SPEC→LEGAL→SAFETY_DOC→VENDOR). 4개 모두 DONE 이면 `overall_status=REVIEW`.\n"
+          },
+          "response": [
+            {
+              "name": "200 폴링 0/4 완료 (RUNNING)",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/agent-runs/{{runId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "agent-runs",
+                    "{{runId}}"
+                  ]
+                },
+                "description": "steps 별 `PENDING/RUNNING/DONE/FAILED` 상태와 결과 JSON. FE 는 이 JSON 만 알면 된다(Interface First).\nMock: 호출마다 다음 step 하나가 `DONE` 으로 전이(SPEC→LEGAL→SAFETY_DOC→VENDOR). 4개 모두 DONE 이면 `overall_status=REVIEW`.\n"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"run_id\": \"RUN-0042\",\n  \"work_request_id\": \"WR-20260902-011\",\n  \"overall_status\": \"RUNNING\",\n  \"steps\": [\n    {\n      \"agent\": \"SPEC\",\n      \"status\": \"PENDING\",\n      \"started_at\": null,\n      \"completed_at\": null,\n      \"result\": null\n    },\n    {\n      \"agent\": \"LEGAL\",\n      \"status\": \"PENDING\",\n      \"started_at\": null,\n      \"completed_at\": null,\n      \"result\": null\n    },\n    {\n      \"agent\": \"SAFETY_DOC\",\n      \"status\": \"PENDING\",\n      \"started_at\": null,\n      \"completed_at\": null,\n      \"result\": null\n    },\n    {\n      \"agent\": \"VENDOR\",\n      \"status\": \"PENDING\",\n      \"started_at\": null,\n      \"completed_at\": null,\n      \"result\": null\n    }\n  ],\n  \"summary\": null,\n  \"approval_required_by\": \"SAFETY_MANAGER\",\n  \"model_name\": \"mock-v1\",\n  \"prompt_version\": \"replaceflow-v0.1\",\n  \"created_at\": \"2026-09-02T15:10:02+09:00\",\n  \"completed_at\": null\n}"
+            },
+            {
+              "name": "200 폴링 1/4 완료 (RUNNING)",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/agent-runs/{{runId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "agent-runs",
+                    "{{runId}}"
+                  ]
+                },
+                "description": "steps 별 `PENDING/RUNNING/DONE/FAILED` 상태와 결과 JSON. FE 는 이 JSON 만 알면 된다(Interface First).\nMock: 호출마다 다음 step 하나가 `DONE` 으로 전이(SPEC→LEGAL→SAFETY_DOC→VENDOR). 4개 모두 DONE 이면 `overall_status=REVIEW`.\n"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"run_id\": \"RUN-0042\",\n  \"work_request_id\": \"WR-20260902-011\",\n  \"overall_status\": \"RUNNING\",\n  \"steps\": [\n    {\n      \"agent\": \"SPEC\",\n      \"status\": \"DONE\",\n      \"started_at\": \"2026-09-02T15:10:03+09:00\",\n      \"completed_at\": \"2026-09-02T15:10:20+09:00\",\n      \"result\": {\n        \"spec_match\": true,\n        \"current_part\": \"VLV-SS316-1/4-NC\",\n        \"alternatives\": [\n          {\n            \"part_no\": \"VLV-SS316-1/4-NC-EQ\",\n            \"grade\": \"EQUIVALENT\",\n            \"diff\": \"시트 재질 PCTFE→PTFE\",\n            \"allowed_for_toxic_gas\": false\n          }\n        ]\n      }\n    },\n    {\n      \"agent\": \"LEGAL\",\n      \"status\": \"PENDING\",\n      \"started_at\": null,\n      \"completed_at\": null,\n      \"result\": null\n    },\n    {\n      \"agent\": \"SAFETY_DOC\",\n      \"status\": \"PENDING\",\n      \"started_at\": null,\n      \"completed_at\": null,\n      \"result\": null\n    },\n    {\n      \"agent\": \"VENDOR\",\n      \"status\": \"PENDING\",\n      \"started_at\": null,\n      \"completed_at\": null,\n      \"result\": null\n    }\n  ],\n  \"summary\": null,\n  \"approval_required_by\": \"SAFETY_MANAGER\",\n  \"model_name\": \"mock-v1\",\n  \"prompt_version\": \"replaceflow-v0.1\",\n  \"created_at\": \"2026-09-02T15:10:02+09:00\",\n  \"completed_at\": null\n}"
+            },
+            {
+              "name": "200 폴링 2/4 완료 (RUNNING)",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/agent-runs/{{runId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "agent-runs",
+                    "{{runId}}"
+                  ]
+                },
+                "description": "steps 별 `PENDING/RUNNING/DONE/FAILED` 상태와 결과 JSON. FE 는 이 JSON 만 알면 된다(Interface First).\nMock: 호출마다 다음 step 하나가 `DONE` 으로 전이(SPEC→LEGAL→SAFETY_DOC→VENDOR). 4개 모두 DONE 이면 `overall_status=REVIEW`.\n"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"run_id\": \"RUN-0042\",\n  \"work_request_id\": \"WR-20260902-011\",\n  \"overall_status\": \"RUNNING\",\n  \"steps\": [\n    {\n      \"agent\": \"SPEC\",\n      \"status\": \"DONE\",\n      \"started_at\": \"2026-09-02T15:10:03+09:00\",\n      \"completed_at\": \"2026-09-02T15:10:20+09:00\",\n      \"result\": {\n        \"spec_match\": true,\n        \"current_part\": \"VLV-SS316-1/4-NC\",\n        \"alternatives\": [\n          {\n            \"part_no\": \"VLV-SS316-1/4-NC-EQ\",\n            \"grade\": \"EQUIVALENT\",\n            \"diff\": \"시트 재질 PCTFE→PTFE\",\n            \"allowed_for_toxic_gas\": false\n          }\n        ]\n      }\n    },\n    {\n      \"agent\": \"LEGAL\",\n      \"status\": \"DONE\",\n      \"started_at\": \"2026-09-02T15:10:03+09:00\",\n      \"completed_at\": \"2026-09-02T15:10:45+09:00\",\n      \"result\": {\n        \"applicable_laws\": [\n          {\n            \"law\": \"산업안전보건기준에 관한 규칙\",\n            \"article\": \"제92조\",\n            \"title\": \"정비등의 작업 시의 운전정지 등\",\n            \"quote\": \"…운전을 정지하고 … 잠금장치 및 표지판을…\"\n          },\n          {\n            \"law\": \"화학물질관리법\",\n            \"article\": \"제24조\",\n            \"title\": \"취급시설의 설치·관리 기준\",\n            \"quote\": \"\"\n          },\n          {\n            \"law\": \"고압가스 안전관리법 시행규칙\",\n            \"article\": \"별표\",\n            \"title\": \"특정고압가스 사용시설 기준\",\n            \"quote\": \"\"\n          }\n        ],\n        \"required_procedures\": [\n          {\n            \"name\": \"작업허가서(가스 배관 작업)\",\n            \"phase\": \"BEFORE\",\n            \"required\": true\n          },\n          {\n            \"name\": \"위험성평가\",\n            \"phase\": \"BEFORE\",\n            \"required\": true\n          },\n          {\n            \"name\": \"LOTO·가스 차단·퍼지 확인\",\n            \"phase\": \"BEFORE\",\n            \"required\": true\n          },\n          {\n            \"name\": \"가스 감지기 정상 확인\",\n            \"phase\": \"AFTER\",\n            \"required\": true\n          }\n        ]\n      }\n    },\n    {\n      \"agent\": \"SAFETY_DOC\",\n      \"status\": \"PENDING\",\n      \"started_at\": null,\n      \"completed_at\": null,\n      \"result\": null\n    },\n    {\n      \"agent\": \"VENDOR\",\n      \"status\": \"PENDING\",\n      \"started_at\": null,\n      \"completed_at\": null,\n      \"result\": null\n    }\n  ],\n  \"summary\": null,\n  \"approval_required_by\": \"SAFETY_MANAGER\",\n  \"model_name\": \"mock-v1\",\n  \"prompt_version\": \"replaceflow-v0.1\",\n  \"created_at\": \"2026-09-02T15:10:02+09:00\",\n  \"completed_at\": null\n}"
+            },
+            {
+              "name": "200 폴링 3/4 완료 (RUNNING)",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/agent-runs/{{runId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "agent-runs",
+                    "{{runId}}"
+                  ]
+                },
+                "description": "steps 별 `PENDING/RUNNING/DONE/FAILED` 상태와 결과 JSON. FE 는 이 JSON 만 알면 된다(Interface First).\nMock: 호출마다 다음 step 하나가 `DONE` 으로 전이(SPEC→LEGAL→SAFETY_DOC→VENDOR). 4개 모두 DONE 이면 `overall_status=REVIEW`.\n"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"run_id\": \"RUN-0042\",\n  \"work_request_id\": \"WR-20260902-011\",\n  \"overall_status\": \"RUNNING\",\n  \"steps\": [\n    {\n      \"agent\": \"SPEC\",\n      \"status\": \"DONE\",\n      \"started_at\": \"2026-09-02T15:10:03+09:00\",\n      \"completed_at\": \"2026-09-02T15:10:20+09:00\",\n      \"result\": {\n        \"spec_match\": true,\n        \"current_part\": \"VLV-SS316-1/4-NC\",\n        \"alternatives\": [\n          {\n            \"part_no\": \"VLV-SS316-1/4-NC-EQ\",\n            \"grade\": \"EQUIVALENT\",\n            \"diff\": \"시트 재질 PCTFE→PTFE\",\n            \"allowed_for_toxic_gas\": false\n          }\n        ]\n      }\n    },\n    {\n      \"agent\": \"LEGAL\",\n      \"status\": \"DONE\",\n      \"started_at\": \"2026-09-02T15:10:03+09:00\",\n      \"completed_at\": \"2026-09-02T15:10:45+09:00\",\n      \"result\": {\n        \"applicable_laws\": [\n          {\n            \"law\": \"산업안전보건기준에 관한 규칙\",\n            \"article\": \"제92조\",\n            \"title\": \"정비등의 작업 시의 운전정지 등\",\n            \"quote\": \"…운전을 정지하고 … 잠금장치 및 표지판을…\"\n          },\n          {\n            \"law\": \"화학물질관리법\",\n            \"article\": \"제24조\",\n            \"title\": \"취급시설의 설치·관리 기준\",\n            \"quote\": \"\"\n          },\n          {\n            \"law\": \"고압가스 안전관리법 시행규칙\",\n            \"article\": \"별표\",\n            \"title\": \"특정고압가스 사용시설 기준\",\n            \"quote\": \"\"\n          }\n        ],\n        \"required_procedures\": [\n          {\n            \"name\": \"작업허가서(가스 배관 작업)\",\n            \"phase\": \"BEFORE\",\n            \"required\": true\n          },\n          {\n            \"name\": \"위험성평가\",\n            \"phase\": \"BEFORE\",\n            \"required\": true\n          },\n          {\n            \"name\": \"LOTO·가스 차단·퍼지 확인\",\n            \"phase\": \"BEFORE\",\n            \"required\": true\n          },\n          {\n            \"name\": \"가스 감지기 정상 확인\",\n            \"phase\": \"AFTER\",\n            \"required\": true\n          }\n        ]\n      }\n    },\n    {\n      \"agent\": \"SAFETY_DOC\",\n      \"status\": \"DONE\",\n      \"started_at\": \"2026-09-02T15:10:46+09:00\",\n      \"completed_at\": \"2026-09-02T15:11:05+09:00\",\n      \"result\": {\n        \"documents\": [\n          {\n            \"doc_id\": \"DOC-0101\",\n            \"type\": \"WORK_PERMIT\",\n            \"missing\": [\n              \"작업자 2명 이름\"\n            ]\n          },\n          {\n            \"doc_id\": \"DOC-0102\",\n            \"type\": \"RISK_ASSESSMENT\",\n            \"missing\": []\n          }\n        ]\n      }\n    },\n    {\n      \"agent\": \"VENDOR\",\n      \"status\": \"PENDING\",\n      \"started_at\": null,\n      \"completed_at\": null,\n      \"result\": null\n    }\n  ],\n  \"summary\": null,\n  \"approval_required_by\": \"SAFETY_MANAGER\",\n  \"model_name\": \"mock-v1\",\n  \"prompt_version\": \"replaceflow-v0.1\",\n  \"created_at\": \"2026-09-02T15:10:02+09:00\",\n  \"completed_at\": null\n}"
+            },
+            {
+              "name": "200 폴링 4/4 완료 (REVIEW)",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/agent-runs/{{runId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "agent-runs",
+                    "{{runId}}"
+                  ]
+                },
+                "description": "steps 별 `PENDING/RUNNING/DONE/FAILED` 상태와 결과 JSON. FE 는 이 JSON 만 알면 된다(Interface First).\nMock: 호출마다 다음 step 하나가 `DONE` 으로 전이(SPEC→LEGAL→SAFETY_DOC→VENDOR). 4개 모두 DONE 이면 `overall_status=REVIEW`.\n"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"run_id\": \"RUN-0042\",\n  \"work_request_id\": \"WR-20260902-011\",\n  \"overall_status\": \"REVIEW\",\n  \"steps\": [\n    {\n      \"agent\": \"SPEC\",\n      \"status\": \"DONE\",\n      \"started_at\": \"2026-09-02T15:10:03+09:00\",\n      \"completed_at\": \"2026-09-02T15:10:20+09:00\",\n      \"result\": {\n        \"spec_match\": true,\n        \"current_part\": \"VLV-SS316-1/4-NC\",\n        \"alternatives\": [\n          {\n            \"part_no\": \"VLV-SS316-1/4-NC-EQ\",\n            \"grade\": \"EQUIVALENT\",\n            \"diff\": \"시트 재질 PCTFE→PTFE\",\n            \"allowed_for_toxic_gas\": false\n          }\n        ]\n      }\n    },\n    {\n      \"agent\": \"LEGAL\",\n      \"status\": \"DONE\",\n      \"started_at\": \"2026-09-02T15:10:03+09:00\",\n      \"completed_at\": \"2026-09-02T15:10:45+09:00\",\n      \"result\": {\n        \"applicable_laws\": [\n          {\n            \"law\": \"산업안전보건기준에 관한 규칙\",\n            \"article\": \"제92조\",\n            \"title\": \"정비등의 작업 시의 운전정지 등\",\n            \"quote\": \"…운전을 정지하고 … 잠금장치 및 표지판을…\"\n          },\n          {\n            \"law\": \"화학물질관리법\",\n            \"article\": \"제24조\",\n            \"title\": \"취급시설의 설치·관리 기준\",\n            \"quote\": \"\"\n          },\n          {\n            \"law\": \"고압가스 안전관리법 시행규칙\",\n            \"article\": \"별표\",\n            \"title\": \"특정고압가스 사용시설 기준\",\n            \"quote\": \"\"\n          }\n        ],\n        \"required_procedures\": [\n          {\n            \"name\": \"작업허가서(가스 배관 작업)\",\n            \"phase\": \"BEFORE\",\n            \"required\": true\n          },\n          {\n            \"name\": \"위험성평가\",\n            \"phase\": \"BEFORE\",\n            \"required\": true\n          },\n          {\n            \"name\": \"LOTO·가스 차단·퍼지 확인\",\n            \"phase\": \"BEFORE\",\n            \"required\": true\n          },\n          {\n            \"name\": \"가스 감지기 정상 확인\",\n            \"phase\": \"AFTER\",\n            \"required\": true\n          }\n        ]\n      }\n    },\n    {\n      \"agent\": \"SAFETY_DOC\",\n      \"status\": \"DONE\",\n      \"started_at\": \"2026-09-02T15:10:46+09:00\",\n      \"completed_at\": \"2026-09-02T15:11:05+09:00\",\n      \"result\": {\n        \"documents\": [\n          {\n            \"doc_id\": \"DOC-0101\",\n            \"type\": \"WORK_PERMIT\",\n            \"missing\": [\n              \"작업자 2명 이름\"\n            ]\n          },\n          {\n            \"doc_id\": \"DOC-0102\",\n            \"type\": \"RISK_ASSESSMENT\",\n            \"missing\": []\n          }\n        ]\n      }\n    },\n    {\n      \"agent\": \"VENDOR\",\n      \"status\": \"DONE\",\n      \"started_at\": \"2026-09-02T15:11:06+09:00\",\n      \"completed_at\": \"2026-09-02T15:11:30+09:00\",\n      \"result\": {\n        \"rfq_doc_id\": \"DOC-0103\",\n        \"rfq_summary\": \"VLV-SS316-1/4-NC 2EA 견적·납기 요청\",\n        \"lead_time_est_days\": 3,\n        \"last_purchase\": \"2026-02-14\"\n      }\n    }\n  ],\n  \"summary\": \"OEM 동일 규격 밸브 교체. 유독가스 라인이라 호환품 불가. 작업허가·위험성평가·LOTO 필수. 서류 초안 2건 생성, 작업자 명단만 보완 필요.\",\n  \"approval_required_by\": \"SAFETY_MANAGER\",\n  \"model_name\": \"mock-v1\",\n  \"prompt_version\": \"replaceflow-v0.1\",\n  \"created_at\": \"2026-09-02T15:10:02+09:00\",\n  \"completed_at\": \"2026-09-02T15:11:30+09:00\"\n}"
+            },
+            {
+              "name": "401 Unauthorized",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/agent-runs/{{runId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "agent-runs",
+                    "{{runId}}"
+                  ]
+                },
+                "description": "steps 별 `PENDING/RUNNING/DONE/FAILED` 상태와 결과 JSON. FE 는 이 JSON 만 알면 된다(Interface First).\nMock: 호출마다 다음 step 하나가 `DONE` 으로 전이(SPEC→LEGAL→SAFETY_DOC→VENDOR). 4개 모두 DONE 이면 `overall_status=REVIEW`.\n"
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"code\": \"UNAUTHORIZED\",\n  \"message\": \"인증이 필요합니다.\"\n}"
+            },
+            {
+              "name": "404 Not Found",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/agent-runs/{{runId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "agent-runs",
+                    "{{runId}}"
+                  ]
+                },
+                "description": "steps 별 `PENDING/RUNNING/DONE/FAILED` 상태와 결과 JSON. FE 는 이 JSON 만 알면 된다(Interface First).\nMock: 호출마다 다음 step 하나가 `DONE` 으로 전이(SPEC→LEGAL→SAFETY_DOC→VENDOR). 4개 모두 DONE 이면 `overall_status=REVIEW`.\n"
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"code\": \"NOT_FOUND\",\n  \"message\": \"요청한 리소스를 찾을 수 없습니다.\",\n  \"details\": {\n    \"id\": \"WR-99999999-000\"\n  }\n}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const run = pm.response.json();",
+                  "const done = run.steps.filter(s => s.status === 'DONE').length;",
+                  "console.log(`agent-run ${run.run_id}: ${done}/4 DONE, overall=${run.overall_status}`);",
+                  "pm.test('4 steps in fixed order', () => pm.expect(run.steps.map(s => s.agent)).to.eql(['SPEC','LEGAL','SAFETY_DOC','VENDOR']));",
+                  "if (run.overall_status === 'RUNNING') { postman.setNextRequest(pm.info.requestName); } // 3초 폴링은 Runner delay 로 설정"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "approvals",
+      "description": "안전관리자 승인/반려/보완요청",
+      "item": [
+        {
+          "name": "POST /work-requests/{id}/approvals — 승인 / 반려 / 보완요청 결정 등록",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/work-requests/{{workRequestId}}/approvals",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "work-requests",
+                "{{workRequestId}}",
+                "approvals"
+              ]
+            },
+            "description": "안전관리자의 결정(`APPROVE` | `REJECT` | `REQUEST_INFO`)을 등록한다 (UC-04).\n승인 규칙: `checklist` 4항목(`WORK_PERMIT`, `RISK_ASSESSMENT`, `LOTO_GAS_ISOLATION`, `GAS_DETECTOR_CHECK`)이 모두 `true` 가 아니면 `APPROVE` 는 **409**.\n결정에 따라 작업요청 상태는 `APPROVED` / `REJECTED` / (REQUEST_INFO 시) `REVIEW` 로 전이된다.\n",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"approver_id\": \"U-002\",\n  \"decision\": \"APPROVE\",\n  \"checklist\": {\n    \"WORK_PERMIT\": true,\n    \"RISK_ASSESSMENT\": true,\n    \"LOTO_GAS_ISOLATION\": true,\n    \"GAS_DETECTOR_CHECK\": true\n  },\n  \"comment\": \"작업자 명단 확인 완료. 승인.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/work-requests/{{workRequestId}}/approvals",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "work-requests",
+                    "{{workRequestId}}",
+                    "approvals"
+                  ]
+                },
+                "description": "안전관리자의 결정(`APPROVE` | `REJECT` | `REQUEST_INFO`)을 등록한다 (UC-04).\n승인 규칙: `checklist` 4항목(`WORK_PERMIT`, `RISK_ASSESSMENT`, `LOTO_GAS_ISOLATION`, `GAS_DETECTOR_CHECK`)이 모두 `true` 가 아니면 `APPROVE` 는 **409**.\n결정에 따라 작업요청 상태는 `APPROVED` / `REJECTED` / (REQUEST_INFO 시) `REVIEW` 로 전이된다.\n",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"approver_id\": \"U-002\",\n  \"decision\": \"APPROVE\",\n  \"checklist\": {\n    \"WORK_PERMIT\": true,\n    \"RISK_ASSESSMENT\": true,\n    \"LOTO_GAS_ISOLATION\": true,\n    \"GAS_DETECTOR_CHECK\": true\n  },\n  \"comment\": \"작업자 명단 확인 완료. 승인.\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"approval_id\": \"AP-0007\",\n  \"work_request_id\": \"WR-20260902-011\",\n  \"approver_id\": \"U-002\",\n  \"decision\": \"APPROVE\",\n  \"checklist\": {\n    \"WORK_PERMIT\": true,\n    \"RISK_ASSESSMENT\": true,\n    \"LOTO_GAS_ISOLATION\": true,\n    \"GAS_DETECTOR_CHECK\": true\n  },\n  \"comment\": \"작업자 명단 확인 완료. 승인.\",\n  \"decided_at\": \"2026-09-02T16:20:00+09:00\"\n}"
+            },
+            {
+              "name": "401 Unauthorized",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/work-requests/{{workRequestId}}/approvals",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "work-requests",
+                    "{{workRequestId}}",
+                    "approvals"
+                  ]
+                },
+                "description": "안전관리자의 결정(`APPROVE` | `REJECT` | `REQUEST_INFO`)을 등록한다 (UC-04).\n승인 규칙: `checklist` 4항목(`WORK_PERMIT`, `RISK_ASSESSMENT`, `LOTO_GAS_ISOLATION`, `GAS_DETECTOR_CHECK`)이 모두 `true` 가 아니면 `APPROVE` 는 **409**.\n결정에 따라 작업요청 상태는 `APPROVED` / `REJECTED` / (REQUEST_INFO 시) `REVIEW` 로 전이된다.\n",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"approver_id\": \"U-002\",\n  \"decision\": \"APPROVE\",\n  \"checklist\": {\n    \"WORK_PERMIT\": true,\n    \"RISK_ASSESSMENT\": true,\n    \"LOTO_GAS_ISOLATION\": true,\n    \"GAS_DETECTOR_CHECK\": true\n  },\n  \"comment\": \"작업자 명단 확인 완료. 승인.\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"code\": \"UNAUTHORIZED\",\n  \"message\": \"인증이 필요합니다.\"\n}"
+            },
+            {
+              "name": "404 Not Found",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/work-requests/{{workRequestId}}/approvals",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "work-requests",
+                    "{{workRequestId}}",
+                    "approvals"
+                  ]
+                },
+                "description": "안전관리자의 결정(`APPROVE` | `REJECT` | `REQUEST_INFO`)을 등록한다 (UC-04).\n승인 규칙: `checklist` 4항목(`WORK_PERMIT`, `RISK_ASSESSMENT`, `LOTO_GAS_ISOLATION`, `GAS_DETECTOR_CHECK`)이 모두 `true` 가 아니면 `APPROVE` 는 **409**.\n결정에 따라 작업요청 상태는 `APPROVED` / `REJECTED` / (REQUEST_INFO 시) `REVIEW` 로 전이된다.\n",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"approver_id\": \"U-002\",\n  \"decision\": \"APPROVE\",\n  \"checklist\": {\n    \"WORK_PERMIT\": true,\n    \"RISK_ASSESSMENT\": true,\n    \"LOTO_GAS_ISOLATION\": true,\n    \"GAS_DETECTOR_CHECK\": true\n  },\n  \"comment\": \"작업자 명단 확인 완료. 승인.\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"code\": \"NOT_FOUND\",\n  \"message\": \"요청한 리소스를 찾을 수 없습니다.\",\n  \"details\": {\n    \"id\": \"WR-99999999-000\"\n  }\n}"
+            },
+            {
+              "name": "409 Conflict",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/work-requests/{{workRequestId}}/approvals",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "work-requests",
+                    "{{workRequestId}}",
+                    "approvals"
+                  ]
+                },
+                "description": "안전관리자의 결정(`APPROVE` | `REJECT` | `REQUEST_INFO`)을 등록한다 (UC-04).\n승인 규칙: `checklist` 4항목(`WORK_PERMIT`, `RISK_ASSESSMENT`, `LOTO_GAS_ISOLATION`, `GAS_DETECTOR_CHECK`)이 모두 `true` 가 아니면 `APPROVE` 는 **409**.\n결정에 따라 작업요청 상태는 `APPROVED` / `REJECTED` / (REQUEST_INFO 시) `REVIEW` 로 전이된다.\n",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"approver_id\": \"U-002\",\n  \"decision\": \"APPROVE\",\n  \"checklist\": {\n    \"WORK_PERMIT\": true,\n    \"RISK_ASSESSMENT\": true,\n    \"LOTO_GAS_ISOLATION\": true,\n    \"GAS_DETECTOR_CHECK\": true\n  },\n  \"comment\": \"작업자 명단 확인 완료. 승인.\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"code\": \"CHECKLIST_INCOMPLETE\",\n  \"message\": \"필수 체크리스트 4항목을 모두 확인해야 승인할 수 있습니다.\",\n  \"details\": {\n    \"unchecked\": [\n      \"LOTO_GAS_ISOLATION\",\n      \"GAS_DETECTOR_CHECK\"\n    ]\n  }\n}"
+            },
+            {
+              "name": "422 Unprocessable Entity",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/work-requests/{{workRequestId}}/approvals",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "work-requests",
+                    "{{workRequestId}}",
+                    "approvals"
+                  ]
+                },
+                "description": "안전관리자의 결정(`APPROVE` | `REJECT` | `REQUEST_INFO`)을 등록한다 (UC-04).\n승인 규칙: `checklist` 4항목(`WORK_PERMIT`, `RISK_ASSESSMENT`, `LOTO_GAS_ISOLATION`, `GAS_DETECTOR_CHECK`)이 모두 `true` 가 아니면 `APPROVE` 는 **409**.\n결정에 따라 작업요청 상태는 `APPROVED` / `REJECTED` / (REQUEST_INFO 시) `REVIEW` 로 전이된다.\n",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"approver_id\": \"U-002\",\n  \"decision\": \"APPROVE\",\n  \"checklist\": {\n    \"WORK_PERMIT\": true,\n    \"RISK_ASSESSMENT\": true,\n    \"LOTO_GAS_ISOLATION\": true,\n    \"GAS_DETECTOR_CHECK\": true\n  },\n  \"comment\": \"작업자 명단 확인 완료. 승인.\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"code\": \"VALIDATION_ERROR\",\n  \"message\": \"요청 값이 올바르지 않습니다.\",\n  \"details\": {\n    \"errors\": [\n      {\n        \"field\": \"equipment_id\",\n        \"message\": \"field required\"\n      }\n    ]\n  }\n}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status code is expected\", function () { pm.expect([200,201,202]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "documents",
+      "description": "에이전트가 생성한 안전 서류·RFQ 초안",
+      "item": [
+        {
+          "name": "GET /documents/{docId} — 서류 초안 조회",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/documents/{{docId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "documents",
+                "{{docId}}"
+              ]
+            },
+            "description": "에이전트가 생성한 작업허가서·위험성평가표·LOTO 체크리스트·RFQ 초안 본문과 누락 항목."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/documents/{{docId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "documents",
+                    "{{docId}}"
+                  ]
+                },
+                "description": "에이전트가 생성한 작업허가서·위험성평가표·LOTO 체크리스트·RFQ 초안 본문과 누락 항목."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"doc_id\": \"DOC-0101\",\n  \"agent_run_id\": \"RUN-0042\",\n  \"work_request_id\": \"WR-20260902-011\",\n  \"type\": \"WORK_PERMIT\",\n  \"title\": \"작업허가서 — 가스캐비닛#2 밸브 교체\",\n  \"body\": \"# 작업허가서\\n\\n- 설비: 가스캐비닛#2 (EQ-GC-02)\\n- 작업: VLV-SS316-1/4-NC 교체\\n- 물질: SiH4\\n- 작업자: [ ] , [ ]\\n- 사전 조치: 운전 정지, LOTO, 가스 차단·퍼지 확인 (산안규칙 제92조)\\n- 작업 후: 가스 감지기 정상 확인\",\n  \"missing\": [\n    \"작업자 2명 이름\"\n  ],\n  \"version\": 1,\n  \"created_at\": \"2026-09-02T15:11:05+09:00\"\n}"
+            },
+            {
+              "name": "401 Unauthorized",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/documents/{{docId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "documents",
+                    "{{docId}}"
+                  ]
+                },
+                "description": "에이전트가 생성한 작업허가서·위험성평가표·LOTO 체크리스트·RFQ 초안 본문과 누락 항목."
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"code\": \"UNAUTHORIZED\",\n  \"message\": \"인증이 필요합니다.\"\n}"
+            },
+            {
+              "name": "404 Not Found",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/documents/{{docId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "documents",
+                    "{{docId}}"
+                  ]
+                },
+                "description": "에이전트가 생성한 작업허가서·위험성평가표·LOTO 체크리스트·RFQ 초안 본문과 누락 항목."
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"code\": \"NOT_FOUND\",\n  \"message\": \"요청한 리소스를 찾을 수 없습니다.\",\n  \"details\": {\n    \"id\": \"WR-99999999-000\"\n  }\n}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status code is expected\", function () { pm.expect([200,201,202]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "parts",
+      "description": "부품 및 호환표",
+      "item": [
+        {
+          "name": "GET /parts — 부품 목록 조회",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/parts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "parts"
+              ]
+            },
+            "description": "부품 목록 조회"
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/parts",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "parts"
+                  ]
+                },
+                "description": "부품 목록 조회"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "[\n  {\n    \"id\": \"P-VLV-001\",\n    \"tenant_id\": \"T-001\",\n    \"part_no\": \"VLV-SS316-1/4-NC\",\n    \"name\": \"다이어프램 밸브 SS316 1/4\\\" NC\",\n    \"spec\": {\n      \"body\": \"SS316\",\n      \"size\": \"1/4\\\"\",\n      \"type\": \"NC\",\n      \"seat\": \"PCTFE\"\n    },\n    \"grade\": \"OEM\",\n    \"toxic_gas_allowed\": true,\n    \"stock\": 2\n  },\n  {\n    \"id\": \"P-VLV-002\",\n    \"tenant_id\": \"T-001\",\n    \"part_no\": \"VLV-SS316-1/4-NC-EQ\",\n    \"name\": \"다이어프램 밸브 SS316 1/4\\\" NC (호환)\",\n    \"spec\": {\n      \"body\": \"SS316\",\n      \"size\": \"1/4\\\"\",\n      \"type\": \"NC\",\n      \"seat\": \"PTFE\"\n    },\n    \"grade\": \"EQUIVALENT\",\n    \"toxic_gas_allowed\": false,\n    \"stock\": 5\n  },\n  {\n    \"id\": \"P-REG-001\",\n    \"tenant_id\": \"T-001\",\n    \"part_no\": \"REG-2S\",\n    \"name\": \"압력조정기 REG-2S\",\n    \"spec\": {\n      \"stages\": 2,\n      \"inlet_max_bar\": 200\n    },\n    \"grade\": \"OEM\",\n    \"toxic_gas_allowed\": true,\n    \"stock\": 1\n  },\n  {\n    \"id\": \"P-FLT-001\",\n    \"tenant_id\": \"T-001\",\n    \"part_no\": \"FLT-INL-01\",\n    \"name\": \"인라인 필터\",\n    \"spec\": {\n      \"rating_um\": 0.003\n    },\n    \"grade\": \"EQUIVALENT\",\n    \"toxic_gas_allowed\": true,\n    \"stock\": 8\n  }\n]"
+            },
+            {
+              "name": "401 Unauthorized",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/parts",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "parts"
+                  ]
+                },
+                "description": "부품 목록 조회"
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"code\": \"UNAUTHORIZED\",\n  \"message\": \"인증이 필요합니다.\"\n}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status code is expected\", function () { pm.expect([200,201,202]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /parts/{partId}/compatibility — 부품 호환표 조회",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/parts/{{partId}}/compatibility",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "parts",
+                "{{partId}}",
+                "compatibility"
+              ]
+            },
+            "description": "기준 부품과 대체 가능 부품 목록(등급·차이점·유독가스 라인 사용 가능 여부)."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/parts/{{partId}}/compatibility",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "parts",
+                    "{{partId}}",
+                    "compatibility"
+                  ]
+                },
+                "description": "기준 부품과 대체 가능 부품 목록(등급·차이점·유독가스 라인 사용 가능 여부)."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"part\": {\n    \"id\": \"P-VLV-001\",\n    \"tenant_id\": \"T-001\",\n    \"part_no\": \"VLV-SS316-1/4-NC\",\n    \"name\": \"다이어프램 밸브 SS316 1/4\\\" NC\",\n    \"spec\": {\n      \"body\": \"SS316\",\n      \"size\": \"1/4\\\"\",\n      \"type\": \"NC\",\n      \"seat\": \"PCTFE\"\n    },\n    \"grade\": \"OEM\",\n    \"toxic_gas_allowed\": true,\n    \"stock\": 2\n  },\n  \"alternatives\": [\n    {\n      \"part_id\": \"P-VLV-002\",\n      \"part_no\": \"VLV-SS316-1/4-NC-EQ\",\n      \"name\": \"다이어프램 밸브 SS316 1/4\\\" NC (호환)\",\n      \"grade\": \"EQUIVALENT\",\n      \"diff\": \"시트 재질 PCTFE→PTFE\",\n      \"allowed_for_toxic_gas\": false,\n      \"stock\": 5\n    }\n  ]\n}"
+            },
+            {
+              "name": "401 Unauthorized",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/parts/{{partId}}/compatibility",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "parts",
+                    "{{partId}}",
+                    "compatibility"
+                  ]
+                },
+                "description": "기준 부품과 대체 가능 부품 목록(등급·차이점·유독가스 라인 사용 가능 여부)."
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"code\": \"UNAUTHORIZED\",\n  \"message\": \"인증이 필요합니다.\"\n}"
+            },
+            {
+              "name": "404 Not Found",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/parts/{{partId}}/compatibility",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "parts",
+                    "{{partId}}",
+                    "compatibility"
+                  ]
+                },
+                "description": "기준 부품과 대체 가능 부품 목록(등급·차이점·유독가스 라인 사용 가능 여부)."
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"code\": \"NOT_FOUND\",\n  \"message\": \"요청한 리소스를 찾을 수 없습니다.\",\n  \"details\": {\n    \"id\": \"WR-99999999-000\"\n  }\n}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status code is expected\", function () { pm.expect([200,201,202]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "equipments",
+      "description": "설비 마스터",
+      "item": [
+        {
+          "name": "GET /equipments — 설비 목록 조회",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/equipments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "equipments"
+              ]
+            },
+            "description": "설비 목록 조회"
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/equipments",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "equipments"
+                  ]
+                },
+                "description": "설비 목록 조회"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "[\n  {\n    \"id\": \"EQ-GC-02\",\n    \"tenant_id\": \"T-001\",\n    \"name\": \"가스캐비닛#2\",\n    \"type\": \"GAS_CABINET\",\n    \"line\": \"FAB1-L2\",\n    \"substances\": [\n      \"SiH4\"\n    ]\n  },\n  {\n    \"id\": \"EQ-VLV-07\",\n    \"tenant_id\": \"T-001\",\n    \"name\": \"공정가스 밸브#7\",\n    \"type\": \"VALVE\",\n    \"line\": \"FAB1-L2\",\n    \"substances\": [\n      \"NH3\"\n    ]\n  },\n  {\n    \"id\": \"EQ-SCR-01\",\n    \"tenant_id\": \"T-001\",\n    \"name\": \"스크러버#1\",\n    \"type\": \"SCRUBBER\",\n    \"line\": \"FAB1-L3\",\n    \"substances\": []\n  }\n]"
+            },
+            {
+              "name": "401 Unauthorized",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/equipments",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "equipments"
+                  ]
+                },
+                "description": "설비 목록 조회"
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"code\": \"UNAUTHORIZED\",\n  \"message\": \"인증이 필요합니다.\"\n}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status code is expected\", function () { pm.expect([200,201,202]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "laws",
+      "description": "법령 인덱스(법제처 사전 적재) 검색",
+      "item": [
+        {
+          "name": "GET /laws/search — 법령 인덱스 검색",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/laws/search?q=운전정지&equipmentType=GAS_CABINET&substance=SiH4",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "laws",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "운전정지"
+                },
+                {
+                  "key": "equipmentType",
+                  "value": "GAS_CABINET"
+                },
+                {
+                  "key": "substance",
+                  "value": "SiH4"
+                }
+              ]
+            },
+            "description": "사내에 사전 적재된 법령 인덱스(법제처 API)에서 키워드·설비 유형·물질로 조문을 검색한다. 외부 전송 없음."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/laws/search?q=운전정지&equipmentType=GAS_CABINET&substance=SiH4",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "laws",
+                    "search"
+                  ],
+                  "query": [
+                    {
+                      "key": "q",
+                      "value": "운전정지"
+                    },
+                    {
+                      "key": "equipmentType",
+                      "value": "GAS_CABINET"
+                    },
+                    {
+                      "key": "substance",
+                      "value": "SiH4"
+                    }
+                  ]
+                },
+                "description": "사내에 사전 적재된 법령 인덱스(법제처 API)에서 키워드·설비 유형·물질로 조문을 검색한다. 외부 전송 없음."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"items\": [\n    {\n      \"id\": \"LAW-0002\",\n      \"law\": \"산업안전보건기준에 관한 규칙\",\n      \"article\": \"제92조\",\n      \"title\": \"정비등의 작업 시의 운전정지 등\",\n      \"text\": \"사업주는 공작기계·수송기계·건설기계 등의 정비·청소·급유·검사·수리·교체 또는 조정 작업 시 근로자가 위험해질 우려가 있으면 해당 기계의 운전을 정지하여야 하며 … 잠금장치 및 표지판을 …\",\n      \"effective_date\": \"2024-06-28\",\n      \"source_uri\": \"https://www.law.go.kr/법령/산업안전보건기준에관한규칙/제92조\",\n      \"tags\": [\n        \"GAS_CABINET\",\n        \"VALVE\",\n        \"LOTO\"\n      ]\n    },\n    {\n      \"id\": \"LAW-0005\",\n      \"law\": \"화학물질관리법\",\n      \"article\": \"제24조\",\n      \"title\": \"취급시설의 설치·관리 기준\",\n      \"text\": \"유해화학물질 취급시설을 설치·운영하려는 자는 … 환경부령으로 정하는 설치 및 관리 기준에 따라야 한다.\",\n      \"effective_date\": \"2025-01-01\",\n      \"source_uri\": \"https://www.law.go.kr/법령/화학물질관리법/제24조\",\n      \"tags\": [\n        \"GAS_CABINET\",\n        \"SiH4\",\n        \"NH3\"\n      ]\n    }\n  ],\n  \"total\": 2\n}"
+            },
+            {
+              "name": "401 Unauthorized",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/laws/search?q=운전정지&equipmentType=GAS_CABINET&substance=SiH4",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "laws",
+                    "search"
+                  ],
+                  "query": [
+                    {
+                      "key": "q",
+                      "value": "운전정지"
+                    },
+                    {
+                      "key": "equipmentType",
+                      "value": "GAS_CABINET"
+                    },
+                    {
+                      "key": "substance",
+                      "value": "SiH4"
+                    }
+                  ]
+                },
+                "description": "사내에 사전 적재된 법령 인덱스(법제처 API)에서 키워드·설비 유형·물질로 조문을 검색한다. 외부 전송 없음."
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"code\": \"UNAUTHORIZED\",\n  \"message\": \"인증이 필요합니다.\"\n}"
+            },
+            {
+              "name": "422 Unprocessable Entity",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/laws/search?q=운전정지&equipmentType=GAS_CABINET&substance=SiH4",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "laws",
+                    "search"
+                  ],
+                  "query": [
+                    {
+                      "key": "q",
+                      "value": "운전정지"
+                    },
+                    {
+                      "key": "equipmentType",
+                      "value": "GAS_CABINET"
+                    },
+                    {
+                      "key": "substance",
+                      "value": "SiH4"
+                    }
+                  ]
+                },
+                "description": "사내에 사전 적재된 법령 인덱스(법제처 API)에서 키워드·설비 유형·물질로 조문을 검색한다. 외부 전송 없음."
+              },
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"code\": \"VALIDATION_ERROR\",\n  \"message\": \"요청 값이 올바르지 않습니다.\",\n  \"details\": {\n    \"errors\": [\n      {\n        \"field\": \"equipment_id\",\n        \"message\": \"field required\"\n      }\n    ]\n  }\n}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status code is expected\", function () { pm.expect([200,201,202]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "dashboard",
+      "description": "KPI 대시보드",
+      "item": [
+        {
+          "name": "GET /dashboard/summary — 대시보드 KPI 요약",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dashboard/summary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "dashboard",
+                "summary"
+              ]
+            },
+            "description": "진행 중·승인 대기 건수, 평균 승인 소요시간(As-Is 168h 대비), 이번 달 완료, 반려 사유 TOP."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/dashboard/summary",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "dashboard",
+                    "summary"
+                  ]
+                },
+                "description": "진행 중·승인 대기 건수, 평균 승인 소요시간(As-Is 168h 대비), 이번 달 완료, 반려 사유 TOP."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"in_progress\": 5,\n  \"pending_approval\": 2,\n  \"avg_approval_hours\": 26.5,\n  \"as_is_baseline_hours\": 168,\n  \"completed_this_month\": 12,\n  \"reject_reasons_top\": [\n    {\n      \"reason\": \"서류 누락\",\n      \"count\": 3\n    },\n    {\n      \"reason\": \"호환품 부적합\",\n      \"count\": 1\n    }\n  ]\n}"
+            },
+            {
+              "name": "401 Unauthorized",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/dashboard/summary",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "dashboard",
+                    "summary"
+                  ]
+                },
+                "description": "진행 중·승인 대기 건수, 평균 승인 소요시간(As-Is 168h 대비), 이번 달 완료, 반려 사유 TOP."
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"code\": \"UNAUTHORIZED\",\n  \"message\": \"인증이 필요합니다.\"\n}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status code is expected\", function () { pm.expect([200,201,202]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "tenants",
+      "description": "테넌트별 AI 설정(에이전트별 모델·egress)",
+      "item": [
+        {
+          "name": "GET /tenants/{id}/ai-config — 테넌트 AI 설정 조회",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/tenants/{{tenantId}}/ai-config",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenantId}}",
+                "ai-config"
+              ]
+            },
+            "description": "에이전트별 provider(`LOCAL_LLM`/`AX_PLATFORM`/`OPENAI`), 모델명, 프롬프트 버전, 외부 전송 허용 여부."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/tenants/{{tenantId}}/ai-config",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "tenants",
+                    "{{tenantId}}",
+                    "ai-config"
+                  ]
+                },
+                "description": "에이전트별 provider(`LOCAL_LLM`/`AX_PLATFORM`/`OPENAI`), 모델명, 프롬프트 버전, 외부 전송 허용 여부."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "[\n  {\n    \"tenant_id\": \"T-001\",\n    \"agent_type\": \"SPEC\",\n    \"provider\": \"LOCAL_LLM\",\n    \"model_name\": \"mock-v1\",\n    \"prompt_version\": \"replaceflow-v0.1\",\n    \"egress_allowed\": false\n  },\n  {\n    \"tenant_id\": \"T-001\",\n    \"agent_type\": \"LEGAL\",\n    \"provider\": \"LOCAL_LLM\",\n    \"model_name\": \"mock-v1\",\n    \"prompt_version\": \"replaceflow-v0.1\",\n    \"egress_allowed\": false\n  },\n  {\n    \"tenant_id\": \"T-001\",\n    \"agent_type\": \"SAFETY_DOC\",\n    \"provider\": \"LOCAL_LLM\",\n    \"model_name\": \"mock-v1\",\n    \"prompt_version\": \"replaceflow-v0.1\",\n    \"egress_allowed\": false\n  },\n  {\n    \"tenant_id\": \"T-001\",\n    \"agent_type\": \"VENDOR\",\n    \"provider\": \"LOCAL_LLM\",\n    \"model_name\": \"mock-v1\",\n    \"prompt_version\": \"replaceflow-v0.1\",\n    \"egress_allowed\": false\n  }\n]"
+            },
+            {
+              "name": "401 Unauthorized",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/tenants/{{tenantId}}/ai-config",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "tenants",
+                    "{{tenantId}}",
+                    "ai-config"
+                  ]
+                },
+                "description": "에이전트별 provider(`LOCAL_LLM`/`AX_PLATFORM`/`OPENAI`), 모델명, 프롬프트 버전, 외부 전송 허용 여부."
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"code\": \"UNAUTHORIZED\",\n  \"message\": \"인증이 필요합니다.\"\n}"
+            },
+            {
+              "name": "404 Not Found",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/tenants/{{tenantId}}/ai-config",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "tenants",
+                    "{{tenantId}}",
+                    "ai-config"
+                  ]
+                },
+                "description": "에이전트별 provider(`LOCAL_LLM`/`AX_PLATFORM`/`OPENAI`), 모델명, 프롬프트 버전, 외부 전송 허용 여부."
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"code\": \"NOT_FOUND\",\n  \"message\": \"요청한 리소스를 찾을 수 없습니다.\",\n  \"details\": {\n    \"id\": \"WR-99999999-000\"\n  }\n}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status code is expected\", function () { pm.expect([200,201,202]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PUT /tenants/{id}/ai-config — 테넌트 AI 설정 전체 교체",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/tenants/{{tenantId}}/ai-config",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenantId}}",
+                "ai-config"
+              ]
+            },
+            "description": "에이전트별 AI 설정 배열을 통째로 교체한다(멱등). 온프레미스 기본값은 `provider=LOCAL_LLM`, `egress_allowed=false`."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/tenants/{{tenantId}}/ai-config",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "tenants",
+                    "{{tenantId}}",
+                    "ai-config"
+                  ]
+                },
+                "description": "에이전트별 AI 설정 배열을 통째로 교체한다(멱등). 온프레미스 기본값은 `provider=LOCAL_LLM`, `egress_allowed=false`."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "[\n  {\n    \"tenant_id\": \"T-001\",\n    \"agent_type\": \"SPEC\",\n    \"provider\": \"LOCAL_LLM\",\n    \"model_name\": \"mock-v1\",\n    \"prompt_version\": \"replaceflow-v0.1\",\n    \"egress_allowed\": false\n  },\n  {\n    \"tenant_id\": \"T-001\",\n    \"agent_type\": \"LEGAL\",\n    \"provider\": \"LOCAL_LLM\",\n    \"model_name\": \"mock-v1\",\n    \"prompt_version\": \"replaceflow-v0.1\",\n    \"egress_allowed\": false\n  },\n  {\n    \"tenant_id\": \"T-001\",\n    \"agent_type\": \"SAFETY_DOC\",\n    \"provider\": \"LOCAL_LLM\",\n    \"model_name\": \"mock-v1\",\n    \"prompt_version\": \"replaceflow-v0.1\",\n    \"egress_allowed\": false\n  },\n  {\n    \"tenant_id\": \"T-001\",\n    \"agent_type\": \"VENDOR\",\n    \"provider\": \"LOCAL_LLM\",\n    \"model_name\": \"mock-v1\",\n    \"prompt_version\": \"replaceflow-v0.1\",\n    \"egress_allowed\": false\n  }\n]"
+            },
+            {
+              "name": "401 Unauthorized",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/tenants/{{tenantId}}/ai-config",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "tenants",
+                    "{{tenantId}}",
+                    "ai-config"
+                  ]
+                },
+                "description": "에이전트별 AI 설정 배열을 통째로 교체한다(멱등). 온프레미스 기본값은 `provider=LOCAL_LLM`, `egress_allowed=false`."
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"code\": \"UNAUTHORIZED\",\n  \"message\": \"인증이 필요합니다.\"\n}"
+            },
+            {
+              "name": "404 Not Found",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/tenants/{{tenantId}}/ai-config",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "tenants",
+                    "{{tenantId}}",
+                    "ai-config"
+                  ]
+                },
+                "description": "에이전트별 AI 설정 배열을 통째로 교체한다(멱등). 온프레미스 기본값은 `provider=LOCAL_LLM`, `egress_allowed=false`."
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"code\": \"NOT_FOUND\",\n  \"message\": \"요청한 리소스를 찾을 수 없습니다.\",\n  \"details\": {\n    \"id\": \"WR-99999999-000\"\n  }\n}"
+            },
+            {
+              "name": "422 Unprocessable Entity",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/tenants/{{tenantId}}/ai-config",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "tenants",
+                    "{{tenantId}}",
+                    "ai-config"
+                  ]
+                },
+                "description": "에이전트별 AI 설정 배열을 통째로 교체한다(멱등). 온프레미스 기본값은 `provider=LOCAL_LLM`, `egress_allowed=false`."
+              },
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"code\": \"VALIDATION_ERROR\",\n  \"message\": \"요청 값이 올바르지 않습니다.\",\n  \"details\": {\n    \"errors\": [\n      {\n        \"field\": \"equipment_id\",\n        \"message\": \"field required\"\n      }\n    ]\n  }\n}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status code is expected\", function () { pm.expect([200,201,202]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "데모 시나리오 (90초)",
+      "description": "요청 생성 → 에이전트 4개 완료 → 승인 요청 → 안전관리자 승인 → 대시보드. Collection Runner 에서 delay 3000ms 로 실행.",
+      "item": [
+        {
+          "name": "1. 작업요청 생성 (201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/work-requests",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "work-requests"
+              ]
+            },
+            "description": "설비·부품·증상·현장 확인 결과를 입력해 작업요청을 생성한다 (UC-01). 생성 직후 상태는 `REQUESTED`.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"equipment_id\": \"EQ-GC-02\",\n  \"part_id\": \"P-VLV-001\",\n  \"symptom\": \"가스 유량 이상, 밸브 누설 의심\",\n  \"site_check_note\": \"현장 확인 결과 밸브 시트 마모\",\n  \"requested_by\": \"U-001\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/work-requests",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "work-requests"
+                  ]
+                },
+                "description": "설비·부품·증상·현장 확인 결과를 입력해 작업요청을 생성한다 (UC-01). 생성 직후 상태는 `REQUESTED`.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"equipment_id\": \"EQ-GC-02\",\n  \"part_id\": \"P-VLV-001\",\n  \"symptom\": \"가스 유량 이상, 밸브 누설 의심\",\n  \"site_check_note\": \"현장 확인 결과 밸브 시트 마모\",\n  \"requested_by\": \"U-001\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "Location",
+                  "value": "/api/v1/work-requests/WR-20260902-011"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"id\": \"WR-20260902-011\",\n  \"tenant_id\": \"T-001\",\n  \"equipment_id\": \"EQ-GC-02\",\n  \"part_id\": \"P-VLV-001\",\n  \"symptom\": \"가스 유량 이상, 밸브 누설 의심\",\n  \"site_check_note\": \"현장 확인 결과 밸브 시트 마모\",\n  \"requested_by\": \"U-001\",\n  \"status\": \"REQUESTED\",\n  \"created_at\": \"2026-09-02T15:00:00+09:00\",\n  \"updated_at\": \"2026-09-02T15:00:00+09:00\"\n}"
+            },
+            {
+              "name": "401 Unauthorized",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/work-requests",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "work-requests"
+                  ]
+                },
+                "description": "설비·부품·증상·현장 확인 결과를 입력해 작업요청을 생성한다 (UC-01). 생성 직후 상태는 `REQUESTED`.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"equipment_id\": \"EQ-GC-02\",\n  \"part_id\": \"P-VLV-001\",\n  \"symptom\": \"가스 유량 이상, 밸브 누설 의심\",\n  \"site_check_note\": \"현장 확인 결과 밸브 시트 마모\",\n  \"requested_by\": \"U-001\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"code\": \"UNAUTHORIZED\",\n  \"message\": \"인증이 필요합니다.\"\n}"
+            },
+            {
+              "name": "422 Unprocessable Entity",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/work-requests",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "work-requests"
+                  ]
+                },
+                "description": "설비·부품·증상·현장 확인 결과를 입력해 작업요청을 생성한다 (UC-01). 생성 직후 상태는 `REQUESTED`.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"equipment_id\": \"EQ-GC-02\",\n  \"part_id\": \"P-VLV-001\",\n  \"symptom\": \"가스 유량 이상, 밸브 누설 의심\",\n  \"site_check_note\": \"현장 확인 결과 밸브 시트 마모\",\n  \"requested_by\": \"U-001\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"code\": \"VALIDATION_ERROR\",\n  \"message\": \"요청 값이 올바르지 않습니다.\",\n  \"details\": {\n    \"errors\": [\n      {\n        \"field\": \"equipment_id\",\n        \"message\": \"field required\"\n      }\n    ]\n  }\n}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('workRequestId', pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2. 에이전트 실행 시작 (202)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/work-requests/{{workRequestId}}/agent-runs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "work-requests",
+                "{{workRequestId}}",
+                "agent-runs"
+              ]
+            },
+            "description": "오케스트레이터가 SPEC/LEGAL/SAFETY_DOC/VENDOR 4개 에이전트 실행을 시작한다 (UC-02).\n처리는 비동기이므로 **202 Accepted** 와 `run_id` 만 즉시 반환하고, 결과는 `GET /agent-runs/{runId}` 로 폴링한다.\n작업요청 상태는 `RUNNING` 으로 전이된다. 이미 `APPROVED`/`DONE` 인 요청에는 실행할 수 없다(409).\n"
+          },
+          "response": [
+            {
+              "name": "202 Accepted",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/work-requests/{{workRequestId}}/agent-runs",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "work-requests",
+                    "{{workRequestId}}",
+                    "agent-runs"
+                  ]
+                },
+                "description": "오케스트레이터가 SPEC/LEGAL/SAFETY_DOC/VENDOR 4개 에이전트 실행을 시작한다 (UC-02).\n처리는 비동기이므로 **202 Accepted** 와 `run_id` 만 즉시 반환하고, 결과는 `GET /agent-runs/{runId}` 로 폴링한다.\n작업요청 상태는 `RUNNING` 으로 전이된다. 이미 `APPROVED`/`DONE` 인 요청에는 실행할 수 없다(409).\n"
+              },
+              "status": "Accepted",
+              "code": 202,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "Location",
+                  "value": "/api/v1/agent-runs/RUN-0042"
+                },
+                {
+                  "key": "Retry-After",
+                  "value": "3"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"run_id\": \"RUN-0042\",\n  \"overall_status\": \"RUNNING\"\n}"
+            },
+            {
+              "name": "401 Unauthorized",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/work-requests/{{workRequestId}}/agent-runs",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "work-requests",
+                    "{{workRequestId}}",
+                    "agent-runs"
+                  ]
+                },
+                "description": "오케스트레이터가 SPEC/LEGAL/SAFETY_DOC/VENDOR 4개 에이전트 실행을 시작한다 (UC-02).\n처리는 비동기이므로 **202 Accepted** 와 `run_id` 만 즉시 반환하고, 결과는 `GET /agent-runs/{runId}` 로 폴링한다.\n작업요청 상태는 `RUNNING` 으로 전이된다. 이미 `APPROVED`/`DONE` 인 요청에는 실행할 수 없다(409).\n"
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"code\": \"UNAUTHORIZED\",\n  \"message\": \"인증이 필요합니다.\"\n}"
+            },
+            {
+              "name": "404 Not Found",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/work-requests/{{workRequestId}}/agent-runs",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "work-requests",
+                    "{{workRequestId}}",
+                    "agent-runs"
+                  ]
+                },
+                "description": "오케스트레이터가 SPEC/LEGAL/SAFETY_DOC/VENDOR 4개 에이전트 실행을 시작한다 (UC-02).\n처리는 비동기이므로 **202 Accepted** 와 `run_id` 만 즉시 반환하고, 결과는 `GET /agent-runs/{runId}` 로 폴링한다.\n작업요청 상태는 `RUNNING` 으로 전이된다. 이미 `APPROVED`/`DONE` 인 요청에는 실행할 수 없다(409).\n"
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"code\": \"NOT_FOUND\",\n  \"message\": \"요청한 리소스를 찾을 수 없습니다.\",\n  \"details\": {\n    \"id\": \"WR-99999999-000\"\n  }\n}"
+            },
+            {
+              "name": "409 Conflict",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/work-requests/{{workRequestId}}/agent-runs",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "work-requests",
+                    "{{workRequestId}}",
+                    "agent-runs"
+                  ]
+                },
+                "description": "오케스트레이터가 SPEC/LEGAL/SAFETY_DOC/VENDOR 4개 에이전트 실행을 시작한다 (UC-02).\n처리는 비동기이므로 **202 Accepted** 와 `run_id` 만 즉시 반환하고, 결과는 `GET /agent-runs/{runId}` 로 폴링한다.\n작업요청 상태는 `RUNNING` 으로 전이된다. 이미 `APPROVED`/`DONE` 인 요청에는 실행할 수 없다(409).\n"
+              },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"code\": \"INVALID_STATE\",\n  \"message\": \"이미 승인(APPROVED) 또는 완료(DONE)된 작업요청에는 에이전트를 실행할 수 없습니다.\",\n  \"details\": {\n    \"current_status\": \"APPROVED\"\n  }\n}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('202 Accepted', () => pm.response.to.have.status(202));",
+                  "const b = pm.response.json();",
+                  "pm.collectionVariables.set('runId', b.run_id);",
+                  "pm.test('overall_status RUNNING', () => pm.expect(b.overall_status).to.eql('RUNNING'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3. 폴링 — RUNNING 이면 자기 자신 재호출 (Runner delay 3000ms)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/agent-runs/{{runId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "agent-runs",
+                "{{runId}}"
+              ]
+            },
+            "description": "steps 별 `PENDING/RUNNING/DONE/FAILED` 상태와 결과 JSON. FE 는 이 JSON 만 알면 된다(Interface First).\nMock: 호출마다 다음 step 하나가 `DONE` 으로 전이(SPEC→LEGAL→SAFETY_DOC→VENDOR). 4개 모두 DONE 이면 `overall_status=REVIEW`.\n"
+          },
+          "response": [
+            {
+              "name": "200 폴링 0/4 완료 (RUNNING)",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/agent-runs/{{runId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "agent-runs",
+                    "{{runId}}"
+                  ]
+                },
+                "description": "steps 별 `PENDING/RUNNING/DONE/FAILED` 상태와 결과 JSON. FE 는 이 JSON 만 알면 된다(Interface First).\nMock: 호출마다 다음 step 하나가 `DONE` 으로 전이(SPEC→LEGAL→SAFETY_DOC→VENDOR). 4개 모두 DONE 이면 `overall_status=REVIEW`.\n"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"run_id\": \"RUN-0042\",\n  \"work_request_id\": \"WR-20260902-011\",\n  \"overall_status\": \"RUNNING\",\n  \"steps\": [\n    {\n      \"agent\": \"SPEC\",\n      \"status\": \"PENDING\",\n      \"started_at\": null,\n      \"completed_at\": null,\n      \"result\": null\n    },\n    {\n      \"agent\": \"LEGAL\",\n      \"status\": \"PENDING\",\n      \"started_at\": null,\n      \"completed_at\": null,\n      \"result\": null\n    },\n    {\n      \"agent\": \"SAFETY_DOC\",\n      \"status\": \"PENDING\",\n      \"started_at\": null,\n      \"completed_at\": null,\n      \"result\": null\n    },\n    {\n      \"agent\": \"VENDOR\",\n      \"status\": \"PENDING\",\n      \"started_at\": null,\n      \"completed_at\": null,\n      \"result\": null\n    }\n  ],\n  \"summary\": null,\n  \"approval_required_by\": \"SAFETY_MANAGER\",\n  \"model_name\": \"mock-v1\",\n  \"prompt_version\": \"replaceflow-v0.1\",\n  \"created_at\": \"2026-09-02T15:10:02+09:00\",\n  \"completed_at\": null\n}"
+            },
+            {
+              "name": "200 폴링 1/4 완료 (RUNNING)",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/agent-runs/{{runId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "agent-runs",
+                    "{{runId}}"
+                  ]
+                },
+                "description": "steps 별 `PENDING/RUNNING/DONE/FAILED` 상태와 결과 JSON. FE 는 이 JSON 만 알면 된다(Interface First).\nMock: 호출마다 다음 step 하나가 `DONE` 으로 전이(SPEC→LEGAL→SAFETY_DOC→VENDOR). 4개 모두 DONE 이면 `overall_status=REVIEW`.\n"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"run_id\": \"RUN-0042\",\n  \"work_request_id\": \"WR-20260902-011\",\n  \"overall_status\": \"RUNNING\",\n  \"steps\": [\n    {\n      \"agent\": \"SPEC\",\n      \"status\": \"DONE\",\n      \"started_at\": \"2026-09-02T15:10:03+09:00\",\n      \"completed_at\": \"2026-09-02T15:10:20+09:00\",\n      \"result\": {\n        \"spec_match\": true,\n        \"current_part\": \"VLV-SS316-1/4-NC\",\n        \"alternatives\": [\n          {\n            \"part_no\": \"VLV-SS316-1/4-NC-EQ\",\n            \"grade\": \"EQUIVALENT\",\n            \"diff\": \"시트 재질 PCTFE→PTFE\",\n            \"allowed_for_toxic_gas\": false\n          }\n        ]\n      }\n    },\n    {\n      \"agent\": \"LEGAL\",\n      \"status\": \"PENDING\",\n      \"started_at\": null,\n      \"completed_at\": null,\n      \"result\": null\n    },\n    {\n      \"agent\": \"SAFETY_DOC\",\n      \"status\": \"PENDING\",\n      \"started_at\": null,\n      \"completed_at\": null,\n      \"result\": null\n    },\n    {\n      \"agent\": \"VENDOR\",\n      \"status\": \"PENDING\",\n      \"started_at\": null,\n      \"completed_at\": null,\n      \"result\": null\n    }\n  ],\n  \"summary\": null,\n  \"approval_required_by\": \"SAFETY_MANAGER\",\n  \"model_name\": \"mock-v1\",\n  \"prompt_version\": \"replaceflow-v0.1\",\n  \"created_at\": \"2026-09-02T15:10:02+09:00\",\n  \"completed_at\": null\n}"
+            },
+            {
+              "name": "200 폴링 2/4 완료 (RUNNING)",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/agent-runs/{{runId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "agent-runs",
+                    "{{runId}}"
+                  ]
+                },
+                "description": "steps 별 `PENDING/RUNNING/DONE/FAILED` 상태와 결과 JSON. FE 는 이 JSON 만 알면 된다(Interface First).\nMock: 호출마다 다음 step 하나가 `DONE` 으로 전이(SPEC→LEGAL→SAFETY_DOC→VENDOR). 4개 모두 DONE 이면 `overall_status=REVIEW`.\n"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"run_id\": \"RUN-0042\",\n  \"work_request_id\": \"WR-20260902-011\",\n  \"overall_status\": \"RUNNING\",\n  \"steps\": [\n    {\n      \"agent\": \"SPEC\",\n      \"status\": \"DONE\",\n      \"started_at\": \"2026-09-02T15:10:03+09:00\",\n      \"completed_at\": \"2026-09-02T15:10:20+09:00\",\n      \"result\": {\n        \"spec_match\": true,\n        \"current_part\": \"VLV-SS316-1/4-NC\",\n        \"alternatives\": [\n          {\n            \"part_no\": \"VLV-SS316-1/4-NC-EQ\",\n            \"grade\": \"EQUIVALENT\",\n            \"diff\": \"시트 재질 PCTFE→PTFE\",\n            \"allowed_for_toxic_gas\": false\n          }\n        ]\n      }\n    },\n    {\n      \"agent\": \"LEGAL\",\n      \"status\": \"DONE\",\n      \"started_at\": \"2026-09-02T15:10:03+09:00\",\n      \"completed_at\": \"2026-09-02T15:10:45+09:00\",\n      \"result\": {\n        \"applicable_laws\": [\n          {\n            \"law\": \"산업안전보건기준에 관한 규칙\",\n            \"article\": \"제92조\",\n            \"title\": \"정비등의 작업 시의 운전정지 등\",\n            \"quote\": \"…운전을 정지하고 … 잠금장치 및 표지판을…\"\n          },\n          {\n            \"law\": \"화학물질관리법\",\n            \"article\": \"제24조\",\n            \"title\": \"취급시설의 설치·관리 기준\",\n            \"quote\": \"\"\n          },\n          {\n            \"law\": \"고압가스 안전관리법 시행규칙\",\n            \"article\": \"별표\",\n            \"title\": \"특정고압가스 사용시설 기준\",\n            \"quote\": \"\"\n          }\n        ],\n        \"required_procedures\": [\n          {\n            \"name\": \"작업허가서(가스 배관 작업)\",\n            \"phase\": \"BEFORE\",\n            \"required\": true\n          },\n          {\n            \"name\": \"위험성평가\",\n            \"phase\": \"BEFORE\",\n            \"required\": true\n          },\n          {\n            \"name\": \"LOTO·가스 차단·퍼지 확인\",\n            \"phase\": \"BEFORE\",\n            \"required\": true\n          },\n          {\n            \"name\": \"가스 감지기 정상 확인\",\n            \"phase\": \"AFTER\",\n            \"required\": true\n          }\n        ]\n      }\n    },\n    {\n      \"agent\": \"SAFETY_DOC\",\n      \"status\": \"PENDING\",\n      \"started_at\": null,\n      \"completed_at\": null,\n      \"result\": null\n    },\n    {\n      \"agent\": \"VENDOR\",\n      \"status\": \"PENDING\",\n      \"started_at\": null,\n      \"completed_at\": null,\n      \"result\": null\n    }\n  ],\n  \"summary\": null,\n  \"approval_required_by\": \"SAFETY_MANAGER\",\n  \"model_name\": \"mock-v1\",\n  \"prompt_version\": \"replaceflow-v0.1\",\n  \"created_at\": \"2026-09-02T15:10:02+09:00\",\n  \"completed_at\": null\n}"
+            },
+            {
+              "name": "200 폴링 3/4 완료 (RUNNING)",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/agent-runs/{{runId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "agent-runs",
+                    "{{runId}}"
+                  ]
+                },
+                "description": "steps 별 `PENDING/RUNNING/DONE/FAILED` 상태와 결과 JSON. FE 는 이 JSON 만 알면 된다(Interface First).\nMock: 호출마다 다음 step 하나가 `DONE` 으로 전이(SPEC→LEGAL→SAFETY_DOC→VENDOR). 4개 모두 DONE 이면 `overall_status=REVIEW`.\n"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"run_id\": \"RUN-0042\",\n  \"work_request_id\": \"WR-20260902-011\",\n  \"overall_status\": \"RUNNING\",\n  \"steps\": [\n    {\n      \"agent\": \"SPEC\",\n      \"status\": \"DONE\",\n      \"started_at\": \"2026-09-02T15:10:03+09:00\",\n      \"completed_at\": \"2026-09-02T15:10:20+09:00\",\n      \"result\": {\n        \"spec_match\": true,\n        \"current_part\": \"VLV-SS316-1/4-NC\",\n        \"alternatives\": [\n          {\n            \"part_no\": \"VLV-SS316-1/4-NC-EQ\",\n            \"grade\": \"EQUIVALENT\",\n            \"diff\": \"시트 재질 PCTFE→PTFE\",\n            \"allowed_for_toxic_gas\": false\n          }\n        ]\n      }\n    },\n    {\n      \"agent\": \"LEGAL\",\n      \"status\": \"DONE\",\n      \"started_at\": \"2026-09-02T15:10:03+09:00\",\n      \"completed_at\": \"2026-09-02T15:10:45+09:00\",\n      \"result\": {\n        \"applicable_laws\": [\n          {\n            \"law\": \"산업안전보건기준에 관한 규칙\",\n            \"article\": \"제92조\",\n            \"title\": \"정비등의 작업 시의 운전정지 등\",\n            \"quote\": \"…운전을 정지하고 … 잠금장치 및 표지판을…\"\n          },\n          {\n            \"law\": \"화학물질관리법\",\n            \"article\": \"제24조\",\n            \"title\": \"취급시설의 설치·관리 기준\",\n            \"quote\": \"\"\n          },\n          {\n            \"law\": \"고압가스 안전관리법 시행규칙\",\n            \"article\": \"별표\",\n            \"title\": \"특정고압가스 사용시설 기준\",\n            \"quote\": \"\"\n          }\n        ],\n        \"required_procedures\": [\n          {\n            \"name\": \"작업허가서(가스 배관 작업)\",\n            \"phase\": \"BEFORE\",\n            \"required\": true\n          },\n          {\n            \"name\": \"위험성평가\",\n            \"phase\": \"BEFORE\",\n            \"required\": true\n          },\n          {\n            \"name\": \"LOTO·가스 차단·퍼지 확인\",\n            \"phase\": \"BEFORE\",\n            \"required\": true\n          },\n          {\n            \"name\": \"가스 감지기 정상 확인\",\n            \"phase\": \"AFTER\",\n            \"required\": true\n          }\n        ]\n      }\n    },\n    {\n      \"agent\": \"SAFETY_DOC\",\n      \"status\": \"DONE\",\n      \"started_at\": \"2026-09-02T15:10:46+09:00\",\n      \"completed_at\": \"2026-09-02T15:11:05+09:00\",\n      \"result\": {\n        \"documents\": [\n          {\n            \"doc_id\": \"DOC-0101\",\n            \"type\": \"WORK_PERMIT\",\n            \"missing\": [\n              \"작업자 2명 이름\"\n            ]\n          },\n          {\n            \"doc_id\": \"DOC-0102\",\n            \"type\": \"RISK_ASSESSMENT\",\n            \"missing\": []\n          }\n        ]\n      }\n    },\n    {\n      \"agent\": \"VENDOR\",\n      \"status\": \"PENDING\",\n      \"started_at\": null,\n      \"completed_at\": null,\n      \"result\": null\n    }\n  ],\n  \"summary\": null,\n  \"approval_required_by\": \"SAFETY_MANAGER\",\n  \"model_name\": \"mock-v1\",\n  \"prompt_version\": \"replaceflow-v0.1\",\n  \"created_at\": \"2026-09-02T15:10:02+09:00\",\n  \"completed_at\": null\n}"
+            },
+            {
+              "name": "200 폴링 4/4 완료 (REVIEW)",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/agent-runs/{{runId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "agent-runs",
+                    "{{runId}}"
+                  ]
+                },
+                "description": "steps 별 `PENDING/RUNNING/DONE/FAILED` 상태와 결과 JSON. FE 는 이 JSON 만 알면 된다(Interface First).\nMock: 호출마다 다음 step 하나가 `DONE` 으로 전이(SPEC→LEGAL→SAFETY_DOC→VENDOR). 4개 모두 DONE 이면 `overall_status=REVIEW`.\n"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"run_id\": \"RUN-0042\",\n  \"work_request_id\": \"WR-20260902-011\",\n  \"overall_status\": \"REVIEW\",\n  \"steps\": [\n    {\n      \"agent\": \"SPEC\",\n      \"status\": \"DONE\",\n      \"started_at\": \"2026-09-02T15:10:03+09:00\",\n      \"completed_at\": \"2026-09-02T15:10:20+09:00\",\n      \"result\": {\n        \"spec_match\": true,\n        \"current_part\": \"VLV-SS316-1/4-NC\",\n        \"alternatives\": [\n          {\n            \"part_no\": \"VLV-SS316-1/4-NC-EQ\",\n            \"grade\": \"EQUIVALENT\",\n            \"diff\": \"시트 재질 PCTFE→PTFE\",\n            \"allowed_for_toxic_gas\": false\n          }\n        ]\n      }\n    },\n    {\n      \"agent\": \"LEGAL\",\n      \"status\": \"DONE\",\n      \"started_at\": \"2026-09-02T15:10:03+09:00\",\n      \"completed_at\": \"2026-09-02T15:10:45+09:00\",\n      \"result\": {\n        \"applicable_laws\": [\n          {\n            \"law\": \"산업안전보건기준에 관한 규칙\",\n            \"article\": \"제92조\",\n            \"title\": \"정비등의 작업 시의 운전정지 등\",\n            \"quote\": \"…운전을 정지하고 … 잠금장치 및 표지판을…\"\n          },\n          {\n            \"law\": \"화학물질관리법\",\n            \"article\": \"제24조\",\n            \"title\": \"취급시설의 설치·관리 기준\",\n            \"quote\": \"\"\n          },\n          {\n            \"law\": \"고압가스 안전관리법 시행규칙\",\n            \"article\": \"별표\",\n            \"title\": \"특정고압가스 사용시설 기준\",\n            \"quote\": \"\"\n          }\n        ],\n        \"required_procedures\": [\n          {\n            \"name\": \"작업허가서(가스 배관 작업)\",\n            \"phase\": \"BEFORE\",\n            \"required\": true\n          },\n          {\n            \"name\": \"위험성평가\",\n            \"phase\": \"BEFORE\",\n            \"required\": true\n          },\n          {\n            \"name\": \"LOTO·가스 차단·퍼지 확인\",\n            \"phase\": \"BEFORE\",\n            \"required\": true\n          },\n          {\n            \"name\": \"가스 감지기 정상 확인\",\n            \"phase\": \"AFTER\",\n            \"required\": true\n          }\n        ]\n      }\n    },\n    {\n      \"agent\": \"SAFETY_DOC\",\n      \"status\": \"DONE\",\n      \"started_at\": \"2026-09-02T15:10:46+09:00\",\n      \"completed_at\": \"2026-09-02T15:11:05+09:00\",\n      \"result\": {\n        \"documents\": [\n          {\n            \"doc_id\": \"DOC-0101\",\n            \"type\": \"WORK_PERMIT\",\n            \"missing\": [\n              \"작업자 2명 이름\"\n            ]\n          },\n          {\n            \"doc_id\": \"DOC-0102\",\n            \"type\": \"RISK_ASSESSMENT\",\n            \"missing\": []\n          }\n        ]\n      }\n    },\n    {\n      \"agent\": \"VENDOR\",\n      \"status\": \"DONE\",\n      \"started_at\": \"2026-09-02T15:11:06+09:00\",\n      \"completed_at\": \"2026-09-02T15:11:30+09:00\",\n      \"result\": {\n        \"rfq_doc_id\": \"DOC-0103\",\n        \"rfq_summary\": \"VLV-SS316-1/4-NC 2EA 견적·납기 요청\",\n        \"lead_time_est_days\": 3,\n        \"last_purchase\": \"2026-02-14\"\n      }\n    }\n  ],\n  \"summary\": \"OEM 동일 규격 밸브 교체. 유독가스 라인이라 호환품 불가. 작업허가·위험성평가·LOTO 필수. 서류 초안 2건 생성, 작업자 명단만 보완 필요.\",\n  \"approval_required_by\": \"SAFETY_MANAGER\",\n  \"model_name\": \"mock-v1\",\n  \"prompt_version\": \"replaceflow-v0.1\",\n  \"created_at\": \"2026-09-02T15:10:02+09:00\",\n  \"completed_at\": \"2026-09-02T15:11:30+09:00\"\n}"
+            },
+            {
+              "name": "401 Unauthorized",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/agent-runs/{{runId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "agent-runs",
+                    "{{runId}}"
+                  ]
+                },
+                "description": "steps 별 `PENDING/RUNNING/DONE/FAILED` 상태와 결과 JSON. FE 는 이 JSON 만 알면 된다(Interface First).\nMock: 호출마다 다음 step 하나가 `DONE` 으로 전이(SPEC→LEGAL→SAFETY_DOC→VENDOR). 4개 모두 DONE 이면 `overall_status=REVIEW`.\n"
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"code\": \"UNAUTHORIZED\",\n  \"message\": \"인증이 필요합니다.\"\n}"
+            },
+            {
+              "name": "404 Not Found",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/agent-runs/{{runId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "agent-runs",
+                    "{{runId}}"
+                  ]
+                },
+                "description": "steps 별 `PENDING/RUNNING/DONE/FAILED` 상태와 결과 JSON. FE 는 이 JSON 만 알면 된다(Interface First).\nMock: 호출마다 다음 step 하나가 `DONE` 으로 전이(SPEC→LEGAL→SAFETY_DOC→VENDOR). 4개 모두 DONE 이면 `overall_status=REVIEW`.\n"
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"code\": \"NOT_FOUND\",\n  \"message\": \"요청한 리소스를 찾을 수 없습니다.\",\n  \"details\": {\n    \"id\": \"WR-99999999-000\"\n  }\n}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const run = pm.response.json();",
+                  "const done = run.steps.filter(s => s.status === 'DONE').length;",
+                  "console.log(`agent-run ${run.run_id}: ${done}/4 DONE, overall=${run.overall_status}`);",
+                  "pm.test('4 steps in fixed order', () => pm.expect(run.steps.map(s => s.agent)).to.eql(['SPEC','LEGAL','SAFETY_DOC','VENDOR']));",
+                  "if (run.overall_status === 'RUNNING') { postman.setNextRequest(pm.info.requestName); } // 3초 폴링은 Runner delay 로 설정"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4. 승인 요청 제출 (200 / 422 / 409)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/work-requests/{{workRequestId}}/submit-approval",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "work-requests",
+                "{{workRequestId}}",
+                "submit-approval"
+              ]
+            },
+            "description": "엔지니어가 에이전트 결과를 검토하고 누락 정보를 보완한 뒤 안전관리자에게 승인을 요청한다 (UC-03).\n- 에이전트 run 이 아직 `REVIEW` 가 아니면(미완료) **409**\n- 서류의 `missing` 항목이 남아 있으면 **422** (누락 항목 목록을 `details.missing` 에 반환)\n",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"missing_info\": {\n    \"작업자 2명 이름\": \"김민준, 박수진\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/work-requests/{{workRequestId}}/submit-approval",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "work-requests",
+                    "{{workRequestId}}",
+                    "submit-approval"
+                  ]
+                },
+                "description": "엔지니어가 에이전트 결과를 검토하고 누락 정보를 보완한 뒤 안전관리자에게 승인을 요청한다 (UC-03).\n- 에이전트 run 이 아직 `REVIEW` 가 아니면(미완료) **409**\n- 서류의 `missing` 항목이 남아 있으면 **422** (누락 항목 목록을 `details.missing` 에 반환)\n",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"missing_info\": {\n    \"작업자 2명 이름\": \"김민준, 박수진\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"id\": \"WR-20260902-011\",\n  \"tenant_id\": \"T-001\",\n  \"equipment_id\": \"EQ-GC-02\",\n  \"part_id\": \"P-VLV-001\",\n  \"symptom\": \"가스 유량 이상, 밸브 누설 의심\",\n  \"site_check_note\": \"현장 확인 결과 밸브 시트 마모\",\n  \"requested_by\": \"U-001\",\n  \"status\": \"PENDING_APPROVAL\",\n  \"created_at\": \"2026-09-02T15:00:00+09:00\",\n  \"updated_at\": \"2026-09-02T15:30:00+09:00\"\n}"
+            },
+            {
+              "name": "401 Unauthorized",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/work-requests/{{workRequestId}}/submit-approval",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "work-requests",
+                    "{{workRequestId}}",
+                    "submit-approval"
+                  ]
+                },
+                "description": "엔지니어가 에이전트 결과를 검토하고 누락 정보를 보완한 뒤 안전관리자에게 승인을 요청한다 (UC-03).\n- 에이전트 run 이 아직 `REVIEW` 가 아니면(미완료) **409**\n- 서류의 `missing` 항목이 남아 있으면 **422** (누락 항목 목록을 `details.missing` 에 반환)\n",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"missing_info\": {\n    \"작업자 2명 이름\": \"김민준, 박수진\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"code\": \"UNAUTHORIZED\",\n  \"message\": \"인증이 필요합니다.\"\n}"
+            },
+            {
+              "name": "404 Not Found",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/work-requests/{{workRequestId}}/submit-approval",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "work-requests",
+                    "{{workRequestId}}",
+                    "submit-approval"
+                  ]
+                },
+                "description": "엔지니어가 에이전트 결과를 검토하고 누락 정보를 보완한 뒤 안전관리자에게 승인을 요청한다 (UC-03).\n- 에이전트 run 이 아직 `REVIEW` 가 아니면(미완료) **409**\n- 서류의 `missing` 항목이 남아 있으면 **422** (누락 항목 목록을 `details.missing` 에 반환)\n",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"missing_info\": {\n    \"작업자 2명 이름\": \"김민준, 박수진\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"code\": \"NOT_FOUND\",\n  \"message\": \"요청한 리소스를 찾을 수 없습니다.\",\n  \"details\": {\n    \"id\": \"WR-99999999-000\"\n  }\n}"
+            },
+            {
+              "name": "409 Conflict",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/work-requests/{{workRequestId}}/submit-approval",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "work-requests",
+                    "{{workRequestId}}",
+                    "submit-approval"
+                  ]
+                },
+                "description": "엔지니어가 에이전트 결과를 검토하고 누락 정보를 보완한 뒤 안전관리자에게 승인을 요청한다 (UC-03).\n- 에이전트 run 이 아직 `REVIEW` 가 아니면(미완료) **409**\n- 서류의 `missing` 항목이 남아 있으면 **422** (누락 항목 목록을 `details.missing` 에 반환)\n",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"missing_info\": {\n    \"작업자 2명 이름\": \"김민준, 박수진\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"code\": \"RUN_NOT_COMPLETED\",\n  \"message\": \"에이전트 실행이 완료되지 않아 승인 요청을 제출할 수 없습니다.\",\n  \"details\": {\n    \"run_id\": \"RUN-0042\",\n    \"overall_status\": \"RUNNING\"\n  }\n}"
+            },
+            {
+              "name": "422 Unprocessable Entity",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/work-requests/{{workRequestId}}/submit-approval",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "work-requests",
+                    "{{workRequestId}}",
+                    "submit-approval"
+                  ]
+                },
+                "description": "엔지니어가 에이전트 결과를 검토하고 누락 정보를 보완한 뒤 안전관리자에게 승인을 요청한다 (UC-03).\n- 에이전트 run 이 아직 `REVIEW` 가 아니면(미완료) **409**\n- 서류의 `missing` 항목이 남아 있으면 **422** (누락 항목 목록을 `details.missing` 에 반환)\n",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"missing_info\": {\n    \"작업자 2명 이름\": \"김민준, 박수진\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"code\": \"MISSING_INFORMATION\",\n  \"message\": \"서류 누락 항목을 보완해야 승인 요청을 제출할 수 있습니다.\",\n  \"details\": {\n    \"missing\": [\n      {\n        \"doc_id\": \"DOC-0101\",\n        \"type\": \"WORK_PERMIT\",\n        \"fields\": [\n          \"작업자 2명 이름\"\n        ]\n      }\n    ]\n  }\n}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status code is expected\", function () { pm.expect([200,201,202]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "5. 안전관리자 승인 (201 / 409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/work-requests/{{workRequestId}}/approvals",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "work-requests",
+                "{{workRequestId}}",
+                "approvals"
+              ]
+            },
+            "description": "안전관리자의 결정(`APPROVE` | `REJECT` | `REQUEST_INFO`)을 등록한다 (UC-04).\n승인 규칙: `checklist` 4항목(`WORK_PERMIT`, `RISK_ASSESSMENT`, `LOTO_GAS_ISOLATION`, `GAS_DETECTOR_CHECK`)이 모두 `true` 가 아니면 `APPROVE` 는 **409**.\n결정에 따라 작업요청 상태는 `APPROVED` / `REJECTED` / (REQUEST_INFO 시) `REVIEW` 로 전이된다.\n",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"approver_id\": \"U-002\",\n  \"decision\": \"APPROVE\",\n  \"checklist\": {\n    \"WORK_PERMIT\": true,\n    \"RISK_ASSESSMENT\": true,\n    \"LOTO_GAS_ISOLATION\": true,\n    \"GAS_DETECTOR_CHECK\": true\n  },\n  \"comment\": \"작업자 명단 확인 완료. 승인.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/work-requests/{{workRequestId}}/approvals",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "work-requests",
+                    "{{workRequestId}}",
+                    "approvals"
+                  ]
+                },
+                "description": "안전관리자의 결정(`APPROVE` | `REJECT` | `REQUEST_INFO`)을 등록한다 (UC-04).\n승인 규칙: `checklist` 4항목(`WORK_PERMIT`, `RISK_ASSESSMENT`, `LOTO_GAS_ISOLATION`, `GAS_DETECTOR_CHECK`)이 모두 `true` 가 아니면 `APPROVE` 는 **409**.\n결정에 따라 작업요청 상태는 `APPROVED` / `REJECTED` / (REQUEST_INFO 시) `REVIEW` 로 전이된다.\n",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"approver_id\": \"U-002\",\n  \"decision\": \"APPROVE\",\n  \"checklist\": {\n    \"WORK_PERMIT\": true,\n    \"RISK_ASSESSMENT\": true,\n    \"LOTO_GAS_ISOLATION\": true,\n    \"GAS_DETECTOR_CHECK\": true\n  },\n  \"comment\": \"작업자 명단 확인 완료. 승인.\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"approval_id\": \"AP-0007\",\n  \"work_request_id\": \"WR-20260902-011\",\n  \"approver_id\": \"U-002\",\n  \"decision\": \"APPROVE\",\n  \"checklist\": {\n    \"WORK_PERMIT\": true,\n    \"RISK_ASSESSMENT\": true,\n    \"LOTO_GAS_ISOLATION\": true,\n    \"GAS_DETECTOR_CHECK\": true\n  },\n  \"comment\": \"작업자 명단 확인 완료. 승인.\",\n  \"decided_at\": \"2026-09-02T16:20:00+09:00\"\n}"
+            },
+            {
+              "name": "401 Unauthorized",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/work-requests/{{workRequestId}}/approvals",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "work-requests",
+                    "{{workRequestId}}",
+                    "approvals"
+                  ]
+                },
+                "description": "안전관리자의 결정(`APPROVE` | `REJECT` | `REQUEST_INFO`)을 등록한다 (UC-04).\n승인 규칙: `checklist` 4항목(`WORK_PERMIT`, `RISK_ASSESSMENT`, `LOTO_GAS_ISOLATION`, `GAS_DETECTOR_CHECK`)이 모두 `true` 가 아니면 `APPROVE` 는 **409**.\n결정에 따라 작업요청 상태는 `APPROVED` / `REJECTED` / (REQUEST_INFO 시) `REVIEW` 로 전이된다.\n",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"approver_id\": \"U-002\",\n  \"decision\": \"APPROVE\",\n  \"checklist\": {\n    \"WORK_PERMIT\": true,\n    \"RISK_ASSESSMENT\": true,\n    \"LOTO_GAS_ISOLATION\": true,\n    \"GAS_DETECTOR_CHECK\": true\n  },\n  \"comment\": \"작업자 명단 확인 완료. 승인.\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"code\": \"UNAUTHORIZED\",\n  \"message\": \"인증이 필요합니다.\"\n}"
+            },
+            {
+              "name": "404 Not Found",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/work-requests/{{workRequestId}}/approvals",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "work-requests",
+                    "{{workRequestId}}",
+                    "approvals"
+                  ]
+                },
+                "description": "안전관리자의 결정(`APPROVE` | `REJECT` | `REQUEST_INFO`)을 등록한다 (UC-04).\n승인 규칙: `checklist` 4항목(`WORK_PERMIT`, `RISK_ASSESSMENT`, `LOTO_GAS_ISOLATION`, `GAS_DETECTOR_CHECK`)이 모두 `true` 가 아니면 `APPROVE` 는 **409**.\n결정에 따라 작업요청 상태는 `APPROVED` / `REJECTED` / (REQUEST_INFO 시) `REVIEW` 로 전이된다.\n",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"approver_id\": \"U-002\",\n  \"decision\": \"APPROVE\",\n  \"checklist\": {\n    \"WORK_PERMIT\": true,\n    \"RISK_ASSESSMENT\": true,\n    \"LOTO_GAS_ISOLATION\": true,\n    \"GAS_DETECTOR_CHECK\": true\n  },\n  \"comment\": \"작업자 명단 확인 완료. 승인.\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"code\": \"NOT_FOUND\",\n  \"message\": \"요청한 리소스를 찾을 수 없습니다.\",\n  \"details\": {\n    \"id\": \"WR-99999999-000\"\n  }\n}"
+            },
+            {
+              "name": "409 Conflict",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/work-requests/{{workRequestId}}/approvals",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "work-requests",
+                    "{{workRequestId}}",
+                    "approvals"
+                  ]
+                },
+                "description": "안전관리자의 결정(`APPROVE` | `REJECT` | `REQUEST_INFO`)을 등록한다 (UC-04).\n승인 규칙: `checklist` 4항목(`WORK_PERMIT`, `RISK_ASSESSMENT`, `LOTO_GAS_ISOLATION`, `GAS_DETECTOR_CHECK`)이 모두 `true` 가 아니면 `APPROVE` 는 **409**.\n결정에 따라 작업요청 상태는 `APPROVED` / `REJECTED` / (REQUEST_INFO 시) `REVIEW` 로 전이된다.\n",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"approver_id\": \"U-002\",\n  \"decision\": \"APPROVE\",\n  \"checklist\": {\n    \"WORK_PERMIT\": true,\n    \"RISK_ASSESSMENT\": true,\n    \"LOTO_GAS_ISOLATION\": true,\n    \"GAS_DETECTOR_CHECK\": true\n  },\n  \"comment\": \"작업자 명단 확인 완료. 승인.\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"code\": \"CHECKLIST_INCOMPLETE\",\n  \"message\": \"필수 체크리스트 4항목을 모두 확인해야 승인할 수 있습니다.\",\n  \"details\": {\n    \"unchecked\": [\n      \"LOTO_GAS_ISOLATION\",\n      \"GAS_DETECTOR_CHECK\"\n    ]\n  }\n}"
+            },
+            {
+              "name": "422 Unprocessable Entity",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/work-requests/{{workRequestId}}/approvals",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "work-requests",
+                    "{{workRequestId}}",
+                    "approvals"
+                  ]
+                },
+                "description": "안전관리자의 결정(`APPROVE` | `REJECT` | `REQUEST_INFO`)을 등록한다 (UC-04).\n승인 규칙: `checklist` 4항목(`WORK_PERMIT`, `RISK_ASSESSMENT`, `LOTO_GAS_ISOLATION`, `GAS_DETECTOR_CHECK`)이 모두 `true` 가 아니면 `APPROVE` 는 **409**.\n결정에 따라 작업요청 상태는 `APPROVED` / `REJECTED` / (REQUEST_INFO 시) `REVIEW` 로 전이된다.\n",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"approver_id\": \"U-002\",\n  \"decision\": \"APPROVE\",\n  \"checklist\": {\n    \"WORK_PERMIT\": true,\n    \"RISK_ASSESSMENT\": true,\n    \"LOTO_GAS_ISOLATION\": true,\n    \"GAS_DETECTOR_CHECK\": true\n  },\n  \"comment\": \"작업자 명단 확인 완료. 승인.\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"code\": \"VALIDATION_ERROR\",\n  \"message\": \"요청 값이 올바르지 않습니다.\",\n  \"details\": {\n    \"errors\": [\n      {\n        \"field\": \"equipment_id\",\n        \"message\": \"field required\"\n      }\n    ]\n  }\n}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status code is expected\", function () { pm.expect([200,201,202]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "6. 대시보드 KPI 갱신 확인",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dashboard/summary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "dashboard",
+                "summary"
+              ]
+            },
+            "description": "진행 중·승인 대기 건수, 평균 승인 소요시간(As-Is 168h 대비), 이번 달 완료, 반려 사유 TOP."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/dashboard/summary",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "dashboard",
+                    "summary"
+                  ]
+                },
+                "description": "진행 중·승인 대기 건수, 평균 승인 소요시간(As-Is 168h 대비), 이번 달 완료, 반려 사유 TOP."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"in_progress\": 5,\n  \"pending_approval\": 2,\n  \"avg_approval_hours\": 26.5,\n  \"as_is_baseline_hours\": 168,\n  \"completed_this_month\": 12,\n  \"reject_reasons_top\": [\n    {\n      \"reason\": \"서류 누락\",\n      \"count\": 3\n    },\n    {\n      \"reason\": \"호환품 부적합\",\n      \"count\": 1\n    }\n  ]\n}"
+            },
+            {
+              "name": "401 Unauthorized",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/dashboard/summary",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "dashboard",
+                    "summary"
+                  ]
+                },
+                "description": "진행 중·승인 대기 건수, 평균 승인 소요시간(As-Is 168h 대비), 이번 달 완료, 반려 사유 TOP."
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"code\": \"UNAUTHORIZED\",\n  \"message\": \"인증이 필요합니다.\"\n}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status code is expected\", function () { pm.expect([200,201,202]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+# ReplaceFlow OpenAPI lint 설정
+apis:
+  replaceflow:
+    root: openapi.yaml
+rules:
+  # 로컬 개발 서버(localhost:8000)는 CONTRACT 에 고정된 값이므로 허용
+  no-server-example.com: off
