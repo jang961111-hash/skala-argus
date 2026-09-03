@@ -1,0 +1,834 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://replaceflow.local/schemas/agent_run.schema.json",
+  "title": "AgentRun — 오케스트레이터 실행 결과",
+  "type": "object",
+  "description": "오케스트레이터 실행 결과 (`agent_runs.steps_json` 직렬화)",
+  "required": [
+    "run_id",
+    "work_request_id",
+    "overall_status",
+    "steps",
+    "approval_required_by",
+    "model_name",
+    "prompt_version",
+    "created_at"
+  ],
+  "properties": {
+    "run_id": {
+      "type": "string",
+      "examples": [
+        "RUN-0042"
+      ]
+    },
+    "work_request_id": {
+      "type": "string",
+      "examples": [
+        "WR-20260902-011"
+      ]
+    },
+    "overall_status": {
+      "$ref": "#/$defs/OverallStatus"
+    },
+    "steps": {
+      "type": "array",
+      "description": "에이전트 step 4개 (순서 고정 SPEC→LEGAL→SAFETY_DOC→VENDOR) — 에이전트 순서와 개수 고정",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": false,
+      "prefixItems": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/AgentStep"
+            },
+            {
+              "properties": {
+                "agent": {
+                  "const": "SPEC"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/AgentStep"
+            },
+            {
+              "properties": {
+                "agent": {
+                  "const": "LEGAL"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/AgentStep"
+            },
+            {
+              "properties": {
+                "agent": {
+                  "const": "SAFETY_DOC"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/AgentStep"
+            },
+            {
+              "properties": {
+                "agent": {
+                  "const": "VENDOR"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "summary": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "통합 요약 (모든 step 완료 후 생성)",
+      "examples": [
+        "OEM 동일 규격 밸브 교체. 유독가스 라인이라 호환품 불가. 작업허가·위험성평가·LOTO 필수. 서류 초안 2건 생성, 작업자 명단만 보완 필요."
+      ]
+    },
+    "approval_required_by": {
+      "$ref": "#/$defs/UserRole"
+    },
+    "model_name": {
+      "type": "string",
+      "examples": [
+        "mock-v1"
+      ]
+    },
+    "prompt_version": {
+      "type": "string",
+      "examples": [
+        "replaceflow-v0.1"
+      ]
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "examples": [
+        "2026-09-02T15:10:02+09:00"
+      ]
+    },
+    "completed_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time",
+      "examples": [
+        "2026-09-02T15:11:30+09:00"
+      ]
+    }
+  },
+  "$defs": {
+    "AgentStep": {
+      "type": "object",
+      "description": "개별 에이전트 step. `result` 는 `agent` 값에 따라 SpecResult / LegalResult / SafetyDocResult / VendorResult 중 하나.",
+      "required": [
+        "agent",
+        "status"
+      ],
+      "properties": {
+        "agent": {
+          "$ref": "#/$defs/AgentType"
+        },
+        "status": {
+          "$ref": "#/$defs/StepStatus"
+        },
+        "started_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time",
+          "examples": [
+            "2026-09-02T15:10:03+09:00"
+          ]
+        },
+        "completed_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time",
+          "examples": [
+            "2026-09-02T15:10:20+09:00"
+          ]
+        },
+        "error": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "FAILED 시 오류 메시지"
+        },
+        "result": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SpecResult"
+                },
+                {
+                  "$ref": "#/$defs/LegalResult"
+                },
+                {
+                  "$ref": "#/$defs/SafetyDocResult"
+                },
+                {
+                  "$ref": "#/$defs/VendorResult"
+                },
+                {
+                  "type": "null",
+                  "description": "아직 결과 없음"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "에이전트 결과 — `agent` 값에 따라 SpecResult / LegalResult / SafetyDocResult / VendorResult. PENDING/RUNNING 이면 null."
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "agent": {
+                "const": "SPEC"
+              },
+              "status": {
+                "const": "DONE"
+              }
+            },
+            "required": [
+              "agent",
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "result": {
+                "$ref": "#/$defs/SpecResult"
+              }
+            },
+            "required": [
+              "result"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "agent": {
+                "const": "LEGAL"
+              },
+              "status": {
+                "const": "DONE"
+              }
+            },
+            "required": [
+              "agent",
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "result": {
+                "$ref": "#/$defs/LegalResult"
+              }
+            },
+            "required": [
+              "result"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "agent": {
+                "const": "SAFETY_DOC"
+              },
+              "status": {
+                "const": "DONE"
+              }
+            },
+            "required": [
+              "agent",
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "result": {
+                "$ref": "#/$defs/SafetyDocResult"
+              }
+            },
+            "required": [
+              "result"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "agent": {
+                "const": "VENDOR"
+              },
+              "status": {
+                "const": "DONE"
+              }
+            },
+            "required": [
+              "agent",
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "result": {
+                "$ref": "#/$defs/VendorResult"
+              }
+            },
+            "required": [
+              "result"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "PENDING",
+                  "RUNNING"
+                ]
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "result": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "AgentType": {
+      "type": "string",
+      "description": "에이전트 종류 (A1 규격·호환 / A2 법령 / A3 안전서류 / A4 벤더)",
+      "enum": [
+        "SPEC",
+        "LEGAL",
+        "SAFETY_DOC",
+        "VENDOR"
+      ],
+      "examples": [
+        "SPEC"
+      ]
+    },
+    "AlternativePart": {
+      "type": "object",
+      "required": [
+        "part_no",
+        "grade",
+        "diff",
+        "allowed_for_toxic_gas"
+      ],
+      "properties": {
+        "part_no": {
+          "type": "string",
+          "examples": [
+            "VLV-SS316-1/4-NC-EQ"
+          ]
+        },
+        "grade": {
+          "$ref": "#/$defs/PartGrade"
+        },
+        "diff": {
+          "type": "string",
+          "description": "기준 부품 대비 차이점",
+          "examples": [
+            "시트 재질 PCTFE→PTFE"
+          ]
+        },
+        "allowed_for_toxic_gas": {
+          "type": "boolean",
+          "description": "유독가스 라인 사용 가능 여부",
+          "examples": [
+            false
+          ]
+        }
+      }
+    },
+    "DocumentType": {
+      "type": "string",
+      "enum": [
+        "WORK_PERMIT",
+        "RISK_ASSESSMENT",
+        "LOTO_CHECKLIST",
+        "RFQ"
+      ],
+      "examples": [
+        "WORK_PERMIT"
+      ]
+    },
+    "LawCitation": {
+      "type": "object",
+      "required": [
+        "law",
+        "article",
+        "title"
+      ],
+      "properties": {
+        "law": {
+          "type": "string",
+          "examples": [
+            "산업안전보건기준에 관한 규칙"
+          ]
+        },
+        "article": {
+          "type": "string",
+          "examples": [
+            "제92조"
+          ]
+        },
+        "title": {
+          "type": "string",
+          "examples": [
+            "정비등의 작업 시의 운전정지 등"
+          ]
+        },
+        "quote": {
+          "type": "string",
+          "description": "법령 인덱스 원문 발췌 (빈 문자열 허용)",
+          "examples": [
+            "…운전을 정지하고 … 잠금장치 및 표지판을…"
+          ]
+        },
+        "law_index_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "law_index 테이블 ID (추적용)",
+          "examples": [
+            "LAW-0002"
+          ]
+        }
+      }
+    },
+    "LegalResult": {
+      "type": "object",
+      "description": "A2 법령 에이전트 결과 — 조문 인용 없는 항목 금지",
+      "required": [
+        "applicable_laws",
+        "required_procedures"
+      ],
+      "properties": {
+        "applicable_laws": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/LawCitation"
+          }
+        },
+        "required_procedures": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RequiredProcedure"
+          }
+        }
+      }
+    },
+    "OverallStatus": {
+      "type": "string",
+      "description": "에이전트 실행 전체 상태",
+      "enum": [
+        "RUNNING",
+        "REVIEW",
+        "FAILED"
+      ],
+      "examples": [
+        "REVIEW"
+      ]
+    },
+    "PartGrade": {
+      "type": "string",
+      "description": "부품 등급 (정품 / 호환품 / 리퍼비시)",
+      "enum": [
+        "OEM",
+        "EQUIVALENT",
+        "REFURB"
+      ],
+      "examples": [
+        "OEM"
+      ]
+    },
+    "ProcedurePhase": {
+      "type": "string",
+      "description": "절차 시점 (작업 전 / 작업 중 / 작업 후)",
+      "enum": [
+        "BEFORE",
+        "DURING",
+        "AFTER"
+      ],
+      "examples": [
+        "BEFORE"
+      ]
+    },
+    "RequiredFlag": {
+      "description": "필수 여부. 근거 조문을 찾지 못한 경우 `UNKNOWN` (안전관리자 확인 필요)",
+      "oneOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "string",
+          "enum": [
+            "UNKNOWN"
+          ]
+        }
+      ],
+      "examples": [
+        true
+      ]
+    },
+    "RequiredProcedure": {
+      "type": "object",
+      "required": [
+        "name",
+        "phase",
+        "required"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "examples": [
+            "작업허가서(가스 배관 작업)"
+          ]
+        },
+        "phase": {
+          "$ref": "#/$defs/ProcedurePhase"
+        },
+        "required": {
+          "$ref": "#/$defs/RequiredFlag"
+        },
+        "basis": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "근거 조문 (예 \"산업안전보건기준에 관한 규칙 제92조\")",
+          "examples": [
+            "산업안전보건기준에 관한 규칙 제92조"
+          ]
+        },
+        "note": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "required=UNKNOWN 인 경우 안전관리자 확인 요청 문구"
+        }
+      }
+    },
+    "SafetyDocResult": {
+      "type": "object",
+      "description": "A3 안전서류 에이전트 결과",
+      "required": [
+        "documents"
+      ],
+      "properties": {
+        "documents": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "doc_id",
+              "type",
+              "missing"
+            ],
+            "properties": {
+              "doc_id": {
+                "type": "string",
+                "examples": [
+                  "DOC-0101"
+                ]
+              },
+              "type": {
+                "$ref": "#/$defs/DocumentType"
+              },
+              "missing": {
+                "type": "array",
+                "description": "초안에서 채우지 못한 항목",
+                "items": {
+                  "type": "string"
+                },
+                "examples": [
+                  [
+                    "작업자 2명 이름"
+                  ]
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "SpecResult": {
+      "type": "object",
+      "description": "A1 규격·호환 에이전트 결과",
+      "required": [
+        "spec_match",
+        "current_part",
+        "alternatives"
+      ],
+      "properties": {
+        "spec_match": {
+          "type": "boolean",
+          "description": "요청 부품이 설비 BOM 규격과 일치하는지",
+          "examples": [
+            true
+          ]
+        },
+        "current_part": {
+          "type": "string",
+          "description": "현재 장착 부품 번호",
+          "examples": [
+            "VLV-SS316-1/4-NC"
+          ]
+        },
+        "alternatives": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AlternativePart"
+          }
+        },
+        "notes": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "판정 근거 메모"
+        }
+      }
+    },
+    "StepStatus": {
+      "type": "string",
+      "description": "에이전트 step 상태",
+      "enum": [
+        "PENDING",
+        "RUNNING",
+        "DONE",
+        "FAILED"
+      ],
+      "examples": [
+        "DONE"
+      ]
+    },
+    "UserRole": {
+      "type": "string",
+      "enum": [
+        "ENGINEER",
+        "SAFETY_MANAGER",
+        "BUYER",
+        "ADMIN"
+      ],
+      "examples": [
+        "SAFETY_MANAGER"
+      ]
+    },
+    "VendorResult": {
+      "type": "object",
+      "description": "A4 벤더 에이전트 결과",
+      "required": [
+        "rfq_doc_id",
+        "rfq_summary",
+        "lead_time_est_days"
+      ],
+      "properties": {
+        "rfq_doc_id": {
+          "type": "string",
+          "description": "RFQ 초안 문서 ID",
+          "examples": [
+            "DOC-0103"
+          ]
+        },
+        "rfq_summary": {
+          "type": "string",
+          "examples": [
+            "VLV-SS316-1/4-NC 2EA 견적·납기 요청"
+          ]
+        },
+        "lead_time_est_days": {
+          "type": "integer",
+          "minimum": 0,
+          "examples": [
+            3
+          ]
+        },
+        "last_purchase": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date",
+          "examples": [
+            "2026-02-14"
+          ]
+        },
+        "stock": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "description": "현재 재고",
+          "examples": [
+            2
+          ]
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "run_id": "RUN-0042",
+      "work_request_id": "WR-20260902-011",
+      "overall_status": "REVIEW",
+      "steps": [
+        {
+          "agent": "SPEC",
+          "status": "DONE",
+          "started_at": "2026-09-02T15:10:03+09:00",
+          "completed_at": "2026-09-02T15:10:20+09:00",
+          "result": {
+            "spec_match": true,
+            "current_part": "VLV-SS316-1/4-NC",
+            "alternatives": [
+              {
+                "part_no": "VLV-SS316-1/4-NC-EQ",
+                "grade": "EQUIVALENT",
+                "diff": "시트 재질 PCTFE→PTFE",
+                "allowed_for_toxic_gas": false
+              }
+            ]
+          }
+        },
+        {
+          "agent": "LEGAL",
+          "status": "DONE",
+          "started_at": "2026-09-02T15:10:03+09:00",
+          "completed_at": "2026-09-02T15:10:45+09:00",
+          "result": {
+            "applicable_laws": [
+              {
+                "law": "산업안전보건기준에 관한 규칙",
+                "article": "제92조",
+                "title": "정비등의 작업 시의 운전정지 등",
+                "quote": "…운전을 정지하고 … 잠금장치 및 표지판을…"
+              },
+              {
+                "law": "화학물질관리법",
+                "article": "제24조",
+                "title": "취급시설의 설치·관리 기준",
+                "quote": ""
+              },
+              {
+                "law": "고압가스 안전관리법 시행규칙",
+                "article": "별표",
+                "title": "특정고압가스 사용시설 기준",
+                "quote": ""
+              }
+            ],
+            "required_procedures": [
+              {
+                "name": "작업허가서(가스 배관 작업)",
+                "phase": "BEFORE",
+                "required": true
+              },
+              {
+                "name": "위험성평가",
+                "phase": "BEFORE",
+                "required": true
+              },
+              {
+                "name": "LOTO·가스 차단·퍼지 확인",
+                "phase": "BEFORE",
+                "required": true
+              },
+              {
+                "name": "가스 감지기 정상 확인",
+                "phase": "AFTER",
+                "required": true
+              }
+            ]
+          }
+        },
+        {
+          "agent": "SAFETY_DOC",
+          "status": "DONE",
+          "started_at": "2026-09-02T15:10:46+09:00",
+          "completed_at": "2026-09-02T15:11:05+09:00",
+          "result": {
+            "documents": [
+              {
+                "doc_id": "DOC-0101",
+                "type": "WORK_PERMIT",
+                "missing": [
+                  "작업자 2명 이름"
+                ]
+              },
+              {
+                "doc_id": "DOC-0102",
+                "type": "RISK_ASSESSMENT",
+                "missing": []
+              }
+            ]
+          }
+        },
+        {
+          "agent": "VENDOR",
+          "status": "DONE",
+          "started_at": "2026-09-02T15:11:06+09:00",
+          "completed_at": "2026-09-02T15:11:30+09:00",
+          "result": {
+            "rfq_doc_id": "DOC-0103",
+            "rfq_summary": "VLV-SS316-1/4-NC 2EA 견적·납기 요청",
+            "lead_time_est_days": 3,
+            "last_purchase": "2026-02-14"
+          }
+        }
+      ],
+      "summary": "OEM 동일 규격 밸브 교체. 유독가스 라인이라 호환품 불가. 작업허가·위험성평가·LOTO 필수. 서류 초안 2건 생성, 작업자 명단만 보완 필요.",
+      "approval_required_by": "SAFETY_MANAGER",
+      "model_name": "mock-v1",
+      "prompt_version": "replaceflow-v0.1",
+      "created_at": "2026-09-02T15:10:02+09:00",
+      "completed_at": "2026-09-02T15:11:30+09:00"
+    }
+  ]
+}

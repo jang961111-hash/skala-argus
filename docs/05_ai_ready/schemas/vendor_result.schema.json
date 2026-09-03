@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://replaceflow.local/schemas/vendor_result.schema.json",
+  "title": "VendorResult — A4 벤더 에이전트 출력",
+  "type": "object",
+  "description": "A4 벤더 에이전트 결과",
+  "required": [
+    "rfq_doc_id",
+    "rfq_summary",
+    "lead_time_est_days"
+  ],
+  "properties": {
+    "rfq_doc_id": {
+      "type": "string",
+      "description": "RFQ 초안 문서 ID",
+      "examples": [
+        "DOC-0103"
+      ]
+    },
+    "rfq_summary": {
+      "type": "string",
+      "examples": [
+        "VLV-SS316-1/4-NC 2EA 견적·납기 요청"
+      ]
+    },
+    "lead_time_est_days": {
+      "type": "integer",
+      "minimum": 0,
+      "examples": [
+        3
+      ]
+    },
+    "last_purchase": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date",
+      "examples": [
+        "2026-02-14"
+      ]
+    },
+    "stock": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "description": "현재 재고",
+      "examples": [
+        2
+      ]
+    }
+  },
+  "examples": [
+    {
+      "rfq_doc_id": "DOC-0103",
+      "rfq_summary": "VLV-SS316-1/4-NC 2EA 견적·납기 요청",
+      "lead_time_est_days": 3,
+      "last_purchase": "2026-02-14"
+    }
+  ]
+}

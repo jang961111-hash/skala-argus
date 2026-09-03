@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://replaceflow.local/schemas/approval.schema.json",
+  "title": "Approval — 안전관리자 승인 결정",
+  "type": "object",
+  "description": "승인 결정",
+  "required": [
+    "approval_id",
+    "work_request_id",
+    "approver_id",
+    "decision",
+    "checklist",
+    "decided_at"
+  ],
+  "properties": {
+    "approval_id": {
+      "type": "string",
+      "examples": [
+        "AP-0007"
+      ]
+    },
+    "work_request_id": {
+      "type": "string",
+      "examples": [
+        "WR-20260902-011"
+      ]
+    },
+    "approver_id": {
+      "type": "string",
+      "examples": [
+        "U-002"
+      ]
+    },
+    "decision": {
+      "$ref": "#/$defs/Decision"
+    },
+    "checklist": {
+      "$ref": "#/$defs/Checklist"
+    },
+    "comment": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "examples": [
+        "작업자 명단 확인 완료. 승인."
+      ]
+    },
+    "decided_at": {
+      "type": "string",
+      "format": "date-time",
+      "examples": [
+        "2026-09-02T16:20:00+09:00"
+      ]
+    }
+  },
+  "$defs": {
+    "Checklist": {
+      "type": "object",
+      "description": "필수 체크리스트 4항목 — 모두 true 여야 APPROVE 가능",
+      "required": [
+        "WORK_PERMIT",
+        "RISK_ASSESSMENT",
+        "LOTO_GAS_ISOLATION",
+        "GAS_DETECTOR_CHECK"
+      ],
+      "properties": {
+        "WORK_PERMIT": {
+          "type": "boolean",
+          "examples": [
+            true
+          ]
+        },
+        "RISK_ASSESSMENT": {
+          "type": "boolean",
+          "examples": [
+            true
+          ]
+        },
+        "LOTO_GAS_ISOLATION": {
+          "type": "boolean",
+          "examples": [
+            true
+          ]
+        },
+        "GAS_DETECTOR_CHECK": {
+          "type": "boolean",
+          "examples": [
+            true
+          ]
+        }
+      }
+    },
+    "Decision": {
+      "type": "string",
+      "description": "승인 결정",
+      "enum": [
+        "APPROVE",
+        "REJECT",
+        "REQUEST_INFO"
+      ],
+      "examples": [
+        "APPROVE"
+      ]
+    }
+  },
+  "examples": [
+    {
+      "approval_id": "AP-0007",
+      "work_request_id": "WR-20260902-011",
+      "approver_id": "U-002",
+      "decision": "APPROVE",
+      "checklist": {
+        "WORK_PERMIT": true,
+        "RISK_ASSESSMENT": true,
+        "LOTO_GAS_ISOLATION": true,
+        "GAS_DETECTOR_CHECK": true
+      },
+      "comment": "작업자 명단 확인 완료. 승인.",
+      "decided_at": "2026-09-02T16:20:00+09:00"
+    }
+  ]
+}

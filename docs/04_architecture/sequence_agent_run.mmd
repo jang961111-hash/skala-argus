@@ -1,0 +1,76 @@
+%% ReplaceFlow — 에이전트 실행부터 승인까지 (비동기 파이프라인)
+sequenceDiagram
+  autonumber
+  actor ENG as 설비 엔지니어 (ENGINEER)
+  participant FE as FE (Vue, 화면 2)
+  participant API as BE Router (FastAPI)
+  participant ORCH as AgentOrchestrator
+  participant AG as AgentService x4 (Mock/LLM)
+  participant APS as ApprovalService
+  participant DB as PostgreSQL
+  actor SM as 안전관리자 (SAFETY_MANAGER)
+
+  ENG->>FE: "에이전트 실행" 클릭
+  FE->>API: POST /api/v1/work-requests/{id}/agent-runs
+  API->>DB: work_requests 조회 (status 검증)
+  alt status 가 APPROVED 또는 DONE
+    API-->>FE: 409 Conflict
+  else id 없음
+    API-->>FE: 404 Not Found
+  else 실행 가능
+    API->>ORCH: start(work_request_id)
+    ORCH->>DB: ai_configs 조회 (provider, model_name, prompt_version)
+    ORCH->>DB: INSERT agent_runs (overall_status=RUNNING, steps 4개 PENDING)
+    ORCH->>DB: UPDATE work_requests.status = RUNNING
+    API-->>FE: 202 Accepted {run_id, overall_status:"RUNNING"}
+    FE->>FE: 타임라인 4카드 = 대기, 3초 폴링 시작
+  end
+
+  loop 3초 폴링 (Mock: 호출마다 step 1개 DONE)
+    FE->>API: GET /api/v1/agent-runs/{runId}
+    API->>ORCH: get_run(runId)
+    ORCH->>AG: 다음 step 실행 (SPEC → LEGAL → SAFETY_DOC → VENDOR)
+    AG-->>ORCH: step.result JSON (status=DONE)
+    ORCH->>DB: UPDATE agent_runs.steps_json, legal_findings / documents 저장
+    ORCH-->>API: AgentRun
+    API-->>FE: 200 AgentRun (steps[].status)
+    FE->>FE: 해당 카드 대기 → 실행 중 → 완료
+  end
+
+  Note over ORCH,DB: 4 step 모두 DONE → summary, approval_required_by=SAFETY_MANAGER 작성
+  ORCH->>DB: UPDATE agent_runs.overall_status = REVIEW, completed_at
+  ORCH->>DB: UPDATE work_requests.status = REVIEW
+  FE->>API: GET /api/v1/agent-runs/{runId}
+  API-->>FE: 200 AgentRun (overall_status=REVIEW)
+  FE->>FE: 폴링 중단, 승인 요청 UI 활성화
+
+  ENG->>FE: 누락 정보 입력 (documents[].missing), "승인 요청" 클릭
+  FE->>API: PATCH /api/v1/work-requests/{id}/submit-approval
+  API->>DB: latest_run 및 missing 검증
+  alt missing 남음
+    API-->>FE: 422 Unprocessable Entity
+  else run 미완료 (RUNNING / FAILED)
+    API-->>FE: 409 Conflict
+  else 검증 통과
+    API->>DB: UPDATE work_requests.status = PENDING_APPROVAL
+    API-->>FE: 200 WorkRequest
+  end
+
+  SM->>FE: 화면 2 승인 패널 열람 (applicable_laws, required_procedures, 서류 초안)
+  FE->>API: GET /api/v1/work-requests/{id}
+  API-->>FE: 200 WorkRequestDetail (latest_run, approvals)
+  SM->>FE: 체크리스트 4항목 확인, 코멘트 입력, "승인" 클릭
+  FE->>API: POST /api/v1/work-requests/{id}/approvals {decision:"APPROVE", checklist, comment}
+  API->>APS: decide(work_request_id, approval)
+  APS->>APS: 상태 검증 (PENDING_APPROVAL) + 체크리스트 게이트
+  alt checklist 4항목 중 false 존재 (APPROVE)
+    APS-->>API: ChecklistIncomplete
+    API-->>FE: 409 Conflict
+  else 게이트 통과
+    APS->>DB: INSERT approvals (decision, checklist_json, comment, decided_at)
+    APS->>DB: UPDATE work_requests.status = APPROVED
+    APS->>DB: INSERT audit_logs
+    APS-->>API: Approval
+    API-->>FE: 201 Created Approval
+    FE->>FE: 상태 배지 APPROVED, 대시보드 avg_approval_hours 갱신
+  end

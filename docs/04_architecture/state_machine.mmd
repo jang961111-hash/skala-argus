@@ -1,0 +1,47 @@
+%% ReplaceFlow work_requests.status state machine
+stateDiagram-v2
+  direction LR
+
+  [*] --> REQUESTED : ENGINEER, POST /work-requests (201)
+
+  REQUESTED --> RUNNING : POST /work-requests/:id/agent-runs (202), agent_runs 생성
+
+  state RUNNING {
+    direction LR
+    [*] --> ALL_PENDING
+    ALL_PENDING --> SPEC_DONE : step SPEC DONE
+    SPEC_DONE --> LEGAL_DONE : step LEGAL DONE
+    LEGAL_DONE --> SAFETY_DOC_DONE : step SAFETY_DOC DONE
+    SAFETY_DOC_DONE --> VENDOR_DONE : step VENDOR DONE
+    VENDOR_DONE --> [*]
+  }
+  note right of RUNNING
+    agent_runs.overall_status = RUNNING
+    step.status = PENDING | RUNNING | DONE | FAILED
+    Mock: GET /agent-runs/:runId 호출마다 step 1개 DONE
+    step FAILED 시 overall_status = FAILED, 재실행은 새 run_id
+  end note
+
+  RUNNING --> REVIEW : 4 step 모두 DONE, overall_status = REVIEW
+
+  REVIEW --> PENDING_APPROVAL : ENGINEER, PATCH submit-approval (200)
+  REVIEW --> REVIEW : submit-approval 422 (누락 정보) 또는 409 (run 미완료)
+
+  PENDING_APPROVAL --> APPROVED : SAFETY_MANAGER, POST approvals decision=APPROVE (201)
+  PENDING_APPROVAL --> PENDING_APPROVAL : APPROVE 인데 checklist 미완료 (409)
+  PENDING_APPROVAL --> REJECTED : decision=REJECT (201)
+  PENDING_APPROVAL --> REVIEW : decision=REQUEST_INFO (201), 코멘트 전달
+
+  REJECTED --> RUNNING : 요청 수정 후 재실행, POST agent-runs (202)
+  APPROVED --> DONE : 발주, 작업, 완료 보고 (ENGINEER / BUYER)
+
+  APPROVED --> APPROVED : POST agent-runs 409 (재실행 불가)
+  DONE --> DONE : POST agent-runs 409 (재실행 불가)
+  DONE --> [*]
+
+  note left of PENDING_APPROVAL
+    Human-in-the-loop, 승인 주체 = SAFETY_MANAGER
+    approvals.checklist 4항목 모두 true 필요:
+    WORK_PERMIT, RISK_ASSESSMENT,
+    LOTO_GAS_ISOLATION, GAS_DETECTOR_CHECK
+  end note

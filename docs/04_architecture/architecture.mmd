@@ -1,0 +1,128 @@
+%% ReplaceFlow System Architecture
+flowchart LR
+  %% ---------- Frontend ----------
+  subgraph FE["FE — Vue 3 + Vite + axios"]
+    direction TB
+    V1["화면 1: 작업요청 목록 / 대시보드<br/>GET /work-requests · GET /dashboard/summary"]
+    V2["화면 2: 에이전트 타임라인 + 승인 패널<br/>GET /work-requests/{id} · GET /agent-runs/{runId} (3초 폴링)<br/>PATCH submit-approval · POST approvals"]
+    V3["/glass 선택 채널 (같은 API)"]
+    AX["axios api client<br/>base /api/v1"]
+    V1 --> AX
+    V2 --> AX
+    V3 --> AX
+  end
+
+  %% ---------- Backend ----------
+  subgraph BE["BE — FastAPI (Python 3.11)"]
+    direction TB
+    subgraph CTRL["Controller (routers)"]
+      direction TB
+      R1["work_requests router<br/>GET/POST /work-requests<br/>GET /work-requests/{id}<br/>POST /work-requests/{id}/agent-runs → 202<br/>PATCH /work-requests/{id}/submit-approval<br/>POST /work-requests/{id}/approvals → 201"]
+      R2["agent_runs router<br/>GET /agent-runs/{runId}"]
+      R3["catalog routers<br/>GET /documents/{docId}<br/>GET /parts · GET /parts/{partId}/compatibility<br/>GET /equipments · GET /laws/search"]
+      R4["dashboard · tenants routers<br/>GET /dashboard/summary<br/>GET/PUT /tenants/{id}/ai-config"]
+    end
+    subgraph SVC["Service"]
+      direction TB
+      WRS["WorkRequestService"]
+      ORCH["AgentOrchestrator<br/>agent_runs 생성 · steps 상태 관리<br/>결과 통합 (summary, approval_required_by)"]
+      APS["ApprovalService<br/>상태머신 + 체크리스트 게이트<br/>4항목 true 아니면 APPROVE 409"]
+      DSS["DashboardService · LawSearchService · AiConfigService"]
+      subgraph AGENTS["AgentService 인터페이스 (4개)"]
+        direction LR
+        SPEC["SpecAgent<br/>SPEC"]
+        LEGAL["LegalAgent<br/>LEGAL"]
+        SDOC["SafetyDocAgent<br/>SAFETY_DOC"]
+        VEND["VendorAgent<br/>VENDOR"]
+      end
+      subgraph IMPL["구현체 (설정으로 선택)"]
+        direction LR
+        MOCK["Mock 구현체<br/>고정 JSON · 폴링마다 step 1개 DONE"]
+        LLM["LLM 구현체 (확장)<br/>LOCAL_LLM / AX_PLATFORM / OPENAI"]
+      end
+    end
+    subgraph REPO["Repository (SQLAlchemy)"]
+      direction TB
+      RP["WorkRequestRepo · AgentRunRepo · ApprovalRepo<br/>DocumentRepo · LegalFindingRepo · LawIndexRepo<br/>PartRepo · EquipmentRepo · AiConfigRepo · AuditLogRepo"]
+    end
+    R1 --> WRS
+    R1 --> ORCH
+    R1 --> APS
+    R2 --> ORCH
+    R3 --> DSS
+    R4 --> DSS
+    ORCH --> SPEC
+    ORCH --> LEGAL
+    ORCH --> SDOC
+    ORCH --> VEND
+    AGENTS -. "implements" .-> IMPL
+    WRS --> RP
+    ORCH --> RP
+    APS --> RP
+    DSS --> RP
+  end
+
+  %% ---------- Database ----------
+  subgraph DB["DB — PostgreSQL (Supabase) · 로컬 SQLite 폴백"]
+    direction TB
+    T1[("tenants · users")]
+    T2[("equipments · parts<br/>equipment_parts · part_compatibility")]
+    T3[("work_requests")]
+    T4[("agent_runs (steps_json, overall_status,<br/>model_name, prompt_version)")]
+    T5[("legal_findings · documents")]
+    T6[("approvals (checklist_json, decision)")]
+    T7[("law_index")]
+    T8[("ai_configs · audit_logs")]
+  end
+
+  %% ---------- External / Extension ----------
+  subgraph EXT["외부 · 확장"]
+    direction TB
+    MON["모니터링 시스템 (Mock)<br/>이상 알람"]
+    LAWAPI["법제처 국가법령정보 Open API<br/>→ law_index 사전 적재 (배치)"]
+    GPU["사내 GPU LLM / SK AX A.X 플랫폼<br/>(온프레미스, 확장)"]
+    VDB["Vector DB (확장, LEGAL RAG)"]
+    ERP["ERP · BOM · 벤더 포털 · 사내 메신저 (확장)"]
+    Q["Queue (확장, 실 병렬 실행)"]
+  end
+
+  %% ---------- Config ----------
+  subgraph CFG["설정 격리"]
+    direction TB
+    AICFG["ai_configs 테이블<br/>tenant_id · agent_type · provider<br/>model_name · prompt_version · egress_allowed=false"]
+    ENV[".env / 환경변수<br/>DATABASE_URL · AGENT_MODE=mock|llm<br/>LLM_ENDPOINT · API 키 (코드 밖)"]
+  end
+
+  %% ---------- Cross links ----------
+  AX == "REST JSON (OpenAPI 3.0)" ==> CTRL
+  RP --> T1
+  RP --> T2
+  RP --> T3
+  RP --> T4
+  RP --> T5
+  RP --> T6
+  RP --> T7
+  RP --> T8
+  MON -. "알람 (확장: 자동 요청 생성)" .-> R1
+  LAWAPI -. "사전 적재" .-> T7
+  LEGAL -. "조문 검색" .-> T7
+  LLM -. "egress_allowed=false 이면 사내만" .-> GPU
+  LLM -.-> VDB
+  SPEC -.-> ERP
+  VEND -.-> ERP
+  ORCH -.-> Q
+  AICFG --> ORCH
+  ENV --> BE
+  T8 --- AICFG
+
+  %% ---------- Styles ----------
+  classDef fe fill:#eef3ff,stroke:#3b5bdb,color:#222;
+  classDef ai fill:#e6fcf5,stroke:#0b7285,stroke-width:2px,color:#222;
+  classDef db fill:#fff7e6,stroke:#d98c00,color:#222;
+  classDef ext fill:#f8f9fa,stroke:#868e96,stroke-dasharray:4 3,color:#222;
+  classDef cfg fill:#fff3bf,stroke:#e67700,color:#222;
+  class V1,V2,V3,AX fe;
+  class ORCH,SPEC,LEGAL,SDOC,VEND,MOCK,LLM ai;
+  class T1,T2,T3,T4,T5,T6,T7,T8 db;
+  class MON,LAWAPI,GPU,VDB,ERP,Q ext;
+  class AICFG,ENV cfg;

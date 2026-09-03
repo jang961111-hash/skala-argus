@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://replaceflow.local/schemas/safety_doc_result.schema.json",
+  "title": "SafetyDocResult — A3 안전서류 에이전트 출력",
+  "type": "object",
+  "description": "A3 안전서류 에이전트 결과",
+  "required": [
+    "documents"
+  ],
+  "properties": {
+    "documents": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "doc_id",
+          "type",
+          "missing"
+        ],
+        "properties": {
+          "doc_id": {
+            "type": "string",
+            "examples": [
+              "DOC-0101"
+            ]
+          },
+          "type": {
+            "$ref": "#/$defs/DocumentType"
+          },
+          "missing": {
+            "type": "array",
+            "description": "초안에서 채우지 못한 항목",
+            "items": {
+              "type": "string"
+            },
+            "examples": [
+              [
+                "작업자 2명 이름"
+              ]
+            ]
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "DocumentType": {
+      "type": "string",
+      "enum": [
+        "WORK_PERMIT",
+        "RISK_ASSESSMENT",
+        "LOTO_CHECKLIST",
+        "RFQ"
+      ],
+      "examples": [
+        "WORK_PERMIT"
+      ]
+    }
+  },
+  "examples": [
+    {
+      "documents": [
+        {
+          "doc_id": "DOC-0101",
+          "type": "WORK_PERMIT",
+          "missing": [
+            "작업자 2명 이름"
+          ]
+        },
+        {
+          "doc_id": "DOC-0102",
+          "type": "RISK_ASSESSMENT",
+          "missing": []
+        }
+      ]
+    }
+  ]
+}

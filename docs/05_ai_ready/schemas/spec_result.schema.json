@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://replaceflow.local/schemas/spec_result.schema.json",
+  "title": "SpecResult — A1 규격·호환 에이전트 출력",
+  "type": "object",
+  "description": "A1 규격·호환 에이전트 결과",
+  "required": [
+    "spec_match",
+    "current_part",
+    "alternatives"
+  ],
+  "properties": {
+    "spec_match": {
+      "type": "boolean",
+      "description": "요청 부품이 설비 BOM 규격과 일치하는지",
+      "examples": [
+        true
+      ]
+    },
+    "current_part": {
+      "type": "string",
+      "description": "현재 장착 부품 번호",
+      "examples": [
+        "VLV-SS316-1/4-NC"
+      ]
+    },
+    "alternatives": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/AlternativePart"
+      }
+    },
+    "notes": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "판정 근거 메모"
+    }
+  },
+  "$defs": {
+    "AlternativePart": {
+      "type": "object",
+      "required": [
+        "part_no",
+        "grade",
+        "diff",
+        "allowed_for_toxic_gas"
+      ],
+      "properties": {
+        "part_no": {
+          "type": "string",
+          "examples": [
+            "VLV-SS316-1/4-NC-EQ"
+          ]
+        },
+        "grade": {
+          "$ref": "#/$defs/PartGrade"
+        },
+        "diff": {
+          "type": "string",
+          "description": "기준 부품 대비 차이점",
+          "examples": [
+            "시트 재질 PCTFE→PTFE"
+          ]
+        },
+        "allowed_for_toxic_gas": {
+          "type": "boolean",
+          "description": "유독가스 라인 사용 가능 여부",
+          "examples": [
+            false
+          ]
+        }
+      }
+    },
+    "PartGrade": {
+      "type": "string",
+      "description": "부품 등급 (정품 / 호환품 / 리퍼비시)",
+      "enum": [
+        "OEM",
+        "EQUIVALENT",
+        "REFURB"
+      ],
+      "examples": [
+        "OEM"
+      ]
+    }
+  },
+  "examples": [
+    {
+      "spec_match": true,
+      "current_part": "VLV-SS316-1/4-NC",
+      "alternatives": [
+        {
+          "part_no": "VLV-SS316-1/4-NC-EQ",
+          "grade": "EQUIVALENT",
+          "diff": "시트 재질 PCTFE→PTFE",
+          "allowed_for_toxic_gas": false
+        }
+      ]
+    }
+  ]
+}
