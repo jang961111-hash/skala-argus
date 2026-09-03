@@ -1,0 +1,56 @@
+%% ReplaceFlow Use-Case Diagram (flowchart LR, actors = rounded nodes, UCs = stadium)
+flowchart LR
+  %% ---------- Actors ----------
+  ENG("설비 엔지니어<br/>ENGINEER")
+  SM("안전관리자<br/>SAFETY_MANAGER")
+  BUYER("구매 담당<br/>BUYER (선택)")
+  ADMIN("관리자<br/>ADMIN")
+  MON("모니터링 시스템<br/>(외부, Mock)")
+  AGENTS("에이전트 서비스<br/>SPEC / LEGAL / SAFETY_DOC / VENDOR<br/>(Mock 또는 LLM)")
+  LAW("법령 인덱스<br/>law_index (법제처 사전 적재)")
+
+  %% ---------- System boundary ----------
+  subgraph SYS["ReplaceFlow 시스템 (FastAPI + Vue)"]
+    direction TB
+    UC01(["UC-01 작업요청 생성<br/>POST /work-requests → REQUESTED"])
+    UC02(["UC-02 에이전트 실행<br/>POST /work-requests/{id}/agent-runs 202<br/>RUNNING → REVIEW"])
+    UC03(["UC-03 결과 검토·보완<br/>PATCH /work-requests/{id}/submit-approval<br/>→ PENDING_APPROVAL"])
+    UC04(["UC-04 승인 / 반려 / 보완요청<br/>POST /work-requests/{id}/approvals 201<br/>→ APPROVED / REJECTED"])
+    UC05(["UC-05 발주·작업·완료 보고<br/>GET /documents/{docId} (RFQ)<br/>→ DONE"])
+    UC06(["UC-06 대시보드<br/>GET /dashboard/summary"])
+    UC07(["UC-07 지식 관리<br/>GET/PUT /tenants/{id}/ai-config<br/>law_index · 호환표 · 템플릿"])
+  end
+
+  %% ---------- Associations ----------
+  MON -. "이상 알람 (트리거)" .-> UC01
+  ENG --> UC01
+  ENG --> UC02
+  ENG --> UC03
+  ENG --> UC05
+  ENG -. "열람" .-> UC06
+  SM --> UC04
+  SM -. "열람" .-> UC06
+  BUYER --> UC05
+  ADMIN --> UC06
+  ADMIN --> UC07
+
+  UC02 --> AGENTS
+  AGENTS -. "LEGAL RAG" .-> LAW
+  UC07 --> LAW
+
+  %% ---------- include / extend ----------
+  UC01 -. "«include» 실행 트리거" .-> UC02
+  UC02 -. "«include» 완료 시" .-> UC03
+  UC03 -. "«include» 승인 요청" .-> UC04
+  UC04 -. "«extend» REQUEST_INFO 시 복귀" .-> UC03
+  UC04 -. "«include» APPROVED 시" .-> UC05
+
+  %% ---------- Styles ----------
+  classDef actor fill:#fff7e6,stroke:#d98c00,stroke-width:1.5px,color:#222;
+  classDef ext fill:#eef3ff,stroke:#3b5bdb,stroke-width:1.5px,stroke-dasharray:4 3,color:#222;
+  classDef uc fill:#ffffff,stroke:#333,stroke-width:1.2px,color:#222;
+  classDef ai fill:#e6fcf5,stroke:#0b7285,stroke-width:2px,color:#222;
+  class ENG,SM,BUYER,ADMIN actor;
+  class MON,AGENTS,LAW ext;
+  class UC01,UC03,UC04,UC05,UC06 uc;
+  class UC02,UC07 ai;

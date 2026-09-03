@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ReplaceFlow 와이어프레임 (Lo-Fi)</title>
+<style>
+  /* ---------- Lo-Fi 그레이박스 스타일 (Balsamiq 풍) ---------- */
+  :root{
+    --ink:#333; --ink2:#666; --ink3:#999;
+    --line:#8a8a8a; --line2:#c9c9c9;
+    --bg:#f4f4f2; --paper:#fff; --box:#ececec; --box2:#dedede;
+    --note:#fff6c2; --note-line:#d8c56a;
+    --ok:#4caf50; --run:#f2a63a; --wait:#bdbdbd; --err:#d9534f;
+    --accent:#5b7fb4;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{font-family:"Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;color:var(--ink);background:var(--bg);font-size:13px;line-height:1.45}
+  .app{display:flex;min-height:100vh}
+
+  /* 좌측 네비 */
+  .nav{width:220px;background:#2f3136;color:#ddd;padding:18px 14px;flex-shrink:0;position:sticky;top:0;height:100vh}
+  .nav .logo{font-weight:700;font-size:15px;color:#fff;letter-spacing:.3px;margin-bottom:4px}
+  .nav .sub{font-size:11px;color:#9a9da3;margin-bottom:18px}
+  .nav button{display:block;width:100%;text-align:left;background:transparent;border:1px solid transparent;color:#ccc;padding:9px 10px;border-radius:6px;cursor:pointer;font-size:13px;margin-bottom:4px;font-family:inherit}
+  .nav button:hover{background:#3a3d43}
+  .nav button.active{background:#4a5568;color:#fff;border-color:#5f6b80}
+  .nav .grp{font-size:10px;color:#8a8d93;margin:16px 0 6px;text-transform:uppercase;letter-spacing:1px}
+  .nav .legend{margin-top:24px;font-size:11px;color:#aaa;border-top:1px solid #45484e;padding-top:12px}
+  .nav .legend div{margin:4px 0}
+
+  /* 프레임 컨테이너 */
+  .main{flex:1;padding:22px 26px;min-width:0}
+  .frame{display:none}
+  .frame.active{display:block}
+  .frame-title{display:flex;align-items:baseline;gap:12px;margin-bottom:12px}
+  .frame-title h1{font-size:18px;margin:0}
+  .frame-title .meta{font-size:11px;color:var(--ink3)}
+  .layout{display:grid;grid-template-columns:1fr 300px;gap:18px;align-items:start}
+
+  /* 와이어 캔버스 */
+  .canvas{background:var(--paper);border:2px solid var(--line);border-radius:4px;padding:16px;position:relative;box-shadow:3px 3px 0 #d0d0d0}
+  .canvas.screen{min-height:560px}
+  .wbox{border:1.5px solid var(--line);background:var(--box);border-radius:3px;padding:10px;position:relative}
+  .wbox.dashed{border-style:dashed;background:#fafafa}
+  .wbox.white{background:#fff}
+  .wlabel{font-size:11px;color:var(--ink2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+  .wtext{color:var(--ink)}
+  .wmuted{color:var(--ink3)}
+  .placeholder{background:repeating-linear-gradient(135deg,#e6e6e6 0 6px,#f3f3f3 6px 12px);border:1px solid var(--line2);color:var(--ink3);display:flex;align-items:center;justify-content:center;font-size:11px}
+  .btn{display:inline-block;border:1.5px solid var(--line);background:#fff;padding:6px 12px;border-radius:3px;font-size:12px;cursor:pointer;font-family:inherit;color:var(--ink)}
+  .btn.primary{background:#555;color:#fff;border-color:#444}
+  .btn.danger{border-color:#b55;color:#933}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+  .btn.small{padding:3px 8px;font-size:11px}
+  .topbar{display:flex;align-items:center;gap:10px;border-bottom:1.5px solid var(--line);padding-bottom:10px;margin-bottom:14px}
+  .topbar .brand{font-weight:700}
+  .topbar .spacer{flex:1}
+  .topbar .user{border:1.5px solid var(--line);border-radius:20px;padding:3px 10px;font-size:11px;background:#fff}
+  .search{border:1.5px solid var(--line);background:#fff;padding:4px 8px;width:200px;font-size:11px;color:var(--ink3)}
+
+  /* 주석 배지 */
+  .ann{position:absolute;top:-9px;left:-9px;width:20px;height:20px;border-radius:50%;background:#e8552b;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 0 0 1px #e8552b;z-index:2}
+  .ann.inl{position:static;display:inline-flex;vertical-align:middle;margin-right:6px;width:18px;height:18px;font-size:10px}
+  .notes{background:var(--note);border:1.5px solid var(--note-line);padding:12px 14px;border-radius:3px;font-size:12px;position:sticky;top:20px}
+  .notes h3{margin:0 0 8px;font-size:13px}
+  .notes ol{margin:0;padding:0;list-style:none}
+  .notes li{display:flex;gap:8px;margin-bottom:9px;line-height:1.4}
+  .notes li .ann{flex-shrink:0;margin-top:1px}
+  .notes code{background:#fff;border:1px solid #e0d39a;padding:0 4px;border-radius:2px;font-size:11px;font-family:Consolas,Menlo,monospace;white-space:nowrap}
+  .notes .st{color:#7a6a1e;font-size:11px}
+
+  /* KPI */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+  .kpi{border:1.5px solid var(--line);background:#fff;padding:10px 12px;position:relative}
+  .kpi .k{font-size:11px;color:var(--ink2)}
+  .kpi .v{font-size:24px;font-weight:700;line-height:1.2;margin-top:2px}
+  .kpi .d{font-size:11px;color:var(--ink3)}
+  .kpi .cmp{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:11px}
+  .kpi .bar{height:6px;background:#ddd;border:1px solid var(--line2);flex:1;position:relative}
+  .kpi .bar>i{position:absolute;left:0;top:0;bottom:0;background:#777}
+
+  /* 테이블 */
+  table.wt{width:100%;border-collapse:collapse;background:#fff;font-size:12px}
+  table.wt th{background:var(--box2);border:1px solid var(--line);padding:6px 8px;text-align:left;font-weight:600;font-size:11px}
+  table.wt td{border:1px solid var(--line2);padding:6px 8px;vertical-align:middle}
+  table.wt tr.sel td{background:#f0f4fa}
+  table.wt tr:hover td{background:#f7f7f7;cursor:pointer}
+  .chip{display:inline-block;border:1.5px solid var(--line);border-radius:12px;padding:1px 8px;font-size:10.5px;background:#fff;white-space:nowrap;font-family:Consolas,Menlo,monospace}
+  .chip.REQUESTED{border-color:#999;color:#666}
+  .chip.RUNNING{border-color:var(--run);color:#a06a10;background:#fff5e5}
+  .chip.REVIEW{border-color:var(--accent);color:#3a5a8a;background:#eef3fa}
+  .chip.PENDING_APPROVAL{border-color:#a07ad0;color:#6a44a0;background:#f3edfb}
+  .chip.APPROVED{border-color:var(--ok);color:#2d7a32;background:#eaf6ea}
+  .chip.REJECTED{border-color:var(--err);color:#a33;background:#fbeaea}
+  .prog{display:flex;align-items:center;gap:6px}
+  .prog .bar{width:90px;height:8px;border:1px solid var(--line);background:#fff;position:relative}
+  .prog .bar>i{position:absolute;left:0;top:0;bottom:0;background:#777}
+  .prog .steps{display:flex;gap:2px}
+  .prog .steps b{width:9px;height:9px;border:1px solid var(--line);display:block;background:#fff}
+  .prog .steps b.d{background:#666}
+  .prog .steps b.r{background:var(--run)}
+  .dash-bottom{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+  .hbar{display:flex;align-items:center;gap:8px;margin:5px 0;font-size:12px}
+  .hbar .n{width:90px}
+  .hbar .b{height:12px;background:#888;border:1px solid var(--line)}
+  .pager{display:flex;justify-content:flex-end;gap:6px;margin-top:8px;font-size:11px;color:var(--ink3)}
+
+  /* 화면2 레이아웃 */
+  .detail{display:grid;grid-template-columns:1fr 300px;gap:14px}
+  .detail .head{grid-column:1/3}
+  .req-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px}
+  .req-grid .cell{background:#fff;border:1px solid var(--line2);padding:6px 8px;font-size:12px}
+  .req-grid .cell .k{font-size:10.5px;color:var(--ink3)}
+  .timeline{position:relative}
+  .tl-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+  .tl-head .spacer{flex:1}
+  .orch{border:1.5px dashed var(--line);background:#fafafa;padding:6px 10px;font-size:11px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+  .cards{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+  .acard{border:1.5px solid var(--line);background:#fff;padding:10px;position:relative;min-height:150px;transition:box-shadow .3s}
+  .acard .t{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+  .acard .t .id{font-family:Consolas,Menlo,monospace;font-size:11px;background:var(--box2);border:1px solid var(--line);padding:0 5px}
+  .acard .t .name{font-weight:600}
+  .acard .t .spacer{flex:1}
+  .st{border-radius:10px;padding:1px 8px;font-size:10.5px;border:1.5px solid var(--wait);color:#777;background:#f5f5f5}
+  .st.RUNNING{border-color:var(--run);color:#a06a10;background:#fff5e5}
+  .st.RUNNING::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--run);margin-right:5px;animation:blink 1s infinite}
+  .st.DONE{border-color:var(--ok);color:#2d7a32;background:#eaf6ea}
+  @keyframes blink{50%{opacity:.2}}
+  .acard.RUNNING{box-shadow:0 0 0 3px #ffe4b8}
+  .acard.DONE{border-color:#6aa86e}
+  .acard .res{font-size:11.5px;color:var(--ink2);border-top:1px dashed var(--line2);padding-top:6px;min-height:60px}
+  .acard .res ul{margin:4px 0 0;padding-left:16px}
+  .acard .res .sk{height:9px;background:#e6e6e6;margin:5px 0;width:80%}
+  .acard .res .sk.s{width:55%}
+  .acard .more{position:absolute;right:8px;bottom:6px;font-size:10.5px;color:var(--accent);text-decoration:underline}
+  .summary{border:1.5px solid var(--line);background:#fff;padding:8px 10px;margin-top:10px;font-size:12px}
+  .summary .k{font-size:10.5px;color:var(--ink3)}
+
+  /* 승인 패널 */
+  .panel{border:1.5px solid var(--line);background:#fff;padding:10px;position:relative}
+  .panel.locked::after{content:"에이전트 실행 완료 후 활성화 (overall_status=REVIEW)";position:absolute;inset:0;background:rgba(240,240,240,.85);display:flex;align-items:center;justify-content:center;text-align:center;font-size:12px;color:#777;padding:20px;z-index:3}
+  .panel.readonly .ro-mask{position:absolute;inset:0;background:rgba(255,255,255,.55);z-index:3;display:flex;align-items:flex-start;justify-content:center;padding-top:50%;font-size:11.5px;color:#777;text-align:center;pointer-events:none}
+  .panel h4{margin:0 0 6px;font-size:12px;display:flex;align-items:center;gap:6px}
+  .panel .sec{border-top:1px dashed var(--line2);padding-top:8px;margin-top:8px}
+  .law{font-size:11.5px;margin:4px 0;display:flex;gap:6px}
+  .law .a{font-family:Consolas,Menlo,monospace;background:var(--box2);padding:0 4px;border:1px solid var(--line2);white-space:nowrap;font-size:10.5px}
+  .law u{color:var(--accent)}
+  .ck{display:flex;align-items:center;gap:7px;font-size:12px;margin:5px 0}
+  .ck input{width:15px;height:15px;margin:0}
+  .ck code{font-size:10px;color:var(--ink3);font-family:Consolas,Menlo,monospace}
+  .doc{font-size:11.5px;margin:4px 0;display:flex;gap:6px;align-items:center}
+  .doc .ic{width:14px;height:17px;border:1px solid var(--line);background:#fff;display:inline-block}
+  .doc .warn{color:#a06a10;font-size:10.5px}
+  .comment{width:100%;border:1.5px solid var(--line);height:56px;font-family:inherit;font-size:12px;padding:6px;resize:none;background:#fff}
+  .actions{display:flex;gap:6px;margin-top:8px}
+  .actions .btn{flex:1;text-align:center}
+  .role-sw{display:inline-flex;border:1.5px solid var(--line);border-radius:4px;overflow:hidden;font-size:11px}
+  .role-sw span{padding:4px 9px;cursor:pointer;background:#fff;color:#777}
+  .role-sw span.on{background:#555;color:#fff}
+  .status-line{font-size:11px;color:var(--ink2);margin-top:8px;border:1px dashed var(--line2);padding:5px 8px;background:#fafafa}
+  .toast{position:fixed;bottom:22px;right:26px;background:#333;color:#fff;padding:10px 14px;border-radius:4px;font-size:12px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:10}
+  .toast.show{opacity:1}
+
+  /* 흐름도 */
+  .flow{padding:20px;overflow-x:auto}
+  .flow svg{display:block;max-width:100%}
+  .flow-legend{display:flex;gap:16px;font-size:11px;color:var(--ink2);margin-top:8px}
+
+  /* 글라스 뷰 */
+  .glass{background:#111;color:#eee;border-radius:14px;padding:18px;width:360px;border:6px solid #333;margin:0 auto}
+  .glass .gs{border:1px solid #444;border-radius:8px;padding:10px 12px;margin-bottom:8px;display:flex;gap:10px;align-items:center;background:#1b1b1b}
+  .glass .gs .n{width:30px;height:30px;border-radius:50%;background:#333;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0}
+  .glass .gs .tt{font-size:16px;font-weight:700}
+  .glass .gs .dd{font-size:12px;color:#aaa}
+  .glass .gs.ok{border-color:#3f8f45}
+  .glass .gs.ok .n{background:#2d7a32}
+  .glass .hint{font-size:11px;color:#888;text-align:center;margin-top:6px}
+
+  @media (max-width:1100px){.layout,.detail{grid-template-columns:1fr}.detail .head{grid-column:auto}.notes{position:static}}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ================= 좌측 네비 ================= -->
+  <aside class="nav">
+    <div class="logo">ReplaceFlow</div>
+    <div class="sub">Lo-Fi 와이어프레임 · 2026-09-02</div>
+    <div class="grp">화면</div>
+    <button class="active" data-frame="f1" onclick="showFrame('f1',this)">화면1 · 작업요청 목록/대시보드</button>
+    <button data-frame="f2" onclick="showFrame('f2',this)">화면2 · 상세 (타임라인+승인)</button>
+    <div class="grp">흐름</div>
+    <button data-frame="f3" onclick="showFrame('f3',this)">화면 흐름도 (User Flow)</button>
+    <div class="grp">선택 채널</div>
+    <button data-frame="f4" onclick="showFrame('f4',this)">글라스 뷰 (선택)</button>
+    <div class="legend">
+      <div><b style="color:#e8552b">①②③</b> 주석 번호 → 우측 “주석” 참조</div>
+      <div>API base: <code>/api/v1</code></div>
+      <div>상태값·필드명은 CONTRACT.md 고정</div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+  <!-- ================= 화면1 ================= -->
+  <section id="f1" class="frame active">
+    <div class="frame-title"><h1>화면1. 작업요청 목록 / 대시보드</h1><span class="meta">Route: <code>/</code> · Actor: 엔지니어·안전관리자·관리자 (UC-01, UC-06)</span></div>
+    <div class="layout">
+      <div class="canvas screen">
+        <div class="topbar">
+          <div class="brand">ReplaceFlow</div>
+          <div class="wmuted">| 작업요청</div><div class="wmuted">| 지식관리</div><div class="wmuted">| 설정</div>
+          <div class="spacer"></div>
+          <div class="search">🔍 설비·부품·요청ID 검색</div>
+          <div class="user">👤 김민준 · ENGINEER</div>
+        </div>
+
+        <div style="display:flex;align-items:center;margin-bottom:10px">
+          <b style="font-size:14px">대시보드</b>
+          <span class="wmuted" style="margin-left:8px">T-001 ○○반도체(하이닉스 2차 협력사)</span>
+          <span style="flex:1"></span>
+          <span style="position:relative"><span class="ann">4</span><button class="btn primary">＋ 새 작업요청</button></span>
+        </div>
+
+        <div class="kpis" style="position:relative">
+          <span class="ann">1</span>
+          <div class="kpi"><div class="k">진행 중</div><div class="v">5</div><div class="d">in_progress</div></div>
+          <div class="kpi"><div class="k">승인 대기</div><div class="v">2</div><div class="d">pending_approval</div></div>
+          <div class="kpi" style="border-width:2px">
+            <div class="k">평균 승인 소요시간</div>
+            <div class="v">26.5<span style="font-size:12px;font-weight:400"> h</span></div>
+            <div class="cmp"><span style="width:38px">As-Is</span><div class="bar"><i style="width:100%"></i></div><span>168h</span></div>
+            <div class="cmp"><span style="width:38px">To-Be</span><div class="bar"><i style="width:16%;background:#333"></i></div><span>26.5h ▼84%</span></div>
+          </div>
+          <div class="kpi"><div class="k">이번 달 완료</div><div class="v">12</div><div class="d">completed_this_month</div></div>
+        </div>
+
+        <div style="position:relative">
+          <span class="ann">2</span>
+          <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;font-size:11px">
+            <span>상태 필터:</span>
+            <span class="chip">전체</span><span class="chip REQUESTED">REQUESTED</span><span class="chip RUNNING">RUNNING</span><span class="chip REVIEW">REVIEW</span><span class="chip PENDING_APPROVAL">PENDING_APPROVAL</span><span class="chip APPROVED">APPROVED</span>
+          </div>
+          <table class="wt">
+            <thead><tr><th>요청 ID</th><th>설비</th><th>부품</th><th>증상</th><th>상태</th><th><span class="ann inl" style="background:#e8552b">3</span>에이전트 진행률</th><th>승인자</th><th>요청일</th></tr></thead>
+            <tbody>
+              <tr onclick="openDetail('WR-20260902-011')"><td><code>WR-20260902-011</code></td><td>EQ-GC-02 가스캐비닛#2</td><td>VLV-SS316-1/4-NC</td><td>가스 유량 이상, 밸브 누설 의심</td><td><span class="chip REQUESTED">REQUESTED</span></td>
+                <td><div class="prog"><div class="bar"><i style="width:0"></i></div><div class="steps"><b></b><b></b><b></b><b></b></div><span class="wmuted">0/4</span></div></td><td class="wmuted">—</td><td>09-02 15:00</td></tr>
+              <tr onclick="openDetail('WR-20260902-010')"><td><code>WR-20260902-010</code></td><td>EQ-VLV-07 공정가스 밸브#7</td><td>VLV-SS316-1/4-NC</td><td>NH3 라인 압력 강하</td><td><span class="chip RUNNING">RUNNING</span></td>
+                <td><div class="prog"><div class="bar"><i style="width:50%"></i></div><div class="steps"><b class="d"></b><b class="d"></b><b class="r"></b><b></b></div><span class="wmuted">2/4</span></div></td><td class="wmuted">—</td><td>09-02 11:20</td></tr>
+              <tr onclick="openDetail('WR-20260901-009')"><td><code>WR-20260901-009</code></td><td>EQ-SCR-01 스크러버#1</td><td>인라인 필터</td><td>차압 상승, 필터 막힘</td><td><span class="chip REVIEW">REVIEW</span></td>
+                <td><div class="prog"><div class="bar"><i style="width:100%"></i></div><div class="steps"><b class="d"></b><b class="d"></b><b class="d"></b><b class="d"></b></div><span class="wmuted">4/4</span></div></td><td class="wmuted">—</td><td>09-01 16:40</td></tr>
+              <tr onclick="openDetail('WR-20260901-008')"><td><code>WR-20260901-008</code></td><td>EQ-GC-02 가스캐비닛#2</td><td>압력조정기 REG-2S</td><td>2차압 불안정</td><td><span class="chip PENDING_APPROVAL">PENDING_APPROVAL</span></td>
+                <td><div class="prog"><div class="bar"><i style="width:100%"></i></div><div class="steps"><b class="d"></b><b class="d"></b><b class="d"></b><b class="d"></b></div><span class="wmuted">4/4</span></div></td><td>이정호 (SAFETY_MANAGER)</td><td>09-01 09:10</td></tr>
+              <tr onclick="openDetail('WR-20260829-007')"><td><code>WR-20260829-007</code></td><td>EQ-VLV-07 공정가스 밸브#7</td><td>VLV-SS316-1/4-NC</td><td>밸브 시트 누설</td><td><span class="chip APPROVED">APPROVED</span></td>
+                <td><div class="prog"><div class="bar"><i style="width:100%"></i></div><div class="steps"><b class="d"></b><b class="d"></b><b class="d"></b><b class="d"></b></div><span class="wmuted">4/4</span></div></td><td>이정호 (SAFETY_MANAGER)</td><td>08-29 14:05</td></tr>
+            </tbody>
+          </table>
+          <div class="pager">total 5 · page 1 / 1 · size 20 &nbsp; ‹ 1 ›</div>
+        </div>
+
+        <div class="dash-bottom">
+          <div class="wbox white" style="position:relative">
+            <span class="ann">5</span>
+            <div class="wlabel">반려 사유 TOP</div>
+            <div class="hbar"><span class="n">서류 누락</span><div class="b" style="width:60%"></div><span>3</span></div>
+            <div class="hbar"><span class="n">호환품 부적합</span><div class="b" style="width:20%"></div><span>1</span></div>
+            <div class="hbar wmuted"><span class="n">(기타)</span><div class="b" style="width:0"></div><span>0</span></div>
+          </div>
+          <div class="wbox dashed" style="position:relative">
+            <span class="ann">6</span>
+            <div class="wlabel">최근 알림 / 코멘트</div>
+            <div class="wtext" style="font-size:11.5px">• [이정호] WR-…-008 “작업자 명단 보완 요청” · 10분 전</div>
+            <div class="wtext" style="font-size:11.5px">• [시스템] WR-…-009 에이전트 실행 완료 (REVIEW) · 1시간 전</div>
+            <div class="wmuted" style="font-size:11px;margin-top:4px">※ 3일 범위에서는 정적 목록 (선택)</div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="notes">
+        <h3>주석 — 화면1</h3>
+        <ol>
+          <li><span class="ann">1</span><div><b>KPI 4카드</b> — 진입 시 1회 호출. 평균 승인시간 카드는 <code>avg_approval_hours</code>(26.5h) vs <code>as_is_baseline_hours</code>(168h) 비교 바 표시.<br><code>GET /dashboard/summary</code> <span class="st">200 DashboardSummary</span></div></li>
+          <li><span class="ann">2</span><div><b>작업요청 테이블</b> — 상태 칩 클릭 시 <code>status=</code> 필터, 페이지네이션. 행 클릭 → 화면2.<br><code>GET /work-requests?status=&amp;page=&amp;size=</code> <span class="st">200 {items:[WorkRequestSummary], total}</span></div></li>
+          <li><span class="ann">3</span><div><b>에이전트 진행률</b> — 4칸(SPEC·LEGAL·SAFETY_DOC·VENDOR)의 step.status로 계산. 요약 응답에 <code>latest_run.steps</code> 카운트가 포함된다고 가정(회색 = PENDING, 주황 = RUNNING, 진회색 = DONE). RUNNING 행은 5초 폴링 <code>GET /agent-runs/{runId}</code>.</div></li>
+          <li><span class="ann">4</span><div><b>새 작업요청</b> — 모달(설비 선택 <code>GET /equipments</code>, 부품 선택 <code>GET /parts</code>, 증상, 현장 확인 메모). 저장 시 <code>POST /work-requests</code> <span class="st">201 WorkRequest (status=REQUESTED)</span> → 화면2로 이동.</div></li>
+          <li><span class="ann">5</span><div><b>반려 사유 TOP</b> — <code>reject_reasons_top[]</code> 가로 막대. (①과 같은 응답 재사용)</div></li>
+          <li><span class="ann">6</span><div><b>최근 알림</b> — 선택 요소. 승인 패널 코멘트가 엔지니어에게 전달됨을 보여주는 자리. API 미정(3일 범위 밖).</div></li>
+        </ol>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ================= 화면2 ================= -->
+  <section id="f2" class="frame">
+    <div class="frame-title"><h1>화면2. 작업요청 상세 — 에이전트 타임라인 + 승인 패널</h1><span class="meta">Route: <code>/work-requests/:id</code> · 데모 클라이맥스 (UC-02~04)</span></div>
+    <div class="layout">
+      <div class="canvas screen">
+        <div class="topbar">
+          <div class="brand">ReplaceFlow</div><div class="wmuted">‹ 목록으로</div>
+          <div class="spacer"></div>
+          <span style="position:relative"><span class="ann">9</span>
+            <span class="role-sw" id="roleSw">
+              <span class="on" data-role="ENGINEER" onclick="setRole('ENGINEER')">👤 김민준 · 엔지니어</span>
+              <span data-role="SAFETY_MANAGER" onclick="setRole('SAFETY_MANAGER')">🛡 이정호 · 안전관리자</span>
+            </span>
+          </span>
+        </div>
+
+        <div class="detail">
+          <!-- 헤더: 요청 정보 -->
+          <div class="head wbox" style="position:relative">
+            <span class="ann">1</span>
+            <div style="display:flex;align-items:center;gap:10px">
+              <b style="font-size:14px">WR-20260902-011</b>
+              <span class="chip REQUESTED" id="wrStatus">REQUESTED</span>
+              <span class="wmuted" style="font-size:11px">요청자 U-001 김민준 · 2026-09-02 15:00</span>
+              <span style="flex:1"></span>
+              <span class="wmuted" style="font-size:11px">approval_required_by: SAFETY_MANAGER</span>
+            </div>
+            <div class="req-grid">
+              <div class="cell"><div class="k">설비 (equipment_id)</div>EQ-GC-02 가스캐비닛#2 · GAS_CABINET · SiH4</div>
+              <div class="cell"><div class="k">부품 (part_id)</div>P-VLV-001 VLV-SS316-1/4-NC · OEM · 재고 2</div>
+              <div class="cell"><div class="k">증상 (symptom)</div>가스 유량 이상, 밸브 누설 의심</div>
+              <div class="cell"><div class="k">현장 확인 메모 (site_check_note)</div>현장 확인 결과 밸브 시트 마모</div>
+            </div>
+          </div>
+
+          <!-- 중앙: 타임라인 -->
+          <div class="timeline">
+            <div class="tl-head">
+              <b>에이전트 타임라인</b>
+              <span class="wmuted" style="font-size:11px" id="runLabel">run_id: — · overall_status: —</span>
+              <span class="spacer"></span>
+              <span style="position:relative"><span class="ann">2</span><button class="btn primary" id="btnRun" onclick="playDemo()">▶ 데모 재생 (에이전트 실행)</button></span>
+              <button class="btn small" onclick="resetDemo()">↺ 초기화</button>
+            </div>
+            <div class="orch" style="position:relative">
+              <span class="ann">3</span>
+              <span>오케스트레이터 — A1~A4 병렬 실행 · 상태 관리 · 결과 통합</span>
+              <span class="wmuted" id="orchStatus">대기 중</span>
+            </div>
+
+            <div class="cards" style="position:relative">
+              <span class="ann">4</span>
+              <div class="acard" id="card-SPEC">
+                <div class="t"><span class="id">A1</span><span class="name">규격·호환 에이전트</span><span class="spacer"></span><span class="st" data-st>대기</span></div>
+                <div class="wmuted" style="font-size:11px">agent: <code>SPEC</code> · 입력: BOM·부품번호·카탈로그</div>
+                <div class="res" data-res><div class="sk"></div><div class="sk s"></div></div>
+                <span class="more">상세 › 호환표</span>
+              </div>
+              <div class="acard" id="card-LEGAL">
+                <div class="t"><span class="id">A2</span><span class="name">법령 에이전트</span><span class="spacer"></span><span class="st" data-st>대기</span></div>
+                <div class="wmuted" style="font-size:11px">agent: <code>LEGAL</code> · 입력: 물질(SiH4)·설비유형·작업종류 → 법령 RAG</div>
+                <div class="res" data-res><div class="sk"></div><div class="sk s"></div></div>
+                <span class="more">상세 › 조문 인용</span>
+              </div>
+              <div class="acard" id="card-SAFETY_DOC">
+                <div class="t"><span class="id">A3</span><span class="name">안전서류 에이전트</span><span class="spacer"></span><span class="st" data-st>대기</span></div>
+                <div class="wmuted" style="font-size:11px">agent: <code>SAFETY_DOC</code> · 입력: A2 결과 + 작업 내용</div>
+                <div class="res" data-res><div class="sk"></div><div class="sk s"></div></div>
+                <span class="more">상세 › 서류 초안</span>
+              </div>
+              <div class="acard" id="card-VENDOR">
+                <div class="t"><span class="id">A4</span><span class="name">벤더 에이전트</span><span class="spacer"></span><span class="st" data-st>대기</span></div>
+                <div class="wmuted" style="font-size:11px">agent: <code>VENDOR</code> · 입력: A1 결과 + 구매 이력</div>
+                <div class="res" data-res><div class="sk"></div><div class="sk s"></div></div>
+                <span class="more">상세 › RFQ 초안</span>
+              </div>
+            </div>
+
+            <div class="summary" style="position:relative">
+              <span class="ann">5</span>
+              <div class="k">통합 요약 (agent_run.summary)</div>
+              <div id="runSummary" class="wmuted">— 실행 완료 후 표시 —</div>
+            </div>
+            <div class="status-line" id="engActions">
+              <b>엔지니어 액션 (UC-03)</b> — 누락 정보 입력 후 <button class="btn small" id="btnSubmit" disabled onclick="submitApproval()">승인 요청 →</button>
+              <span class="wmuted">PATCH /work-requests/{id}/submit-approval · run 미완료 시 409</span>
+            </div>
+          </div>
+
+          <!-- 우측: 승인 패널 -->
+          <div class="panel locked" id="panel">
+            <span class="ann">6</span>
+            <div class="ro-mask" id="roMask" hidden>엔지니어 역할 = 읽기 전용<br>(승인 권한: SAFETY_MANAGER)</div>
+            <h4>승인 패널 <span class="wmuted" style="font-weight:400">· 안전관리자</span></h4>
+
+            <div class="sec"><h4>적용 법령 (applicable_laws)</h4>
+              <div class="law"><span class="a">제92조</span><span><u>산업안전보건기준에 관한 규칙</u> — 정비등의 작업 시의 운전정지 등<br><span class="wmuted">“…운전을 정지하고 … 잠금장치 및 표지판을…”</span></span></div>
+              <div class="law"><span class="a">제24조</span><span><u>화학물질관리법</u> — 취급시설의 설치·관리 기준</span></div>
+              <div class="law"><span class="a">별표</span><span><u>고압가스 안전관리법 시행규칙</u> — 특정고압가스 사용시설 기준</span></div>
+            </div>
+
+            <div class="sec" style="position:relative"><span class="ann" style="left:auto;right:-6px">7</span><h4>필수 절차 체크리스트 (checklist)</h4>
+              <label class="ck"><input type="checkbox" class="ckb" data-key="WORK_PERMIT" onchange="updateApprove()"> 작업허가서(가스 배관 작업) <code>WORK_PERMIT</code> <span class="wmuted">BEFORE</span></label>
+              <label class="ck"><input type="checkbox" class="ckb" data-key="RISK_ASSESSMENT" onchange="updateApprove()"> 위험성평가 <code>RISK_ASSESSMENT</code> <span class="wmuted">BEFORE</span></label>
+              <label class="ck"><input type="checkbox" class="ckb" data-key="LOTO_GAS_ISOLATION" onchange="updateApprove()"> LOTO·가스 차단·퍼지 확인 <code>LOTO_GAS_ISOLATION</code> <span class="wmuted">BEFORE</span></label>
+              <label class="ck"><input type="checkbox" class="ckb" data-key="GAS_DETECTOR_CHECK" onchange="updateApprove()"> 가스 감지기 정상 확인 <code>GAS_DETECTOR_CHECK</code> <span class="wmuted">AFTER</span></label>
+              <div class="wmuted" style="font-size:10.5px" id="ckHint">0 / 4 체크 — 모두 체크해야 승인 활성</div>
+            </div>
+
+            <div class="sec"><h4>서류 초안 (documents)</h4>
+              <div class="doc"><span class="ic"></span><u>DOC-0101 작업허가서</u> <span class="warn">⚠ 누락: 작업자 2명 이름</span></div>
+              <div class="doc"><span class="ic"></span><u>DOC-0102 위험성평가표</u> <span style="color:#2d7a32;font-size:10.5px">✓ 누락 없음</span></div>
+              <div class="doc"><span class="ic"></span><u>DOC-0103 RFQ 초안</u> <span class="wmuted" style="font-size:10.5px">납기 3일 · 최근 구매 02-14</span></div>
+            </div>
+
+            <div class="sec" style="position:relative"><span class="ann" style="left:auto;right:-6px">8</span><h4>결정 + 코멘트</h4>
+              <textarea class="comment" id="comment" placeholder="엔지니어에게 바로 전달됩니다 (메신저 왕복 대체)"></textarea>
+              <div class="actions">
+                <button class="btn primary" id="btnApprove" disabled onclick="decide('APPROVE')">승인</button>
+                <button class="btn danger" onclick="decide('REJECT')">반려</button>
+                <button class="btn" onclick="decide('REQUEST_INFO')">보완요청</button>
+              </div>
+              <div class="wmuted" style="font-size:10.5px;margin-top:5px">decision: APPROVE | REJECT | REQUEST_INFO</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="notes">
+        <h3>주석 — 화면2</h3>
+        <ol>
+          <li><span class="ann">1</span><div><b>요청 정보 헤더</b> — 진입 시 <code>GET /work-requests/{id}</code> <span class="st">200 WorkRequestDetail (latest_run, approvals 포함)</span>. 상태 칩은 <code>status</code>.</div></li>
+          <li><span class="ann">2</span><div><b>데모 재생 / 에이전트 실행</b> — <code>POST /work-requests/{id}/agent-runs</code> <span class="st">202 {run_id, overall_status:"RUNNING"}</span> (409: 이미 APPROVED/DONE). 상태 <code>REQUESTED→RUNNING</code>.</div></li>
+          <li><span class="ann">3</span><div><b>오케스트레이터 바</b> — 실행 후 2초 간격 폴링 <code>GET /agent-runs/{runId}</code>. Mock은 호출마다 step 1개씩 DONE(SPEC→LEGAL→SAFETY_DOC→VENDOR).</div></li>
+          <li><span class="ann">4</span><div><b>에이전트 카드 ×4</b> — <code>steps[].status</code>(PENDING=대기 / RUNNING=실행 중 / DONE=완료)와 <code>result</code> 요약. 클릭 시 상세(호환표·조문·서류). 부품 상세는 <code>GET /parts/{partId}/compatibility</code>, 법령 추가 검색은 <code>GET /laws/search?q=&amp;equipmentType=&amp;substance=</code>.</div></li>
+          <li><span class="ann">5</span><div><b>통합 요약</b> — 4개 DONE → <code>overall_status=REVIEW</code>, 요청 상태 <code>REVIEW</code>. <code>summary</code> 문장 표시. 엔지니어는 누락 보완 후 <code>PATCH /work-requests/{id}/submit-approval</code> <span class="st">200 (422 누락 / 409 run 미완료)</span> → <code>PENDING_APPROVAL</code>.</div></li>
+          <li><span class="ann">6</span><div><b>승인 패널</b> — REVIEW 전에는 잠금. 엔지니어 역할은 읽기 전용, 안전관리자만 조작. 법령 3건은 A2 <code>applicable_laws[]</code>, 조문 클릭 → 원문.</div></li>
+          <li><span class="ann">7</span><div><b>체크리스트 4항목</b> — <code>WORK_PERMIT · RISK_ASSESSMENT · LOTO_GAS_ISOLATION · GAS_DETECTOR_CHECK</code> 모두 true여야 승인 버튼 활성(서버도 미완료 APPROVE는 <b>409</b>). 서류 링크는 <code>GET /documents/{docId}</code>.</div></li>
+          <li><span class="ann">8</span><div><b>승인/반려/보완요청 + 코멘트</b> — <code>POST /work-requests/{id}/approvals</code> <span class="st">201 Approval</span>. body: decision, checklist{4}, comment. 성공 시 상태 <code>APPROVED / REJECTED</code>, 대시보드 평균 승인시간 갱신.</div></li>
+          <li><span class="ann">9</span><div><b>역할 전환 토글</b> — 데모용(실서비스는 로그인 role). ENGINEER: 타임라인·승인 요청 활성, 패널 읽기 전용. SAFETY_MANAGER: 승인 패널 활성.</div></li>
+        </ol>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ================= 화면 흐름도 ================= -->
+  <section id="f3" class="frame">
+    <div class="frame-title"><h1>화면 흐름도 (User Flow)</h1><span class="meta">상태머신과 화면 전환 · 90초 데모 시나리오</span></div>
+    <div class="layout">
+      <div class="canvas flow">
+        <svg width="1040" height="560" viewBox="0 0 1040 560" font-family="Malgun Gothic,Apple SD Gothic Neo,sans-serif" font-size="12">
+          <defs>
+            <marker id="ar" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker>
+          </defs>
+          <!-- 레인 -->
+          <g fill="#f7f7f7" stroke="#ccc" stroke-dasharray="4 3">
+            <rect x="10" y="20" width="1020" height="130" rx="4"/>
+            <rect x="10" y="165" width="1020" height="180" rx="4"/>
+            <rect x="10" y="360" width="1020" height="130" rx="4"/>
+          </g>
+          <g fill="#888" font-size="11" font-weight="700">
+            <text x="20" y="38">엔지니어 (김민준)</text>
+            <text x="20" y="183">시스템 · 오케스트레이터 + 에이전트 A1~A4 (Mock)</text>
+            <text x="20" y="378">안전관리자 (이정호)</text>
+          </g>
+
+          <!-- 노드 스타일 -->
+          <g stroke="#555" stroke-width="1.5" fill="#fff">
+            <rect x="40" y="60" width="150" height="60" rx="3"/>
+            <rect x="240" y="60" width="160" height="60" rx="3"/>
+            <rect x="450" y="60" width="160" height="60" rx="3"/>
+            <rect x="700" y="60" width="160" height="60" rx="3"/>
+            <rect x="880" y="60" width="140" height="60" rx="3"/>
+
+            <rect x="240" y="205" width="160" height="60" rx="3" fill="#eee"/>
+            <rect x="450" y="200" width="70" height="26" rx="3"/>
+            <rect x="530" y="200" width="70" height="26" rx="3"/>
+            <rect x="450" y="234" width="70" height="26" rx="3"/>
+            <rect x="530" y="234" width="70" height="26" rx="3"/>
+            <rect x="640" y="205" width="160" height="60" rx="3" fill="#eee"/>
+
+            <rect x="450" y="400" width="160" height="60" rx="3"/>
+            <rect x="700" y="400" width="160" height="60" rx="3"/>
+            <rect x="880" y="400" width="140" height="60" rx="3" fill="#eaf6ea"/>
+          </g>
+          <g fill="#222" text-anchor="middle">
+            <text x="115" y="84" font-weight="700">화면1 대시보드</text><text x="115" y="102" font-size="11" fill="#666">GET /dashboard/summary</text>
+            <text x="320" y="84" font-weight="700">새 작업요청 모달</text><text x="320" y="102" font-size="11" fill="#666">POST /work-requests → REQUESTED</text>
+            <text x="530" y="84" font-weight="700">화면2 상세 (엔지니어)</text><text x="530" y="102" font-size="11" fill="#666">▶ POST …/agent-runs (202)</text>
+            <text x="780" y="84" font-weight="700">결과 검토·보완</text><text x="780" y="102" font-size="11" fill="#666">PATCH …/submit-approval</text>
+            <text x="950" y="84" font-weight="700">발주·작업·완료</text><text x="950" y="102" font-size="11" fill="#666">RFQ 발송 → DONE</text>
+
+            <text x="320" y="229" font-weight="700">오케스트레이터</text><text x="320" y="247" font-size="11" fill="#666">RUNNING · 4 step PENDING</text>
+            <text x="485" y="217" font-size="11">A1 SPEC</text><text x="565" y="217" font-size="11">A2 LEGAL</text>
+            <text x="485" y="251" font-size="11">A3 SAFETY</text><text x="565" y="251" font-size="11">A4 VENDOR</text>
+            <text x="720" y="229" font-weight="700">결과 통합</text><text x="720" y="247" font-size="11" fill="#666">overall=REVIEW · summary</text>
+
+            <text x="530" y="424" font-weight="700">역할 전환 → 승인 패널</text><text x="530" y="442" font-size="11" fill="#666">법령·서류 확인 · 체크 4/4</text>
+            <text x="780" y="424" font-weight="700">승인 / 반려 / 보완</text><text x="780" y="442" font-size="11" fill="#666">POST …/approvals (201)</text>
+            <text x="950" y="424" font-weight="700">APPROVED</text><text x="950" y="442" font-size="11" fill="#666">대시보드 KPI 갱신</text>
+          </g>
+
+          <!-- 화살표 -->
+          <g stroke="#555" stroke-width="1.5" fill="none" marker-end="url(#ar)">
+            <path d="M190,90 L240,90"/>
+            <path d="M400,90 L450,90"/>
+            <path d="M610,90 L700,90"/>
+            <path d="M860,90 L880,90"/>
+            <path d="M530,120 L530,160 L320,160 L320,205"/>
+            <path d="M400,235 L450,213"/>
+            <path d="M400,235 L450,247"/>
+            <path d="M600,213 L640,230"/>
+            <path d="M600,247 L640,240"/>
+            <path d="M720,265 L720,300 L780,300 L780,120"/>
+            <path d="M780,120 L780,300 L530,300 L530,400" stroke-dasharray="5 4"/>
+            <path d="M610,430 L700,430"/>
+            <path d="M860,430 L880,430"/>
+            <path d="M950,400 L950,150" stroke-dasharray="5 4"/>
+            <path d="M780,460 L780,520 L530,520 L530,120" stroke="#b55" stroke-dasharray="3 3"/>
+          </g>
+          <g font-size="10.5" fill="#555">
+            <text x="540" y="150">2초 폴링 GET /agent-runs/{runId}</text>
+            <text x="790" y="290">REVIEW → 화면2 재조회</text>
+            <text x="600" y="315">PENDING_APPROVAL → 안전관리자 알림</text>
+            <text x="960" y="280">APPROVED → UC-05</text>
+            <text x="560" y="535" fill="#b55">REJECT / REQUEST_INFO → 코멘트와 함께 엔지니어에게 회귀</text>
+          </g>
+          <!-- 상태 스트립 -->
+          <g font-size="10.5" font-family="Consolas,Menlo,monospace">
+            <rect x="10" y="505" width="1020" height="1" fill="#ccc"/>
+            <text x="20" y="550" fill="#888">work_requests.status :</text>
+            <text x="170" y="550" fill="#333">REQUESTED → RUNNING → REVIEW → PENDING_APPROVAL → APPROVED | REJECTED → DONE</text>
+          </g>
+        </svg>
+        <div class="flow-legend"><span>— 실선: 주 흐름</span><span>- - 점선: 상태 변화에 따른 화면 갱신</span><span style="color:#b55">- - 적색: 반려/보완 루프</span></div>
+      </div>
+      <aside class="notes">
+        <h3>데모 시나리오 (90초)</h3>
+        <ol>
+          <li><span class="ann">1</span><div>화면1에서 <b>새 작업요청</b> → 화면2 진입 (REQUESTED)</div></li>
+          <li><span class="ann">2</span><div><b>데모 재생</b> — A1~A4가 2초 간격으로 완료 (RUNNING → REVIEW)</div></li>
+          <li><span class="ann">3</span><div>통합 요약·승인 패널 활성 → 엔지니어 <b>승인 요청</b> (PENDING_APPROVAL)</div></li>
+          <li><span class="ann">4</span><div>역할 토글 <b>안전관리자</b> → 법령 3건·서류 초안 확인</div></li>
+          <li><span class="ann">5</span><div>체크리스트 4개 체크 → <b>승인</b> 버튼 활성 → 승인 (APPROVED)</div></li>
+          <li><span class="ann">6</span><div>화면1로 복귀, 평균 승인시간 26.5h vs As-Is 168h 강조</div></li>
+        </ol>
+        <div style="margin-top:10px;font-size:11px;color:#7a6a1e">Human-in-the-loop: 에이전트는 초안·근거만 생성, 승인·발주는 사람.</div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ================= 글라스 뷰 ================= -->
+  <section id="f4" class="frame">
+    <div class="frame-title"><h1>글라스 뷰 (선택 채널)</h1><span class="meta">Route: <code>/glass/:id</code> · 현장 스마트글라스/모바일 — 같은 데이터, 6단계 큰 글씨 · 필수 아님</span></div>
+    <div class="layout">
+      <div class="canvas" style="padding:26px">
+        <div class="glass">
+          <div style="font-size:12px;color:#888;margin-bottom:8px">WR-20260902-011 · EQ-GC-02 가스캐비닛#2</div>
+          <div class="gs ok"><div class="n">1</div><div><div class="tt">부품 확인</div><div class="dd">VLV-SS316-1/4-NC (OEM) · 호환품 사용 불가(유독가스)</div></div></div>
+          <div class="gs ok"><div class="n">2</div><div><div class="tt">작업허가서</div><div class="dd">DOC-0101 · 작업자 2명 이름 필요</div></div></div>
+          <div class="gs ok"><div class="n">3</div><div><div class="tt">LOTO · 가스 차단 · 퍼지</div><div class="dd">산안규칙 제92조 · 잠금장치·표지판</div></div></div>
+          <div class="gs"><div class="n">4</div><div><div class="tt">교체 작업</div><div class="dd">위험성평가 완료 후 진행</div></div></div>
+          <div class="gs"><div class="n">5</div><div><div class="tt">가스 감지기 확인</div><div class="dd">AFTER · GAS_DETECTOR_CHECK</div></div></div>
+          <div class="gs"><div class="n">6</div><div><div class="tt">완료 보고</div><div class="dd">승인: 이정호 · 상태 APPROVED</div></div></div>
+          <div class="hint">◀ 이전 &nbsp;·&nbsp; 음성 “다음” &nbsp;·&nbsp; 다음 ▶</div>
+        </div>
+      </div>
+      <aside class="notes">
+        <h3>주석 — 글라스 뷰</h3>
+        <ol>
+          <li><span class="ann">1</span><div>데이터 소스는 화면2와 동일: <code>GET /work-requests/{id}</code> + <code>latest_run.steps[].result</code>. 별도 API 없음.</div></li>
+          <li><span class="ann">2</span><div>A2 <code>required_procedures[]</code>(phase BEFORE/AFTER)와 A3 <code>documents[]</code>를 6단계로 재배열. 완료 단계는 녹색 테두리.</div></li>
+          <li><span class="ann">3</span><div>고대비·큰 글씨·한 화면 한 단계. 3일 범위에서는 정적 라우트로 최소 구현 또는 생략.</div></li>
+        </ol>
+      </aside>
+    </div>
+  </section>
+
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+  /* ---------- 프레임 전환 ---------- */
+  function showFrame(id, btn){
+    document.querySelectorAll('.frame').forEach(f=>f.classList.toggle('active', f.id===id));
+    document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active', b===btn || b.dataset.frame===id));
+    window.scrollTo(0,0);
+  }
+  function openDetail(id){ showFrame('f2'); toast('GET /api/v1/work-requests/'+id); }
+
+  /* ---------- 데모 데이터 (CONTRACT.md AgentRun 샘플) ---------- */
+  const RESULTS = {
+    SPEC: `<b>spec_match: true</b> · 현재 부품 VLV-SS316-1/4-NC<ul><li>대안 VLV-SS316-1/4-NC-EQ (EQUIVALENT) — 시트 PCTFE→PTFE</li><li style="color:#a33">allowed_for_toxic_gas: false → 호환품 불가</li></ul>`,
+    LEGAL: `<b>적용 법령 3건</b> · 필수 절차 4건<ul><li>산안규칙 제92조 · 화관법 제24조 · 고압가스법 시행규칙 별표</li><li>작업허가 · 위험성평가 · LOTO/가스차단 (BEFORE) · 감지기 확인 (AFTER)</li></ul>`,
+    SAFETY_DOC: `<b>서류 초안 2건 생성</b><ul><li>DOC-0101 WORK_PERMIT — <span style="color:#a06a10">누락: 작업자 2명 이름</span></li><li>DOC-0102 RISK_ASSESSMENT — 누락 없음</li></ul>`,
+    VENDOR: `<b>RFQ 초안 DOC-0103</b><ul><li>VLV-SS316-1/4-NC 2EA 견적·납기 요청</li><li>납기 예상 3일 · 최근 구매 2026-02-14</li></ul>`
+  };
+  const ORDER = ['SPEC','LEGAL','SAFETY_DOC','VENDOR'];
+  const SUMMARY = 'OEM 동일 규격 밸브 교체. 유독가스 라인이라 호환품 불가. 작업허가·위험성평가·LOTO 필수. 서류 초안 2건 생성, 작업자 명단만 보완 필요.';
+  let playing=false, timers=[], role='ENGINEER', runDone=false, submitted=false;
+
+  function setCard(agent, status){
+    const c=document.getElementById('card-'+agent);
+    c.classList.remove('RUNNING','DONE'); if(status!=='PENDING') c.classList.add(status);
+    const st=c.querySelector('[data-st]'); st.className='st '+(status==='PENDING'?'':status);
+    st.textContent={PENDING:'대기',RUNNING:'실행 중',DONE:'완료'}[status];
+    const res=c.querySelector('[data-res]');
+    if(status==='DONE') res.innerHTML=RESULTS[agent];
+    else if(status==='RUNNING') res.innerHTML='<div class="sk"></div><div class="sk s"></div><div class="wmuted" style="font-size:11px">실행 중… (mock-v1 / replaceflow-v0.1)</div>';
+    else res.innerHTML='<div class="sk"></div><div class="sk s"></div>';
+  }
+  function setWR(status){ const s=document.getElementById('wrStatus'); s.className='chip '+status; s.textContent=status; }
+
+  function playDemo(){
+    if(playing) return; resetDemo(); playing=true;
+    document.getElementById('btnRun').disabled=true;
+    toast('POST /api/v1/work-requests/WR-20260902-011/agent-runs → 202 {run_id:"RUN-0042", overall_status:"RUNNING"}');
+    setWR('RUNNING');
+    document.getElementById('runLabel').textContent='run_id: RUN-0042 · overall_status: RUNNING';
+    document.getElementById('orchStatus').textContent='실행 중 — 0/4 완료';
+    const STEP=2000;
+    ORDER.forEach((a,i)=>{
+      timers.push(setTimeout(()=>{ setCard(a,'RUNNING'); },  i*STEP+100));
+      timers.push(setTimeout(()=>{
+        setCard(a,'DONE');
+        document.getElementById('orchStatus').textContent='실행 중 — '+(i+1)+'/4 완료';
+        toast('GET /api/v1/agent-runs/RUN-0042 → steps['+i+'].'+a+' = DONE');
+        if(i===ORDER.length-1) finishRun();
+      }, (i+1)*STEP));
+    });
+  }
+  function finishRun(){
+    playing=false; runDone=true;
+    document.getElementById('runLabel').textContent='run_id: RUN-0042 · overall_status: REVIEW';
+    document.getElementById('orchStatus').textContent='완료 — overall_status=REVIEW';
+    document.getElementById('runSummary').className='';
+    document.getElementById('runSummary').textContent=SUMMARY;
+    setWR('REVIEW');
+    document.getElementById('panel').classList.remove('locked');
+    document.getElementById('btnSubmit').disabled=false;
+    applyRole();
+    toast('4 steps DONE → overall_status=REVIEW · 승인 패널 활성화');
+  }
+  function resetDemo(){
+    timers.forEach(clearTimeout); timers=[]; playing=false; runDone=false; submitted=false;
+    ORDER.forEach(a=>setCard(a,'PENDING'));
+    setWR('REQUESTED');
+    document.getElementById('runLabel').textContent='run_id: — · overall_status: —';
+    document.getElementById('orchStatus').textContent='대기 중';
+    document.getElementById('runSummary').className='wmuted';
+    document.getElementById('runSummary').textContent='— 실행 완료 후 표시 —';
+    document.getElementById('panel').classList.add('locked');
+    document.getElementById('btnRun').disabled=false;
+    document.getElementById('btnSubmit').disabled=true;
+    document.querySelectorAll('.ckb').forEach(c=>{c.checked=false;});
+    document.getElementById('comment').value='';
+    updateApprove(); applyRole();
+  }
+  function submitApproval(){
+    submitted=true; setWR('PENDING_APPROVAL');
+    document.getElementById('btnSubmit').disabled=true;
+    toast('PATCH /api/v1/work-requests/WR-20260902-011/submit-approval → 200 status=PENDING_APPROVAL');
+  }
+
+  /* ---------- 역할 전환 ---------- */
+  function setRole(r){ role=r; document.querySelectorAll('#roleSw span').forEach(s=>s.classList.toggle('on', s.dataset.role===r)); applyRole(); }
+  function applyRole(){
+    const isSM = role==='SAFETY_MANAGER';
+    const panel=document.getElementById('panel');
+    panel.classList.toggle('readonly', !isSM);
+    document.getElementById('roMask').hidden = isSM;
+    panel.querySelectorAll('input,textarea,button').forEach(el=>{ el.disabled=!isSM; });
+    document.getElementById('engActions').style.opacity = isSM ? .45 : 1;
+    document.getElementById('btnSubmit').disabled = isSM || !runDone || submitted;
+    document.getElementById('btnRun').disabled = isSM || playing || runDone;
+    if(isSM) updateApprove();
+  }
+  function updateApprove(){
+    const boxes=[...document.querySelectorAll('.ckb')];
+    const n=boxes.filter(b=>b.checked).length;
+    document.getElementById('ckHint').textContent = n+' / 4 체크 — '+(n===4?'승인 가능':'모두 체크해야 승인 활성');
+    document.getElementById('btnApprove').disabled = !(n===4 && role==='SAFETY_MANAGER');
+  }
+  function decide(d){
+    const boxes=[...document.querySelectorAll('.ckb')];
+    const ck={}; boxes.forEach(b=>ck[b.dataset.key]=b.checked);
+    if(d==='APPROVE' && Object.values(ck).some(v=>!v)){ toast('POST …/approvals → 409 (체크리스트 미완료)'); return; }
+    const map={APPROVE:'APPROVED',REJECT:'REJECTED',REQUEST_INFO:'REVIEW'};
+    setWR(map[d]);
+    toast('POST /api/v1/work-requests/WR-20260902-011/approvals → 201 Approval {decision:"'+d+'"}'+(d==='APPROVE'?' · 대시보드 avg_approval_hours 갱신':' · 코멘트가 엔지니어에게 전달'));
+  }
+
+  /* ---------- 토스트 ---------- */
+  let toastT;
+  function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2600); }
+
+  applyRole(); updateApprove();
+</script>
+</body>
+</html>

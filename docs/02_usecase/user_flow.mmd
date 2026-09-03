@@ -1,0 +1,102 @@
+%% ReplaceFlow End-to-End User Flow (엔지니어 → 에이전트 → 안전관리자 → 발주) with work_requests.status transitions
+flowchart TD
+  START(["모니터링 알람 또는 정기 점검에서 이상 감지"])
+
+  subgraph L_ENG["설비 엔지니어 (ENGINEER)"]
+    direction TB
+    E1["현장 확인<br/>site_check_note 작성"]
+    E2["작업요청 생성 (화면 1)<br/>POST /work-requests"]
+    S_REQ{{"status = REQUESTED"}}
+    E3["에이전트 실행 버튼 (화면 2)<br/>POST /work-requests/{id}/agent-runs → 202"]
+  end
+
+  subgraph L_AI["AgentOrchestrator + 4 Agents (시스템)"]
+    direction TB
+    S_RUN{{"status = RUNNING<br/>agent_runs.overall_status = RUNNING"}}
+    A1["SPEC<br/>PENDING → RUNNING → DONE"]
+    A2["LEGAL<br/>PENDING → RUNNING → DONE"]
+    A3["SAFETY_DOC<br/>PENDING → RUNNING → DONE"]
+    A4["VENDOR<br/>PENDING → RUNNING → DONE"]
+    POLL["FE 3초 폴링<br/>GET /agent-runs/{runId}"]
+    MERGE["결과 통합<br/>summary · approval_required_by = SAFETY_MANAGER"]
+    FAIL{{"step FAILED<br/>overall_status = FAILED"}}
+    S_REV{{"status = REVIEW<br/>overall_status = REVIEW"}}
+  end
+
+  subgraph L_ENG2["설비 엔지니어 (검토·보완)"]
+    direction TB
+    E4["타임라인 카드 열람<br/>호환표 · 조문 · 서류 초안 · RFQ"]
+    E5{"documents[].missing<br/>비어 있는가?"}
+    E6["누락 정보 입력<br/>(예: 작업자 2명 이름)"]
+    E7["승인 요청<br/>PATCH /work-requests/{id}/submit-approval"]
+    E7X{{"422 누락 정보 / 409 run 미완료"}}
+    S_PEND{{"status = PENDING_APPROVAL"}}
+  end
+
+  subgraph L_SM["안전관리자 (SAFETY_MANAGER)"]
+    direction TB
+    M1["승인 패널 열람<br/>applicable_laws · required_procedures · 서류 초안"]
+    M2["체크리스트 4항목 확인<br/>WORK_PERMIT · RISK_ASSESSMENT<br/>LOTO_GAS_ISOLATION · GAS_DETECTOR_CHECK"]
+    M3{"decision"}
+    M4["POST /work-requests/{id}/approvals<br/>decision = APPROVE → 201"]
+    M4X{{"409: 체크리스트 미완료 APPROVE"}}
+    M5["decision = REJECT + 코멘트"]
+    M6["decision = REQUEST_INFO + 코멘트"]
+    S_APR{{"status = APPROVED"}}
+    S_REJ{{"status = REJECTED"}}
+  end
+
+  subgraph L_BUY["발주·작업 (ENGINEER / BUYER)"]
+    direction TB
+    B1["RFQ 초안 확인·수정<br/>GET /documents/{docId} (type = RFQ)"]
+    B2["RFQ 발송 · 발주 확정 (사람)"]
+    B3["부품 교체 작업 수행<br/>작업허가 · LOTO · 가스 차단 · 퍼지"]
+    B4["작업 후 가스 감지기 확인 · 완료 보고"]
+    S_DONE{{"status = DONE"}}
+  end
+
+  DASH["대시보드 갱신<br/>GET /dashboard/summary<br/>avg_approval_hours · completed_this_month"]
+
+  %% ---------- Flow ----------
+  START --> E1 --> E2 --> S_REQ --> E3 --> S_RUN
+  S_RUN --> A1
+  S_RUN --> A2
+  S_RUN --> A3
+  S_RUN --> A4
+  A1 --> POLL
+  A2 --> POLL
+  A3 --> POLL
+  A4 --> POLL
+  POLL -- "4 step 모두 DONE" --> MERGE --> S_REV
+  POLL -- "step 실패" --> FAIL
+  FAIL -- "재실행 (새 run_id)" --> E3
+
+  S_REV --> E4 --> E5
+  E5 -- "아니오" --> E6 --> E7
+  E5 -- "예" --> E7
+  E7 -- "200" --> S_PEND
+  E7 -- "오류" --> E7X --> E6
+
+  S_PEND --> M1 --> M2 --> M3
+  M3 -- "승인" --> M4
+  M4 -- "체크리스트 4개 true" --> S_APR
+  M4 -- "하나라도 false" --> M4X --> M2
+  M3 -- "반려" --> M5 --> S_REJ
+  M3 -- "보완요청" --> M6
+  M6 -- "status = REVIEW 로 복귀" --> E4
+  S_REJ -- "요청 수정 후 재실행" --> E3
+
+  S_APR --> B1 --> B2 --> B3 --> B4 --> S_DONE
+  B1 -- "재고 충분 (parts.stock)" --> B3
+  S_DONE --> DASH
+  S_APR -.-> DASH
+
+  %% ---------- Styles ----------
+  classDef status fill:#fff3bf,stroke:#e67700,stroke-width:1.5px,color:#222;
+  classDef error fill:#ffe3e3,stroke:#c92a2a,stroke-width:1.5px,color:#222;
+  classDef ai fill:#e6fcf5,stroke:#0b7285,stroke-width:1.5px,color:#222;
+  classDef human fill:#ffffff,stroke:#333,stroke-width:1.2px,color:#222;
+  class S_REQ,S_RUN,S_REV,S_PEND,S_APR,S_REJ,S_DONE status;
+  class FAIL,E7X,M4X error;
+  class A1,A2,A3,A4,MERGE,POLL ai;
+  class E1,E2,E3,E4,E5,E6,E7,M1,M2,M3,M4,M5,M6,B1,B2,B3,B4 human;
