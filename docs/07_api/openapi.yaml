@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-  title: 부품 교체 요청·승인 시스템 API (ReplaceFlow — 명칭 미확정, docs/CONTRACT.md 참고)
+  title: 부품 교체 요청·승인 시스템 API (Argus — 명칭 미확정, docs/CONTRACT.md 참고)
   version: 3.0.0
   description: |
     REQ-F-0001. 팀 「API 명세서 v1.0」+「FixGuide 데이터 모델 정의서 v3.0」+「WRA 화면정의서 v2.0」을 그대로 옮긴 `docs/CONTRACT.md` v3.0 기준.
@@ -16,7 +16,7 @@ info:
     - **v3.0 범위에 없는 것(Phase 2로 삭제)**: 법령 검색, 부품/설비 마스터 조회, 서류 단건 조회, 테넌트 AI 설정 — v1.0/v2.0 초안에는 있었으나 팀 권위 문서(API 명세서 v1.0)에 없어 제거했다.
     - **주의(2026-09-03)**: BE(`backend/`)가 이 계약을 아직 구현 중이다. 이 문서는 CONTRACT.md §4 JSON 규칙을 그대로 옮긴 것이며 **실측 검증되지 않았다.** BE 완료 후 재검증 필요 — `docs/09_qa/postman_verification.md` §9 참고.
   contact:
-    name: ReplaceFlow Team (SKALA mini project)
+    name: Argus Team (SKALA mini project)
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
@@ -29,7 +29,7 @@ servers:
     description: Postman Mock Server
     variables:
       mockId:
-        default: replaceflow
+        default: argus
 
 tags:
   - name: auth
@@ -63,7 +63,7 @@ paths:
               $ref: '#/components/schemas/SignupBody'
             example:
               name: 김민준
-              email: engineer@replaceflow.test
+              email: engineer@argus.test
               password: Passw0rd!
               passwordConfirm: Passw0rd!
               role: ENGINEER
@@ -123,7 +123,7 @@ paths:
             schema:
               $ref: '#/components/schemas/LoginBody'
             example:
-              email: engineer@replaceflow.test
+              email: engineer@argus.test
               password: Passw0rd!
       responses:
         '200':
@@ -1009,7 +1009,7 @@ components:
         email:
           type: string
           format: email
-          example: engineer@replaceflow.test
+          example: engineer@argus.test
         password:
           type: string
           format: password
@@ -1030,7 +1030,7 @@ components:
         email:
           type: string
           format: email
-          example: engineer@replaceflow.test
+          example: engineer@argus.test
         password:
           type: string
           format: password
@@ -1078,7 +1078,7 @@ components:
         email:
           type: string
           format: email
-          example: engineer@replaceflow.test
+          example: engineer@argus.test
         role:
           $ref: '#/components/schemas/Role'
         redirectPath:
@@ -1677,7 +1677,7 @@ components:
         id: a1a1a1a1-0000-4000-8000-000000000001
         userId: a1a1a1a1-0000-4000-8000-000000000001
         name: 김민준
-        email: engineer@replaceflow.test
+        email: engineer@argus.test
         role: ENGINEER
         redirectPath: /home
         createdAt: '2026-09-03T09:00:00+09:00'

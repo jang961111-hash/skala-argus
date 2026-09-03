@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://replaceflow.local/schemas/agent_run.schema.json",
+  "$id": "https://argus.local/schemas/agent_run.schema.json",
   "title": "AgentRun — 오케스트레이터 실행 결과 (v3.0, agentCode A1/A2/A3)",
   "type": "object",
   "description": "CONTRACT v3.0 §4-12(폴링 응답: runId/workRequestId/status/allDone/pollIntervalMs/steps) + §4-7(WorkRequestDetail에 임베드될 때는 results도 포함, results[].editable은 SAFETY_MANAGER 조회 시 항상 false). steps는 정확히 3개, 순서 고정 A1→A2→A3. **실측(backend/app/schemas/agent.py AgentRunResponse/AgentRunDetail)**: 응답에 run의 PK가 `id`와 `runId` 이름으로 중복 노출된다(SQLAlchemy PK 관례 + CONTRACT 계약 필드명을 함께 유지).",

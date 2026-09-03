@@ -1,4 +1,4 @@
-# ReplaceFlow(WRA) 와이어프레임 제작 지시서 — v3.0 기준(실연동 확인)
+# Argus(WRA) 와이어프레임 제작 지시서 — v3.0 기준(실연동 확인)
 
 작성자: 문승은 (Product & UX / FE) · 갱신: 2026-09-03 (2차 긴급 갱신 — v2.0 지시서 대체)
 기준 문서: `docs/10_project_record/02_evidence/screenshots/v3.0_WRA_*.jpg`(2026-09-03 15:31 실연동 캡처, **최신·1차 기준**) · `/Users/jangbyeongheon/Downloads/WRA_화면정의서_v2.0.html`(설계 원안, 2차 기준) · `frontend/src/assets/main.css`(디자인 토큰, 여전히 유효한 자산) · `docs/02_usecase/usecase_spec.md`(UC-01~07, v1.0 — 부분적으로 불일치, 8절 참조)
@@ -332,7 +332,7 @@
 ## 참고 — 화면 구조 (Figma 또는 Stitch, 도구 무관)
 
 ```
-📁 ReplaceFlow(WRA)_Wireframe_v3
+📁 Argus(WRA)_Wireframe_v3
  ├─ 00_Cover              프로젝트명 · 8절 UC-화면 대응표 · 9절 UX 약점 메모 · 10절 캡처 대조 요약 · 상태값 범례
  ├─ 01_Components         GNB, Chip/Status, Card/KPI(2 role), Field/DynamicSpec, Card/Agent(3종), Card/AIResultEditable(행 단위), Card/AIResultReadonly, Panel/Decision(토글+단일 확정)
  ├─ 02_Auth               C_00(캡처 있음), C_01(캡처 없음 — 생략 가능, 캡처 우선 확보)

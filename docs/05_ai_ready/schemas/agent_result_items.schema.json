@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://replaceflow.local/schemas/agent_result_items.schema.json",
+  "$id": "https://argus.local/schemas/agent_result_items.schema.json",
   "title": "AgentResultItems — A1·A2 결과 / PATCH agent-results 요청 본문 (항목형, v3.0)",
   "type": "object",
   "description": "CONTRACT v3.0 §4-13. A1(규격·호환)·A2(법령·조문) 에이전트의 통일 출력 구조이자 PATCH /agent-results/{id}(API#13)의 요청 본문. 배열은 전체 치환(PUT-like) — 응답에 없는 기존 itemId는 삭제, itemId 없이 text만 오면 신규 추가로 처리된다.",

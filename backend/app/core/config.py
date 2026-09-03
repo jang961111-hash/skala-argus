@@ -29,9 +29,9 @@ def _bool(value: str | None, default: bool = False) -> bool:
 
 @dataclass(frozen=True)
 class Settings:
-    app_name: str = "ReplaceFlow API"
+    app_name: str = "Argus API"
     api_prefix: str = "/api/v1"
-    database_url: str = "sqlite:///./replaceflow.db"
+    database_url: str = "sqlite:///./argus.db"
     ai_provider: str = "MOCK"  # MOCK | LOCAL_LLM | AX_PLATFORM | OPENAI
     egress_allowed: bool = False
     openai_api_key: str = ""
@@ -69,7 +69,7 @@ def get_settings() -> Settings:
     prompts = os.getenv("PROMPTS_PATH")
     uploads = os.getenv("UPLOADS_DIR")
     return Settings(
-        database_url=os.getenv("DATABASE_URL", "sqlite:///./replaceflow.db"),
+        database_url=os.getenv("DATABASE_URL", "sqlite:///./argus.db"),
         ai_provider=os.getenv("AI_PROVIDER", "MOCK").upper(),
         egress_allowed=_bool(os.getenv("EGRESS_ALLOWED"), False),
         openai_api_key=os.getenv("OPENAI_API_KEY", ""),

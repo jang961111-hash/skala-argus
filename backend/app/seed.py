@@ -27,8 +27,8 @@ from app.services.agents.mock_agents import LegalMockAgent, SafetyDocMockAgent, 
 KST = timezone(timedelta(hours=9))
 SEED_PASSWORD = "Passw0rd!"
 
-ENGINEER_EMAIL = "engineer@replaceflow.test"
-SAFETY_EMAIL = "safety@replaceflow.test"
+ENGINEER_EMAIL = "engineer@argus.test"
+SAFETY_EMAIL = "safety@argus.test"
 
 
 def seed_if_empty(db: Session) -> bool:

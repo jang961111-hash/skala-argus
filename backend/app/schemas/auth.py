@@ -35,7 +35,7 @@ def validate_password_policy(value: str) -> str:
 
 class SignupRequest(CamelModel):
     name: str = Field(min_length=2, max_length=20, examples=["김민준"])
-    email: str = Field(examples=["engineer@replaceflow.test"])
+    email: str = Field(examples=["engineer@argus.test"])
     password: str = Field(examples=["Passw0rd!"])
     password_confirm: str = Field(examples=["Passw0rd!"])
     role: Role = Field(examples=["ENGINEER"])
@@ -55,7 +55,7 @@ class SignupRequest(CamelModel):
 
 
 class LoginRequest(CamelModel):
-    email: str = Field(examples=["engineer@replaceflow.test"])
+    email: str = Field(examples=["engineer@argus.test"])
     password: str = Field(min_length=1, examples=["Passw0rd!"])
 
     @field_validator("email")

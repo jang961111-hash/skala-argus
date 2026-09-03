@@ -1,4 +1,4 @@
-# ReplaceFlow Use-Case 명세서
+# Argus Use-Case 명세서
 
 문서 버전: **v3.0 (2026-09-03)** · 기준 문서: `docs/CONTRACT.md` v3.0(팀 「API 명세서 v1.0」+「데이터 모델 정의서 v3.0」+「WRA 화면정의서 v2.0」 원문 이관), `docs/03_wireframe/figma_build_guide.md`(AC 번호 출처, UX 담당)
 상태값·필드명(camelCase)·API 번호는 CONTRACT.md v3.0의 표기를 그대로 쓴다. **ID는 UUID v4**이며 예시의 `WR-...` 표기는 `requestNo`(사람이 읽는 표시용 채번)이지 PK가 아니다.
@@ -286,7 +286,7 @@ v2.0(`docs/CONTRACT_v2.0_superseded.md`)은 오케스트레이터가 화면정�
 
 ### 3.3 `prompt_version` ↔ 프롬프트 파일 버전 매칭
 
-`ai_configs.prompt_version`은 실제 프롬프트 파일 버전과 매칭되어야 한다는 것이 ERD 문서에 명시돼 있다. 이 저장소에서는 `docs/05_ai_ready/prompts.md`에 원문을 두고 현재 버전은 **`replaceflow-v0.3`**(A1/A2/A3 3종 통일 구조 기준)이다. `agent_runs.[제안] ai_config_id`가 실행 당시 `ai_configs` 행을 가리켜 `prompt_version`을 고정하므로, 이후 프롬프트를 고쳐도 과거 실행 결과의 재현성이 보존된다.
+`ai_configs.prompt_version`은 실제 프롬프트 파일 버전과 매칭되어야 한다는 것이 ERD 문서에 명시돼 있다. 이 저장소에서는 `docs/05_ai_ready/prompts.md`에 원문을 두고 현재 버전은 **`argus-v0.3`**(A1/A2/A3 3종 통일 구조 기준)이다. `agent_runs.[제안] ai_config_id`가 실행 당시 `ai_configs` 행을 가리켜 `prompt_version`을 고정하므로, 이후 프롬프트를 고쳐도 과거 실행 결과의 재현성이 보존된다.
 
 ### 3.4 사람이 유지하는 곳
 

@@ -1,10 +1,10 @@
-# ReplaceFlow 공통 계약서 v2.0 (모든 산출물이 반드시 따를 것)
+# Argus 공통 계약서 v2.0 (모든 산출물이 반드시 따를 것)
 
 > **쓰기 권한: 오케스트레이터 전용.** 트랙 담당자는 읽기만 한다.
 > 변경이 필요하면 **작업을 멈추고 변경을 요청**한다. 임의로 우회하지 않는다.
 > v1.0 은 `docs/CONTRACT_v1.0_archived.md` 에 보존. 근거 문서는 `WRA_화면정의서_v2.0`(2026-09-03).
 
-서비스명: **ReplaceFlow** — 반도체 설비 부품 교체 승인 프로세스 에이전트
+서비스명: **Argus** — 반도체 설비 부품 교체 승인 프로세스 에이전트
 스택: FE Vue 3 + Vite + axios · BE FastAPI (**Python 3.10+**, 개발 3.11) · DB PostgreSQL(Supabase) — 로컬 SQLite 폴백 · OpenAPI 3.0 · Postman Mock · dbdiagram(DBML)
 
 ---
@@ -197,7 +197,7 @@ FastAPI 기본 형식을 그대로 쓴다. **`{code, message, details}` 형식�
         { "doc_id": "DOC-0102", "type": "RISK_ASSESSMENT", "missing": [] } ] } }
   ],
   "summary": "OEM 동일 규격 밸브 교체. 유독가스 라인이라 호환품 불가. 작업허가·위험성평가·LOTO 필수.",
-  "approval_required_by": "SAFETY_MANAGER", "model_name": "mock-v1", "prompt_version": "replaceflow-v0.2",
+  "approval_required_by": "SAFETY_MANAGER", "model_name": "mock-v1", "prompt_version": "argus-v0.2",
   "created_at": "...", "completed_at": "..." }
 ```
 `result_id` 는 `PATCH /agent-results/{resultId}` 의 대상이다. `edited` 는 엔지니어가 수정했는지 표시하며, **수정된 항목은 화면에서 AI 원본과 시각적으로 구분한다.**
@@ -272,10 +272,10 @@ FastAPI 기본 형식을 그대로 쓴다. **`{code, message, details}` 형식�
 
 - tenant `T-001` "○○반도체(하이닉스 2차 협력사)"
 - users (**비밀번호는 전부 `Passw0rd!`**, 시드에서 해시로 저장):
-  - `U-001` 김민준 `engineer@replaceflow.test` ENGINEER
-  - `U-002` 이정호 `safety@replaceflow.test` SAFETY_MANAGER
-  - `U-003` 박수진 `buyer@replaceflow.test` BUYER
-  - `U-004` 관리자 `admin@replaceflow.test` ADMIN
+  - `U-001` 김민준 `engineer@argus.test` ENGINEER
+  - `U-002` 이정호 `safety@argus.test` SAFETY_MANAGER
+  - `U-003` 박수진 `buyer@argus.test` BUYER
+  - `U-004` 관리자 `admin@argus.test` ADMIN
 - equipments: `EQ-GC-02` 가스캐비닛#2(GAS_CABINET, SiH4) · `EQ-VLV-07` 공정가스 밸브#7(VALVE, NH3) · `EQ-SCR-01` 스크러버#1(SCRUBBER)
 - parts: `P-VLV-001` VLV-SS316-1/4-NC(OEM, toxic_gas_allowed=true, stock 2) · `P-VLV-002` VLV-SS316-1/4-NC-EQ(EQUIVALENT, false, stock 5) · `P-REG-001` REG-2S(OEM) · `P-FLT-001` 인라인 필터(EQUIVALENT)
 - law_index 6건: `LAW-0001`~`LAW-0006` — 산안규칙 91·92·93·319조, 화관법 24조, 고압가스법 시행규칙 별표

@@ -1,4 +1,4 @@
-# ReplaceFlow — 반도체 설비 부품 교체 승인 프로세스 에이전트
+# Argus — 반도체 설비 부품 교체 승인 프로세스 에이전트
 
 > 설비 이상이 확인되면 엔지니어가 작업요청 하나만 올리고, AI 에이전트 4개가 규격·법령·안전서류·벤더 견적을 병렬로 준비하고, 안전관리자는 근거가 붙은 승인 패널에서 결재만 한다 — **일주일 걸리던 교체 승인을 하루로.**
 
@@ -30,7 +30,7 @@ SKALA 4기 Full-Stack Engineering "AI 웹 서비스 설계 Mini-project" · 2026
 ## 3. 폴더 구조
 
 ```
-replaceflow/
+argus/
 ├── README.md                      ← 이 문서
 ├── .gitignore / .github/PULL_REQUEST_TEMPLATE.md
 ├── docs/

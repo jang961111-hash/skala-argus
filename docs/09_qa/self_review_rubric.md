@@ -1,4 +1,4 @@
-# ReplaceFlow — 루브릭 자체 점검표 (v3.0 최종 사양 기준)
+# Argus — 루브릭 자체 점검표 (v3.0 최종 사양 기준)
 
 실행: 3일차 11:00 CP5 (전원) · 진행: PM 은태현 · 기록: 신서현
 **3차 기입: 2026-09-03 15:37, PM 은태현** — `bash scripts/collect_evidence.sh` 직접 실행 후 그 출력만 인용.
@@ -93,7 +93,7 @@
 ### 2-1. ERD 1:N / N:M · 정규화
 | 점검 항목 | 근거 산출물 | 상태 | 보완 필요 사항 |
 |---|---|---|---|
-| 테이블 전부 DBML 작성 + 렌더 이미지 | `docs/06_erd/replaceflow.dbml`, `erd.svg` | ✔ | **8테이블**(7+`ai_configs` 제안). sqlglot·dbml2sql 검증 통과 |
+| 테이블 전부 DBML 작성 + 렌더 이미지 | `docs/06_erd/argus.dbml`, `erd.svg` | ✔ | **8테이블**(7+`ai_configs` 제안). sqlglot·dbml2sql 검증 통과 |
 | **1:N 관계 명시** | `erd.md:88-102` | ✔ | **8개** — users→work_requests/approvals, work_requests→photos/agent_runs/approvals, agent_runs→agent_steps/agent_results, ai_configs→agent_runs |
 | **N:M 관계** | `erd.md:103-109`, `erd_phase2.mmd` | ✖ | **0개. 루브릭 명시 요구 미충족.** 대응: 왜 없는지 설명(마스터 테이블 부재) + Phase 2 예비 N:M 설계 + 확장 ER 다이어그램 |
 | 정규화 근거 | `erd.md`, `CONTRACT.md` §5 | ✔ | **사실/추론/행동 3층 분리** · 대리키 UUID + 업무키 UNIQUE · append-only 이력 · jsonb 는 가변 구조만 |
@@ -171,7 +171,7 @@
 | 발표자·데모·Q&A 역할 분담 | `rnr_and_schedule.md` | ✔ | |
 | 슬라이드에 GitHub·Swagger·ERD 캡처 | | ☐ | |
 | 한계를 먼저 말하고 확장으로 마무리 | `retrospective_template.md` | ◐ | §1·§2 작성됨, §3·§4 공란 |
-| **명칭 통일** (FixGuide / ReplaceFlow) | `CONTRACT.md` 머리말 ⚠ | ☐ | **팀 확인 필요 — 발표 전 반드시 하나로** |
+| **명칭 통일** (FixGuide / Argus) | `CONTRACT.md` 머리말 ⚠ | ☐ | **팀 확인 필요 — 발표 전 반드시 하나로** |
 
 ---
 

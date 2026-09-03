@@ -80,7 +80,7 @@ bash scripts/e2e_live_v3.sh          # 마지막 줄 "실패 0" 이면 OK (기�
 | 네트워크 없음 | `npm ci`/`pip install` 실패, GitHub Actions 연동 불가 | 발표는 로컬 실행이 기준이므로 **사전에** `npm ci && npm run build`, `backend/.venv/bin/pytest -q`를 발표 직전 오프라인 캐시 상태로 1회 완주해 둔다. 당일엔 재설치 시도 금지 — `npm run dev` / `uvicorn app.main:app --port 8000`만 실행 |
 | 포트 충돌 (8000/5173 등 이미 사용 중) | `Address already in use` | `lsof -ti:8000 \| xargs kill -9` (5173은 `lsof -ti:5173 \| xargs kill -9`) |
 | 포트 충돌 (E2E 전용 8820) | `scripts/e2e_live_v3.sh` 기동 실패 또는 응답 `000` — 직전에 깨진 실행이 서버 프로세스를 못 내리고 남긴 경우 | `lsof -ti:8820 \| xargs kill -9` (`collect_evidence.sh`가 매 실행 전 자동으로 이걸 한다) |
-| DB 파일 꼬임 (`replaceflow.db` 상태 이상) | 이전 데모 데이터 잔존, 상태머신 불일치 | `rm -f backend/replaceflow.db` (수동 데모용. E2E 스크립트는 자기 DB를 알아서 지운다 — v1.0은 `replaceflow.db`, v3.0은 `backend/e2e_v3.db`를 매 실행 초기화) |
+| DB 파일 꼬임 (`argus.db` 상태 이상) | 이전 데모 데이터 잔존, 상태머신 불일치 | `rm -f backend/argus.db` (수동 데모용. E2E 스크립트는 자기 DB를 알아서 지운다 — v1.0은 `argus.db`, v3.0은 `backend/e2e_v3.db`를 매 실행 초기화) |
 | E2E 상태 오염 (첫 실행만 대량 실패) | 직전에 죽은 서버·DB가 남아 46건 실패 → 재실행하면 3건으로 줄어드는 패턴 (팀장 실측 사례) | 포트부터 정리(`lsof -ti:8820 \| xargs kill -9`) 후 재실행. 반복돼도 안 줄면 서버 코드 문제이니 CONTRACT 대조 필요 |
 | npm 캐시 없음 (새 노트북/캐시 삭제됨) | `npm ci` 느림 또는 실패 | `cd frontend && rm -rf node_modules && npm ci` (오프라인이면 캐시 있는 팀원 노트북의 `node_modules`를 그대로 tar로 옮겨 `tar xzf` 복원) |
 | `.env` 파일 없음 (신규 노트북) | 백엔드 기동 실패 | `cd backend && cp .env.example .env` |

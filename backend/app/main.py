@@ -20,7 +20,7 @@ from app.seed import seed_if_empty
 import app.models  # noqa: F401  — register all tables on Base.metadata
 
 logging.basicConfig(level=logging.INFO)
-log = logging.getLogger("replaceflow")
+log = logging.getLogger("argus")
 settings = get_settings()
 
 

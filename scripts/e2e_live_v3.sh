@@ -84,9 +84,9 @@ chkerr(){ local name=$1 actstatus=$2 expstatus=$3 expcode=$4
             printf '  FAIL  %-46s 기대 %s/%s, 실제 %s/%s (fmt=%s)\n' "$name" "$expstatus" "$expcode" "$actstatus" "$actcode" "$fmt"; FAIL=$((FAIL+1))
           fi; }
 
-ENG_EMAIL="engineer-e2e@replaceflow.test"
-ENG2_EMAIL="engineer2-e2e@replaceflow.test"
-SAFETY_EMAIL="safety-e2e@replaceflow.test"
+ENG_EMAIL="engineer-e2e@argus.test"
+ENG2_EMAIL="engineer2-e2e@argus.test"
+SAFETY_EMAIL="safety-e2e@argus.test"
 
 echo "== 1. 인증 (CONTRACT §4 #1~#3) =="
 cat > "$P" <<J
@@ -98,7 +98,7 @@ ENG_ID=$(field id)
 chkerr "signup 중복 이메일" "$(req POST "$B/auth/signup" "$P")" "409" "EMAIL_ALREADY_EXISTS"        # CONTRACT §4-1
 
 cat > "$P" <<J
-{"name":"김민준","email":"eng-mismatch-e2e@replaceflow.test","password":"Passw0rd!","passwordConfirm":"Different1!","role":"ENGINEER"}
+{"name":"김민준","email":"eng-mismatch-e2e@argus.test","password":"Passw0rd!","passwordConfirm":"Different1!","role":"ENGINEER"}
 J
 chkerr "signup 비밀번호 불일치" "$(req POST "$B/auth/signup" "$P")" "400" "PASSWORD_MISMATCH"        # CONTRACT §4-1
 

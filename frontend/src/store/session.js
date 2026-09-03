@@ -6,7 +6,7 @@ import { ROLE, ROLE_LABEL, FALLBACK_REDIRECT } from '../constants/domain'
  * 로그인 응답은 {accessToken, role, redirectPath} 이고 사용자 상세는 GET /auth/me 로 받는다.
  * redirectPath 는 서버가 정한다. 프론트가 역할로 직접 계산하지 않는다(폴백만 둔다).
  */
-const KEY = 'replaceflow.session'
+const KEY = 'argus.session'
 
 const state = reactive({
   accessToken: null,

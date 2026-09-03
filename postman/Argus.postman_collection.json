@@ -1,6 +1,6 @@
 {
   "info": {
-    "_postman_id": "b1f4c2a0-5e7d-4c3e-9a1b-replaceflow03",
+    "_postman_id": "b1f4c2a0-5e7d-4c3e-9a1b-argus03",
     "name": "부품 교체 요청·승인 시스템 API v3.0 (REQ-F-0001)",
     "description": "docs/CONTRACT.md v3.0 기준. **대부분의 예시는 2026-09-03 라이브 캡처(포트 8821, 격리 DB, backend/services/ 완성 후)** —\n실측하지 못한 항목은 예시 이름에 '미실측'으로 표시했다(photos 전부, 일부 희귀 오류 코드).\n\n- 인증: /auth/signup, /auth/login 제외 전 API 에 Authorization: Bearer {{token}} 필수(컬렉션 레벨 bearer 상속).\n- ID: UUID v4. 오류 응답 단일 포맷 {code, message, fieldErrors?}.\n- 여러 리소스가 같은 값을 id/{resource}Id 두 키로 낸다(User.id/userId, WorkRequest.id/workRequestId, AgentResult.id/agentResultId, Approval.id/approvalId, Photo.id/photoId, AgentRun.id/runId) — 실측으로 확인.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -68,7 +68,7 @@
             "description": "name(2~20자)·email(유니크)·password(8자+영문/숫자/특수문자)·passwordConfirm·role. 실측(2026-09-03).",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"김민준\",\n  \"email\": \"engineer@replaceflow.test\",\n  \"password\": \"Passw0rd!\",\n  \"passwordConfirm\": \"Passw0rd!\",\n  \"role\": \"ENGINEER\"\n}",
+              "raw": "{\n  \"name\": \"김민준\",\n  \"email\": \"engineer@argus.test\",\n  \"password\": \"Passw0rd!\",\n  \"passwordConfirm\": \"Passw0rd!\",\n  \"role\": \"ENGINEER\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -111,7 +111,7 @@
                 }
               ],
               "cookie": [],
-              "body": "{\n  \"id\": \"605233e2-ae76-4b85-9100-6d2e4bac70c4\",\n  \"userId\": \"605233e2-ae76-4b85-9100-6d2e4bac70c4\",\n  \"name\": \"김민준\",\n  \"email\": \"engineer-cap@replaceflow.test\",\n  \"role\": \"ENGINEER\",\n  \"redirectPath\": \"/home\",\n  \"createdAt\": \"2026-09-03T15:42:22.458040+09:00\"\n}"
+              "body": "{\n  \"id\": \"605233e2-ae76-4b85-9100-6d2e4bac70c4\",\n  \"userId\": \"605233e2-ae76-4b85-9100-6d2e4bac70c4\",\n  \"name\": \"김민준\",\n  \"email\": \"engineer-cap@argus.test\",\n  \"role\": \"ENGINEER\",\n  \"redirectPath\": \"/home\",\n  \"createdAt\": \"2026-09-03T15:42:22.458040+09:00\"\n}"
             },
             {
               "name": "409 EMAIL_ALREADY_EXISTS",
@@ -209,7 +209,7 @@
             "description": "성공 시 redirectPath 서버 계산(ENGINEER→/home, SAFETY_MANAGER→/manage/requests). 실측(2026-09-03).",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"engineer@replaceflow.test\",\n  \"password\": \"Passw0rd!\"\n}",
+              "raw": "{\n  \"email\": \"engineer@argus.test\",\n  \"password\": \"Passw0rd!\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -344,7 +344,7 @@
                 }
               ],
               "cookie": [],
-              "body": "{\n  \"id\": \"605233e2-ae76-4b85-9100-6d2e4bac70c4\",\n  \"userId\": \"605233e2-ae76-4b85-9100-6d2e4bac70c4\",\n  \"name\": \"김민준\",\n  \"email\": \"engineer-cap@replaceflow.test\",\n  \"role\": \"ENGINEER\",\n  \"redirectPath\": \"/home\",\n  \"createdAt\": \"2026-09-03T15:42:22.458040+09:00\"\n}"
+              "body": "{\n  \"id\": \"605233e2-ae76-4b85-9100-6d2e4bac70c4\",\n  \"userId\": \"605233e2-ae76-4b85-9100-6d2e4bac70c4\",\n  \"name\": \"김민준\",\n  \"email\": \"engineer-cap@argus.test\",\n  \"role\": \"ENGINEER\",\n  \"redirectPath\": \"/home\",\n  \"createdAt\": \"2026-09-03T15:42:22.458040+09:00\"\n}"
             },
             {
               "name": "401 TOKEN_INVALID",
