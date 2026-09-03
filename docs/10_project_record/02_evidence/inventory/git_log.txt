@@ -1,3 +1,4 @@
+9aa38ff  09-03 16:55  chore: 저장소 이름을 argus 로 통일 — GitHub skala-argus, 로컬 ~/projects/argus
 f750b16  09-03 16:48  Merge develop into main
 a7df78a  09-03 16:48  Merge feature/final-docs-argus into develop
 622ee4d  09-03 16:48  docs: Argus 확정 반영 · 루브릭 자체점검 완료 · 발표 당일 런북 신설

@@ -19,7 +19,7 @@
 | DB | **테이블 8개**(7 + `ai_configs` 제안). PK 전부 **UUID v4**, `request_no`는 UNIQUE 컬럼 |
 | 관계 | **1:N 8개, N:M 0개.** Phase 2 예비 N:M 설계는 `docs/06_erd/erd.md`에 첨부 |
 | 승인 | **체크리스트 없음.** 승인은 사유 없이 즉시, **거절만 사유 10자 이상 필수**(400 `REJECT_REASON_REQUIRED`) |
-| 실측치 | **최종** — pytest **30** · E2E **72/0** · 빌드 **223.88 kB**(gzip 81.98) · API 15 · ERD 8 · 에러코드 23 · JSON Schema 15/15 · 파일 170 · 커밋 33 · 브랜치 11. 로그 `..._1637.log` |
+| 실측치 | **최종** — pytest **30** · E2E **72/72** · 빌드 **223.88 kB**(gzip 82.56) · API 15 · ERD 8 · 에러코드 23 · JSON Schema 15/15 · 파일 **171** · 커밋 **37** · 브랜치 **12**(feature 10+develop+main). 로그 `..._1655/1659.log` |
 
 ---
 
