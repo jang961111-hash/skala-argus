@@ -1,32 +1,22 @@
 <script setup>
 import { computed } from 'vue'
+import { STATUS, STATUS_META, STEP_STATUS, STEP_META, DECISION_META } from '../constants/domain'
 
+// WorkRequestStatus · AgentStepStatus · ApprovalDecision 공용 칩.
+// 라벨·색은 전부 constants/domain.js 에서 온다. 여기에 문자열을 박지 않는다.
 const props = defineProps({
   status: { type: String, required: true },
 })
 
-// CONTRACT.md 상태값 → 라벨/색상. work_requests.status, agent_runs.overall_status, step.status 공용.
-const MAP = {
-  REQUESTED: { label: '요청됨', tone: 'neutral' },
-  RUNNING: { label: '에이전트 실행 중', tone: 'info' },
-  REVIEW: { label: '검토 대기', tone: 'primary' },
-  PENDING_APPROVAL: { label: '승인 대기', tone: 'warning' },
-  APPROVED: { label: '승인', tone: 'success' },
-  REJECTED: { label: '반려', tone: 'danger' },
-  DONE: { label: '완료', tone: 'success' },
-  PENDING: { label: '대기', tone: 'neutral' },
-  FAILED: { label: '실패', tone: 'danger' },
-  APPROVE: { label: '승인', tone: 'success' },
-  REJECT: { label: '반려', tone: 'danger' },
-  REQUEST_INFO: { label: '보완요청', tone: 'warning' },
-}
+const MAP = { ...STATUS_META, ...STEP_META, ...DECISION_META }
 
 const meta = computed(() => MAP[props.status] || { label: props.status, tone: 'neutral' })
+const pulsing = computed(() => props.status === STATUS.AI_RUNNING || props.status === STEP_STATUS.RUNNING)
 </script>
 
 <template>
   <span class="chip" :class="meta.tone">
-    <i v-if="status === 'RUNNING'" class="dot pulse"></i>
+    <i v-if="pulsing" class="dot pulse"></i>
     {{ meta.label }}
   </span>
 </template>
