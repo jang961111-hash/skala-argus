@@ -20,7 +20,7 @@ function logout() {
   <header class="topbar">
     <div class="topbar-inner">
       <span class="brand">
-        <span class="logo">RF</span>
+        <span class="logo">AR</span>
         <strong>Argus</strong>
       </span>
 
