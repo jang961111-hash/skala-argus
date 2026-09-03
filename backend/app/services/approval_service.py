@@ -1,11 +1,8 @@
-"""ApprovalService — state machine + checklist gate (Human-in-the-loop).
+"""ApprovalService — 승인/거절 (CONTRACT §4-15).
 
-Transitions:
-  PENDING_APPROVAL --APPROVE (checklist all true)--> APPROVED
-  PENDING_APPROVAL --APPROVE (checklist incomplete)--> 409
-  PENDING_APPROVAL --REJECT--> REJECTED
-  PENDING_APPROVAL --REQUEST_INFO--> REVIEW  (엔지니어가 보완 후 다시 submit-approval)
-Any other source status → 409.
+체크리스트 blocking 은 없다. 승인은 사유 없이 즉시, 거절만 `reason` 10자 이상 필수.
+append-only 이력이라 거절 → 재제출 → 재결정도 행을 추가한다. 상태가 PENDING 이 아닐 때
+이미 결정 이력이 있으면 `ALREADY_DECIDED`, 아직 한 번도 결정되지 않았으면 `NOT_PENDING` 이다.
 """
 from __future__ import annotations
 
@@ -14,29 +11,31 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from app.models import Approval, AuditLog
+from app.core.enums import ApprovalDecision, WorkRequestStatus
+from app.core.errors import AppError, ErrorCode
+from app.models import Approval, User
 from app.repositories.approval_repo import ApprovalRepository
-from app.repositories.ids import next_approval_id
-from app.repositories.master_repo import MasterRepository
+from app.repositories.user_repo import UserRepository
 from app.repositories.work_request_repo import WorkRequestRepository
-from app.schemas.approval import ApprovalCreate
-from app.schemas.common import CHECKLIST_KEYS
-from app.services.errors import Conflict, NotFound, Unprocessable
+from app.schemas.approval import REJECT_REASON_MIN_LEN, ApprovalCreate
 
-ALLOWED_SOURCE = {"PENDING_APPROVAL"}
-TRANSITIONS = {"APPROVE": "APPROVED", "REJECT": "REJECTED", "REQUEST_INFO": "REVIEW"}
+DECISION_TO_STATUS = {
+    ApprovalDecision.APPROVE: WorkRequestStatus.APPROVED,
+    ApprovalDecision.REJECT: WorkRequestStatus.REJECTED,
+}
 
 
-def approval_to_schema(ap: Approval) -> dict[str, Any]:
-    checklist = {k: bool((ap.checklist_json or {}).get(k, False)) for k in CHECKLIST_KEYS}
+def approval_to_schema(approval: Approval, approver: User | None = None) -> dict[str, Any]:
     return {
-        "approval_id": ap.id,
-        "work_request_id": ap.work_request_id,
-        "approver_id": ap.approver_id,
-        "decision": ap.decision,
-        "checklist": checklist,
-        "comment": ap.comment,
-        "decided_at": ap.decided_at,
+        "id": approval.id,
+        "approvalId": approval.id,
+        "workRequestId": approval.work_request_id,
+        "approverId": approval.approver_id,
+        "approverName": approver.name if approver else None,
+        "decision": approval.decision,
+        "reason": approval.reason,
+        "reasonCategory": approval.reason_category,
+        "decidedAt": approval.decided_at,
     }
 
 
@@ -45,48 +44,35 @@ class ApprovalService:
         self.db = db
         self.work_requests = WorkRequestRepository(db)
         self.approvals = ApprovalRepository(db)
-        self.master = MasterRepository(db)
+        self.users = UserRepository(db)
 
-    def decide(self, wr_id: str, body: ApprovalCreate) -> Approval:
-        wr = self.work_requests.get(wr_id)
+    def decide(self, body: ApprovalCreate, approver: User) -> Approval:
+        wr = self.work_requests.get(body.work_request_id)
         if wr is None:
-            raise NotFound(f"work request {wr_id} not found")
-        approver = self.master.get_user(body.approver_id)
-        if approver is None:
-            raise Unprocessable(f"approver {body.approver_id} not found")
-        if approver.role not in {"SAFETY_MANAGER", "ADMIN"}:
-            raise Conflict(f"user {approver.id} ({approver.role}) is not allowed to approve")
-        if wr.status not in ALLOWED_SOURCE:
-            raise Conflict(f"work request {wr_id} is {wr.status}; approvals only allowed in PENDING_APPROVAL")
+            raise AppError(ErrorCode.WORK_REQUEST_NOT_FOUND, "작업요청을 찾을 수 없습니다")
+        if wr.status is not WorkRequestStatus.PENDING:
+            if self.approvals.latest_for(wr.id) is not None:
+                raise AppError(ErrorCode.ALREADY_DECIDED, "이미 결정된 요청입니다")
+            raise AppError(ErrorCode.NOT_PENDING, f"{wr.status.value} 상태의 요청은 결정할 수 없습니다")
 
-        decision = body.decision.value
-        checklist = body.checklist.model_dump()
-        if decision == "APPROVE" and not all(checklist.get(k) for k in CHECKLIST_KEYS):
-            unchecked = [k for k in CHECKLIST_KEYS if not checklist.get(k)]
-            raise Conflict("checklist incomplete: " + ", ".join(unchecked))
+        reason = (body.reason or "").strip() or None
+        if body.decision is ApprovalDecision.REJECT and (reason is None or len(reason) < REJECT_REASON_MIN_LEN):
+            raise AppError(
+                ErrorCode.REJECT_REASON_REQUIRED,
+                f"거절 사유는 {REJECT_REASON_MIN_LEN}자 이상 입력해야 합니다",
+                [{"field": "reason", "message": f"{REJECT_REASON_MIN_LEN}자 이상"}],
+            )
 
         now = datetime.now(timezone.utc)
-        ap = Approval(
-            id=next_approval_id(self.db),
+        approval = Approval(
             work_request_id=wr.id,
-            approver_id=body.approver_id,
-            decision=decision,
-            checklist_json=checklist,
-            comment=body.comment,
+            approver_id=approver.id,
+            decision=body.decision,
+            reason=reason,
+            reason_category=(body.reason_category or "").strip() or None,
             decided_at=now,
         )
-        before = wr.status
-        wr.status = TRANSITIONS[decision]
+        wr.status = DECISION_TO_STATUS[body.decision]
         wr.updated_at = now
         self.db.add(wr)
-        self.db.add(
-            AuditLog(
-                user_id=body.approver_id,
-                entity="work_request",
-                entity_id=wr.id,
-                action=f"APPROVAL_{decision}",
-                before_json={"status": before},
-                after_json={"status": wr.status, "checklist": checklist},
-            )
-        )
-        return self.approvals.add(ap)
+        return self.approvals.add(approval)
