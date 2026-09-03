@@ -1,103 +1,109 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://replaceflow.local/schemas/approval.schema.json",
-  "title": "Approval — 안전관리자 승인 결정",
+  "title": "Approval — 승인 결정 (v3.0)",
   "type": "object",
-  "description": "승인 결정",
+  "description": "CONTRACT v3.0 §4-15 POST /approvals(API#15, 최상위 경로, body에 workRequestId를 담는다). 체크리스트 없음. decision=REJECT면 reason 10자 이상 필수(400 REJECT_REASON_REQUIRED). reasonCategory는 CONTRACT §8-6에 '고정 5종 enum vs 자유 입력' 미확정으로 명시돼 있어 자유 문자열로 검증한다(§5 DB reason_category varchar(30) 근거).",
   "required": [
-    "approval_id",
-    "work_request_id",
-    "approver_id",
-    "decision",
-    "checklist",
-    "decided_at"
+    "workRequestId",
+    "decision"
   ],
   "properties": {
-    "approval_id": {
+    "id": {
       "type": "string",
+      "description": "응답에만 존재하는 서버 채번 UUID. 요청 본문에는 없다. approvalId와 동일 값(실측: backend/app/schemas/approval.py ApprovalResponse — id·approval_id 중복 노출).",
       "examples": [
-        "AP-0007"
+        "9d8c7b60-2a1e-4f3d-9e0a-000000000001"
       ]
     },
-    "work_request_id": {
+    "approvalId": {
       "type": "string",
+      "description": "id와 동일 값. 응답에만 존재.",
       "examples": [
-        "WR-20260902-011"
+        "9d8c7b60-2a1e-4f3d-9e0a-000000000001"
       ]
     },
-    "approver_id": {
+    "workRequestId": {
       "type": "string",
       "examples": [
-        "U-002"
+        "a1b2c3d4-1111-4222-8333-000000000099"
+      ]
+    },
+    "approverId": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "응답에만 존재. 요청 본문에는 없다(토큰의 사용자로 서버가 채운다).",
+      "examples": [
+        "e2f1a900-5b6c-4d7e-8f9a-000000000002"
+      ]
+    },
+    "approverName": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "응답에만 존재(실측: ApprovalResponse.approver_name).",
+      "examples": [
+        "이정호"
       ]
     },
     "decision": {
       "$ref": "#/$defs/Decision"
     },
-    "checklist": {
-      "$ref": "#/$defs/Checklist"
-    },
-    "comment": {
+    "reason": {
       "type": [
         "string",
         "null"
       ],
+      "description": "decision=REJECT면 10자 이상 필수. decision=APPROVE면 선택(생략 가능, 체크리스트 게이트 없이 즉시 승인).",
       "examples": [
-        "작업자 명단 확인 완료. 승인."
+        "규격 부적합: 입력 압력 등급이 요구치보다 낮아 재검토가 필요합니다."
       ]
     },
-    "decided_at": {
-      "type": "string",
-      "format": "date-time",
+    "reasonCategory": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 30,
+      "description": "자유 문자열(varchar(30)). 고정 enum 여부는 CONTRACT §8-6 미확정 — 임의로 enum화하지 않았다. 실측(backend/app/schemas/approval.py)도 `str | None, max_length=30`으로 자유 입력 구현.",
       "examples": [
-        "2026-09-02T16:20:00+09:00"
+        "규격 부적합"
+      ]
+    },
+    "decidedAt": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time",
+      "description": "응답에만 존재.",
+      "examples": [
+        "2026-09-03T16:20:00+09:00"
       ]
     }
   },
-  "$defs": {
-    "Checklist": {
-      "type": "object",
-      "description": "필수 체크리스트 4항목 — 모두 true 여야 APPROVE 가능",
-      "required": [
-        "WORK_PERMIT",
-        "RISK_ASSESSMENT",
-        "LOTO_GAS_ISOLATION",
-        "GAS_DETECTOR_CHECK"
-      ],
-      "properties": {
-        "WORK_PERMIT": {
-          "type": "boolean",
-          "examples": [
-            true
-          ]
-        },
-        "RISK_ASSESSMENT": {
-          "type": "boolean",
-          "examples": [
-            true
-          ]
-        },
-        "LOTO_GAS_ISOLATION": {
-          "type": "boolean",
-          "examples": [
-            true
-          ]
-        },
-        "GAS_DETECTOR_CHECK": {
-          "type": "boolean",
-          "examples": [
-            true
-          ]
-        }
+  "allOf": [
+    {
+      "if": {
+        "properties": { "decision": { "const": "REJECT" } },
+        "required": [ "decision" ]
+      },
+      "then": {
+        "properties": { "reason": { "type": "string", "minLength": 10 } },
+        "required": [ "reason" ]
       }
-    },
+    }
+  ],
+  "$defs": {
     "Decision": {
       "type": "string",
-      "description": "승인 결정",
+      "description": "ApprovalDecision — CONTRACT §2. REQUEST_INFO 없음(거절+재제출로 통합).",
       "enum": [
         "APPROVE",
-        "REJECT",
-        "REQUEST_INFO"
+        "REJECT"
       ],
       "examples": [
         "APPROVE"
@@ -106,18 +112,19 @@
   },
   "examples": [
     {
-      "approval_id": "AP-0007",
-      "work_request_id": "WR-20260902-011",
-      "approver_id": "U-002",
-      "decision": "APPROVE",
-      "checklist": {
-        "WORK_PERMIT": true,
-        "RISK_ASSESSMENT": true,
-        "LOTO_GAS_ISOLATION": true,
-        "GAS_DETECTOR_CHECK": true
-      },
-      "comment": "작업자 명단 확인 완료. 승인.",
-      "decided_at": "2026-09-02T16:20:00+09:00"
+      "workRequestId": "a1b2c3d4-1111-4222-8333-000000000099",
+      "decision": "APPROVE"
+    },
+    {
+      "id": "9d8c7b60-2a1e-4f3d-9e0a-000000000001",
+      "approvalId": "9d8c7b60-2a1e-4f3d-9e0a-000000000001",
+      "workRequestId": "a1b2c3d4-1111-4222-8333-000000000099",
+      "approverId": "e2f1a900-5b6c-4d7e-8f9a-000000000002",
+      "approverName": "이정호",
+      "decision": "REJECT",
+      "reason": "규격 부적합: 입력 압력 등급이 요구치보다 낮아 재검토가 필요합니다.",
+      "reasonCategory": "규격 부적합",
+      "decidedAt": "2026-09-03T16:20:00+09:00"
     }
   ]
 }

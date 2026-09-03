@@ -1,102 +1,109 @@
-%% ReplaceFlow End-to-End User Flow (엔지니어 → 에이전트 → 안전관리자 → 발주) with work_requests.status transitions
+%% ReplaceFlow End-to-End User Flow v3.0 (인증 → 등록 → AI 검증(A1/A2/A3) → 편집 → 승인/거절 → 재제출) — CONTRACT.md v3.0 상태 6종
 flowchart TD
-  START(["모니터링 알람 또는 정기 점검에서 이상 감지"])
+  START(["미인증 방문자 진입"])
 
-  subgraph L_ENG["설비 엔지니어 (ENGINEER)"]
+  subgraph L_AUTH["인증 (API #1-3)"]
     direction TB
-    E1["현장 확인<br/>site_check_note 작성"]
-    E2["작업요청 생성 (화면 1)<br/>POST /work-requests"]
-    S_REQ{{"status = REQUESTED"}}
-    E3["에이전트 실행 버튼 (화면 2)<br/>POST /work-requests/{id}/agent-runs → 202"]
+    AU1["회원가입 #1<br/>role: ENGINEER/SAFETY_MANAGER"]
+    AU2["로그인 #2<br/>→ {accessToken, role, redirectPath}"]
+    AU3{"redirectPath<br/>(서버가 결정)"}
   end
 
-  subgraph L_AI["AgentOrchestrator + 4 Agents (시스템)"]
+  subgraph L_ENG["설비 엔지니어 — 등록 (UC-03~05)"]
     direction TB
-    S_RUN{{"status = RUNNING<br/>agent_runs.overall_status = RUNNING"}}
-    A1["SPEC<br/>PENDING → RUNNING → DONE"]
-    A2["LEGAL<br/>PENDING → RUNNING → DONE"]
-    A3["SAFETY_DOC<br/>PENDING → RUNNING → DONE"]
-    A4["VENDOR<br/>PENDING → RUNNING → DONE"]
-    POLL["FE 3초 폴링<br/>GET /agent-runs/{runId}"]
-    MERGE["결과 통합<br/>summary · approval_required_by = SAFETY_MANAGER"]
-    FAIL{{"step FAILED<br/>overall_status = FAILED"}}
-    S_REV{{"status = REVIEW<br/>overall_status = REVIEW"}}
+    E1["엔지니어 메인 (E_01)<br/>'신규 교체 요청'"]
+    E2["요청 등록 (E_02)<br/>productType별 specJson 동적 폼 + 사진(files[])"]
+    E2D{{"'임시 저장'?"}}
+    S_DRAFT{{"status = DRAFT"}}
+    E2S["'AI 검증 시작' #5(draft=false) → #11 agent-runs"]
   end
 
-  subgraph L_ENG2["설비 엔지니어 (검토·보완)"]
+  subgraph L_AI["AgentOrchestrator + A1·A2·A3 (UC-06)"]
     direction TB
-    E4["타임라인 카드 열람<br/>호환표 · 조문 · 서류 초안 · RFQ"]
-    E5{"documents[].missing<br/>비어 있는가?"}
-    E6["누락 정보 입력<br/>(예: 작업자 2명 이름)"]
-    E7["승인 요청<br/>PATCH /work-requests/{id}/submit-approval"]
-    E7X{{"422 누락 정보 / 409 run 미완료"}}
-    S_PEND{{"status = PENDING_APPROVAL"}}
+    S_RUN{{"status = AI_RUNNING"}}
+    A1["A1 규격·호환<br/>specJson 적합성 판정 (부품 마스터 없음, Phase2)"]
+    A2["A2 법령·조문<br/>정적 참고 조문 (법령 마스터 없음, Phase2)"]
+    A3["A3 안전서류<br/>documents[] 초안"]
+    POLL["FE 폴링 #12<br/>pollIntervalMs=2500"]
+    FAILSTEP{{"step만 FAILED<br/>HTTP 200 유지"}}
+    S_DONE{{"status = AI_DONE<br/>allDone = true"}}
   end
 
-  subgraph L_SM["안전관리자 (SAFETY_MANAGER)"]
+  subgraph L_ENG2["설비 엔지니어 — 결과 편집 (UC-07, UC-08)"]
     direction TB
-    M1["승인 패널 열람<br/>applicable_laws · required_procedures · 서류 초안"]
-    M2["체크리스트 4항목 확인<br/>WORK_PERMIT · RISK_ASSESSMENT<br/>LOTO_GAS_ISOLATION · GAS_DETECTOR_CHECK"]
+    E4["결과 확인·수정 (E_04)<br/>items[]/documents[] 전체 치환 #13"]
+    E5["engineerNote 작성 #8"]
+    E7["'제출' #14 submit-approval<br/>(A1·A2·A3 존재 + note + A2 1건↑ + AI_DONE/REJECTED)"]
+    E7X{{"422 SUBMIT_REQUIRED_FIELD_MISSING"}}
+    S_PEND{{"status = PENDING"}}
+  end
+
+  subgraph L_SM["안전관리자 — 승인/거절 (UC-09)"]
+    direction TB
+    M0["요청 관리 (S_01) → 요청 상세 (S_02)"]
+    M1["결과(읽기전용 editable=false)·사진·engineerNote 열람 #7 #10"]
     M3{"decision"}
-    M4["POST /work-requests/{id}/approvals<br/>decision = APPROVE → 201"]
-    M4X{{"409: 체크리스트 미완료 APPROVE"}}
-    M5["decision = REJECT + 코멘트"]
-    M6["decision = REQUEST_INFO + 코멘트"]
+    M4["#15 POST /approvals decision=APPROVE"]
+    M4X{{"403 FORBIDDEN_ROLE / 409 NOT_PENDING·ALREADY_DECIDED"}}
+    M5["#15 decision=REJECT + reason(10자↑)"]
+    M5X{{"400 REJECT_REASON_REQUIRED"}}
     S_APR{{"status = APPROVED"}}
-    S_REJ{{"status = REJECTED"}}
+    S_REJ{{"status = REJECTED<br/>approvals 행 append-only 보존"}}
   end
 
-  subgraph L_BUY["발주·작업 (ENGINEER / BUYER)"]
+  subgraph L_RESUB["설비 엔지니어 — 재제출 (UC-10)"]
     direction TB
-    B1["RFQ 초안 확인·수정<br/>GET /documents/{docId} (type = RFQ)"]
-    B2["RFQ 발송 · 발주 확정 (사람)"]
-    B3["부품 교체 작업 수행<br/>작업허가 · LOTO · 가스 차단 · 퍼지"]
-    B4["작업 후 가스 감지기 확인 · 완료 보고"]
-    S_DONE{{"status = DONE"}}
+    R1["내 요청 목록 (E_05) #6<br/>사유 확인"]
+    R2["재편집 → E_04"]
   end
 
-  DASH["대시보드 갱신<br/>GET /dashboard/summary<br/>avg_approval_hours · completed_this_month"]
+  DASH_E["엔지니어 메인 갱신 #4(engineer)"]
+  DASH_S["안전관리자 요청관리 갱신 #4(safety)<br/>rejectReasonsTop"]
 
   %% ---------- Flow ----------
-  START --> E1 --> E2 --> S_REQ --> E3 --> S_RUN
+  START --> AU1 --> AU2
+  START --> AU2
+  AU2 --> AU3
+  AU3 -- "ENGINEER → /home" --> E1
+  AU3 -- "SAFETY_MANAGER → /manage/requests" --> M0
+
+  E1 --> E2 --> E2D
+  E2D -- "예" --> S_DRAFT
+  S_DRAFT -. "'이어서' #8" .-> E2
+  E2D -- "아니오" --> E2S --> S_RUN
+
   S_RUN --> A1
   S_RUN --> A2
   S_RUN --> A3
-  S_RUN --> A4
   A1 --> POLL
   A2 --> POLL
   A3 --> POLL
-  A4 --> POLL
-  POLL -- "4 step 모두 DONE" --> MERGE --> S_REV
-  POLL -- "step 실패" --> FAIL
-  FAIL -- "재실행 (새 run_id)" --> E3
+  POLL -- "일부 실패" --> FAILSTEP
+  POLL -- "allDone:true" --> S_DONE
 
-  S_REV --> E4 --> E5
-  E5 -- "아니오" --> E6 --> E7
-  E5 -- "예" --> E7
+  S_DONE --> E4 --> E5 --> E7
   E7 -- "200" --> S_PEND
-  E7 -- "오류" --> E7X --> E6
+  E7 -- "422" --> E7X --> E5
 
-  S_PEND --> M1 --> M2 --> M3
+  S_PEND --> M0 --> M1 --> M3
   M3 -- "승인" --> M4
-  M4 -- "체크리스트 4개 true" --> S_APR
-  M4 -- "하나라도 false" --> M4X --> M2
-  M3 -- "반려" --> M5 --> S_REJ
-  M3 -- "보완요청" --> M6
-  M6 -- "status = REVIEW 로 복귀" --> E4
-  S_REJ -- "요청 수정 후 재실행" --> E3
+  M4 -- "성공" --> S_APR
+  M4 -- "실패" --> M4X --> M1
+  M3 -- "거절" --> M5
+  M5 -- "reason 10자↑" --> S_REJ
+  M5 -- "reason 없음/짧음" --> M5X --> M5
 
-  S_APR --> B1 --> B2 --> B3 --> B4 --> S_DONE
-  B1 -- "재고 충분 (parts.stock)" --> B3
-  S_DONE --> DASH
-  S_APR -.-> DASH
+  S_REJ --> R1 --> R2 --> E4
+  S_APR --> DASH_E
+  S_REJ --> DASH_S
+  S_PEND -.-> DASH_S
 
   %% ---------- Styles ----------
   classDef status fill:#fff3bf,stroke:#e67700,stroke-width:1.5px,color:#222;
   classDef error fill:#ffe3e3,stroke:#c92a2a,stroke-width:1.5px,color:#222;
   classDef ai fill:#e6fcf5,stroke:#0b7285,stroke-width:1.5px,color:#222;
   classDef human fill:#ffffff,stroke:#333,stroke-width:1.2px,color:#222;
-  class S_REQ,S_RUN,S_REV,S_PEND,S_APR,S_REJ,S_DONE status;
-  class FAIL,E7X,M4X error;
-  class A1,A2,A3,A4,MERGE,POLL ai;
-  class E1,E2,E3,E4,E5,E6,E7,M1,M2,M3,M4,M5,M6,B1,B2,B3,B4 human;
+  class S_DRAFT,S_RUN,S_DONE,S_PEND,S_APR,S_REJ status;
+  class FAILSTEP,E7X,M4X,M5X error;
+  class A1,A2,A3,POLL ai;
+  class AU1,AU2,AU3,E1,E2,E2D,E2S,E4,E5,E7,M0,M1,M3,M4,M5,R1,R2 human;

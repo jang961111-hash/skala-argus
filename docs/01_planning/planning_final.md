@@ -4,10 +4,11 @@
 | 항목 | 내용 |
 |---|---|
 | 과정 | SKALA 4기 Full-Stack Engineering · AI 웹 서비스 설계 Mini-project (2026-09-02 ~ 09-04) |
-| 팀 | PM·DBA 은태현 / Product&UX·FE 문승은 / DevOps&Infra 신서현 / API Architect·BE 정구현 / BE·발표 장병헌 |
-| 문서 버전 | v1.0 최종 (2026-09-02) |
+| 팀 | PM 은태현 / Product&UX·FE 문승은 / DevOps&Infra 신서현 / API Architect·BE 정구현 / BE·발표 장병헌 |
+| 문서 버전 | **v3.0 (2026-09-03)** — 팀 노션 「API 명세서 v1.0」+「FixGuide 데이터 모델 정의서 v3.0」+「WRA 화면정의서 v2.0」 원문 기준 |
+| ⚠️ 명칭 미확정 | ERD 문서 제목은 **FixGuide**, 저장소·본 기획서는 **ReplaceFlow**, API 명세서는 "부품 교체 요청·승인 시스템". **팀 확인 필요.** 확정 전까지 이 문서는 `ReplaceFlow`를 유지한다(CONTRACT.md v3.0 상단 경고와 동일) |
 | 프레임 | 우리는 SK AX AI 도메인팀 — 유해가스 취급 설비를 가진 반도체 제조사(하이닉스 협력사·후공정)에 B2B AX 솔루션을 제안한다 |
-| 관련 산출물 | `docs/02_usecase`(UC 명세·다이어그램) · `docs/03_wireframe`(와이어프레임) · `docs/04_architecture`(아키텍처·상태머신·시퀀스) · `docs/05_ai_ready`(프롬프트·JSON Schema) · `docs/06_erd`(DBML·DDL·seed) · `docs/07_api`(OpenAPI·API 명세) · `postman/`(Mock) · `frontend/` · `backend/` · `docs/08_presentation`(발표) · `docs/09_qa`(E2E·자체점검·Q&A) |
+| 관련 산출물 | `docs/02_usecase`(UC 명세·다이어그램) · `docs/03_wireframe`(와이어프레임, `figma_build_guide.md`) · `docs/04_architecture`(아키텍처·상태머신·시퀀스) · `docs/05_ai_ready`(프롬프트·JSON Schema) · `docs/06_erd`(DBML·DDL·seed) · `docs/07_api`(OpenAPI·API 명세) · `postman/`(Mock) · `frontend/` · `backend/` · `docs/08_presentation`(발표) · `docs/09_qa`(E2E·자체점검·Q&A) |
 
 ### 변경 이력
 | 버전 | 일자 | 내용 |
@@ -15,7 +16,9 @@
 | v0.1 | 09-02 오전 | E안 "협력사 설비 알람→정비 가이드 에이전트" 초안 |
 | v0.2 | 09-02 오후 | 실습교수님 피드백 반영 — 스마트글라스·RAG·QR/YOLO, 법령·규격·교체시기·호환 레이어 전수조사 |
 | v0.3 | 09-02 오후 | 팀 회의 반영 — 문제를 "교체 승인 프로세스(규격·법령·승인) 일주일"로 재정의, 에이전트 4개+오케스트레이터, 온프레미스 전제, 스마트글라스는 선택 채널 |
-| **v1.0** | 09-02 저녁 | 최종본. 전 산출물(UC·와이어프레임·아키텍처·ERD·API·Mock·FE/BE 스캐폴딩)과 필드·상태값 정합화(`docs/CONTRACT.md`) |
+| v1.0 | 09-02 저녁 | 최종본. 전 산출물(UC·와이어프레임·아키텍처·ERD·API·Mock·FE/BE 스캐폴딩)과 필드·상태값 정합화(`docs/CONTRACT.md`) |
+| v2.0 | 09-03 오후 | 오케스트레이터가 화면정의서에서 **추론**해 작성 — 팀 권위 문서와 불일치해 **폐기**(`CONTRACT_v2.0_superseded.md`) |
+| **v3.0** | **09-03** | **팀 노션 「API 명세서 v1.0」+「FixGuide 데이터 모델 정의서 v3.0」+「WRA 화면정의서 v2.0」을 그대로 반영. 에이전트 코드 SPEC/LEGAL/SAFETY_DOC→`A1`/`A2`/`A3`, 상태값 8종→6종(`DRAFT`·`AI_RUNNING`·`AI_DONE`·`PENDING`·`APPROVED`·`REJECTED`), 결과 구조를 에이전트별 고유 스키마에서 통일 구조(`items[]`/`documents[]`)로 단순화, API 15개 확정, 법령·설비·부품 마스터는 전부 Phase 2. 근거: `docs/CONTRACT.md` v3.0(255줄)** |
 
 ### 목차
 1. 서비스 한 줄 정의 · 2. 문제 정의(As-Is) · 3. SK AX 연결 · 4. 에이전틱 AI 배치 · 5. Actor·Use-Case · 6. 핵심 화면 · 7. AI-Ready 설계 · 8. 아키텍처 · 9. ERD · 10. REST API · 11. 일정·R&R · 12. 한계·확장 · 13. 예상 Q&A · 14. 교수님 확인 사항 · 15. 산출물 목록과 루브릭 매핑
@@ -67,141 +70,136 @@
 
 ## 4. 에이전틱 AI를 어디서 어떻게 보여주는가 (발표의 핵심 장면)
 
-작업요청 1건이 들어오면 **오케스트레이터가 4개 전문 에이전트를 병렬로 실행**하고, 화면에 각 에이전트의 진행 상태가 실시간으로 바뀐다. 끝나면 안전관리자 승인 패널에 근거가 붙은 결재 요청이 뜬다. 이 "에이전트 실행 타임라인" 화면이 데모의 클라이맥스다.
+작업요청 1건이 들어오면 **오케스트레이터가 3개 전문 에이전트를 병렬로 실행**하고, 화면에 각 에이전트의 진행 상태가 실시간으로 바뀐다. 결과는 엔지니어가 항목 단위로 검토·편집한 뒤, 안전관리자 승인 화면에 근거가 붙은 결재 요청으로 넘어간다. 이 "AI 검증 진행" → "결과 확인·수정" 화면이 데모의 클라이맥스다.
 
-| 에이전트 | 하는 일 | 입력 | 출력 |
-|---|---|---|---|
-| **A1. 규격·호환 에이전트** | 기존 부품 규격과 후보 부품 비교, 호환 여부·등급(OEM/호환/리퍼비시) 판정 | 설비 BOM, 부품번호, 벤더 카탈로그(사내 DB) | `spec_match`, `alternatives[]`, 차이점 |
-| **A2. 법령 에이전트** | 취급 물질·설비 유형으로 적용 법령 조문 검색, 필요 절차 목록화 | 물질(MSDS), 설비 유형, 작업 종류 → 법령 RAG(법제처 API 사전 인덱스) | `applicable_laws[]`, `required_procedures[]` (작업허가·위험성평가·LOTO·가스 차단 등) |
-| **A3. 안전서류 에이전트** | 작업허가서·위험성평가표·LOTO 체크리스트 초안 생성 | A2 결과 + 작업 내용 | `documents[]` (초안 본문·누락 항목) |
-| **A4. 벤더 에이전트** | 견적요청(RFQ) 초안, 납기·재고 확인 메시지 작성 | A1 결과, 구매 이력 | `rfq_draft`, `lead_time_est` |
-| **오케스트레이터** | 4개 실행·상태 관리, 결과 통합, 승인 패널 생성 | 작업요청 | `agent_run` (steps 상태·통합 요약·승인 필요 항목) |
+| 에이전트 | 코드 | 하는 일 | 입력 | 출력 |
+|---|---|---|---|---|
+| 규격·호환 에이전트 | **`A1`** | 엔지니어가 입력한 `specJson`이 요구 스펙을 충족하는지 판정(예: 압력 등급 3000 psi ≥ 요구 2500 psi). **부품 마스터·호환표는 Phase 2**라 실 재고·대체품 대사는 하지 않는다 | 서버가 구성한 요청 스냅샷(설비·라인·물질·운전조건·제품명·유형·`specJson`·사진 메타) | `items[]` (`{itemId, text, edited}`) |
+| 법령 에이전트 | **`A2`** | 취급 물질·설비·운전조건으로 적용 법령 조문 인용, 필요 절차 정리. **법령 마스터 DB는 Phase 2**라 정적으로 내장된 참고 조문(시드)을 근거로 답한다 | 위와 동일 스냅샷 | `items[]` (`{itemId, text, edited}`) |
+| 안전서류 에이전트 | **`A3`** | 작업허가서 등 안전서류 초안 생성 | `A2` 결과 + 스냅샷 | `documents[]` (`{docId, type, name, content, edited}`) |
+| 오케스트레이터 | — | `agent_runs`/`agent_steps` 생성·상태 관리, `workRequestId`로 스냅샷 구성, 결과 통합 | 작업요청 등록 시 입력 전체 | `AgentRun`(`steps[]`·`allDone`·`pollIntervalMs`) |
 
-핵심 설계: 에이전트는 **정보를 모으고 초안을 쓸 뿐** 승인·발주를 실행하지 않는다. 안전관리자가 승인해야 다음 단계(발주·작업)가 열린다 — Human-in-the-loop. 3일 범위에서는 4개 에이전트 모두 Mock(고정 JSON, 단계별 상태 전이)이고 오케스트레이션 구조·상태머신·JSON 계약이 실제 산출물.
+핵심 설계: 에이전트는 **정보를 모으고 초안을 쓸 뿐** 승인을 실행하지 않는다. 엔지니어가 결과를 `items[]`/`documents[]` 단위로 편집(`edited=true`, AI 원본과 화면에서 시각적으로 구분)한 뒤, 안전관리자가 승인해야 다음 단계가 열린다 — Human-in-the-loop. 3일 범위에서는 3개 에이전트 모두 Mock이고 오케스트레이션 구조·상태머신·JSON 계약이 실제 산출물.
+
+**A4 벤더 에이전트는 Phase 2다.** 벤더 견적(RFQ)은 벤더 포털·이메일 같은 외부 시스템 연동이 전제인데, 이는 우리 서비스의 온프레미스 전제(`ai_configs.egress_allowed=false` 기본)와 정면으로 충돌한다. 3일이라는 범위에서 이를 Mock으로 흉내 내면(예: 고정된 가짜 RFQ 문구) "이 에이전트가 실제로 무엇을 하는가"라는 질문에 대한 답이 가짜가 되고, 이는 실제 법령·규격 데이터에 기반해 동작해야 할 나머지 3개 에이전트의 근거 품질까지 함께 의심받게 만든다. 그래서 A4를 빼는 쪽이 남은 3개 에이전트의 신뢰도를 지키는 선택이라고 판단했다(상세: `docs/02_usecase/usecase_spec.md` §3.5).
 
 ## 5. Actor 및 Use-Case
 
+**v3.0은 12개 UC다(회원가입·로그인·임시저장·사진업로드·결과편집·재제출은 유효, 지식 관리 UC는 대응 API가 15개 안에 없어 삭제). `Role`은 `ENGINEER`·`SAFETY_MANAGER` 2종뿐 — `BUYER`·`ADMIN`은 v3.0 도메인에 없다. 전체 명세는 `docs/02_usecase/usecase_spec.md` 참조 — 여기서는 요약만 남긴다.**
+
 | Actor | 설명 |
 |---|---|
-| 설비 엔지니어 | 작업요청 생성, 에이전트 결과 확인·보완, 작업 완료 보고 |
-| 안전관리자 | 승인 패널에서 법령·서류 검토, 승인/반려/보완요청 |
-| 구매 담당(선택) | RFQ 초안 확인 후 발주 |
-| 모니터링 시스템(외부) | 이상 알람(Mock 입력) |
-| 에이전트 서비스(외부/Mock) | A1~A4 |
+| 미인증 방문자 | 회원가입·로그인만 수행 |
+| 설비 엔지니어 (`ENGINEER`) | 요청 등록(동적 스펙+사진)·임시저장, AI 결과 확인·편집, 제출, 거절 시 재제출 |
+| 안전관리자 (`SAFETY_MANAGER`) | AI 결과(항상 읽기전용 `editable:false`)·설명 검토, 승인/거절(+사유) |
+| 모니터링 시스템(외부, 선택) | 이상 알람(Mock 입력) |
+| 에이전트 서비스(외부/Mock) | `A1`·`A2`·`A3` (`A4` 벤더는 Phase 2) |
 
-| UC | 이름 | Actor | 흐름 |
+| UC | 이름 | Actor | 흐름 (API #, CONTRACT §4) |
 |---|---|---|---|
-| UC-01 | 작업요청 생성 | 엔지니어 | 설비·부품·증상·현장 확인 결과 입력 → `REQUESTED` |
-| UC-02 | 에이전트 실행 | 시스템 | 오케스트레이터가 A1~A4 병렬 실행 → `RUNNING` → 각 step `DONE` → `REVIEW` |
-| UC-03 | 결과 검토·보완 | 엔지니어 | 에이전트 결과 확인, 누락 정보 입력, 승인 요청 → `PENDING_APPROVAL` |
-| UC-04 | 승인 | 안전관리자 | 법령·서류 근거 확인, 체크리스트 완료 후 승인/반려 → `APPROVED`/`REJECTED` |
-| UC-05 | 발주·작업 | 엔지니어/구매 | RFQ 발송(초안 그대로 또는 수정), 작업 수행, 완료 보고 → `DONE` |
-| UC-06 | 대시보드 | 관리자 | 요청 수, 평균 승인 소요시간(As-Is 7일 대비), 반려 사유 TOP |
-| UC-07 | 지식 관리 | 관리자 | 법령 인덱스 갱신, BOM·호환표, 서류 템플릿 |
+| UC-01·02 | 회원가입·로그인 | 미인증 방문자 | #1·#2·#3 — 로그인 성공 시 서버가 `redirectPath`로 역할 분기 |
+| UC-03~05 | 요청 등록·임시저장·사진업로드 | 엔지니어 | #5·#8·#9·#11 — 등록 즉시 AI 검증 자동 트리거 → `AI_RUNNING` |
+| UC-06 | AI 검증(`A1`·`A2`·`A3`) | 시스템 | #12 폴링(`pollIntervalMs:2500`) → `allDone` → `AI_DONE` |
+| UC-07·08 | 결과 확인·편집, 제출 | 엔지니어 | #13(전체 치환) · #14 → `PENDING` |
+| UC-09 | 승인/거절 | 안전관리자 | #15 — 체크리스트 없이 승인 즉시, 거절은 사유(10자↑) 필수 → `APPROVED`/`REJECTED` |
+| UC-10 | 거절 사유 확인 후 재제출 | 엔지니어 | #6·#7·#14 재호출 → `PENDING` 복귀, 직전 `approvals` 이력 보존 |
+| UC-11·12 | 대시보드, 내 요청 목록 | 엔지니어/안전관리자 | #4·#6 — 역할별 KPI(엔지니어는 평균 승인시간 없음), `status` 다중 필터 |
 
-## 6. 핵심 화면 2개
+## 6. 핵심 화면 9개 (CONTRACT v3.0 §7 화면↔API 매트릭스)
 
-**화면 1. 작업요청 목록 / 대시보드** — KPI(진행 중, 승인 대기, 평균 승인 소요시간, 이번 달 완료), 요청 테이블(설비 / 부품 / 상태 / 에이전트 진행률 / 승인자), 반려 사유 TOP5
+v1.0의 화면 2개(목록/대시보드, 상세=타임라인+승인패널)가 **역할별 GNB·플로우 분리**로 9개 화면이 됐다. 화면 구성 자체는 화면정의서 v2.0 기준으로 v2.0 문서 때와 동일하고, v3.0에서 바뀐 것은 각 화면이 호출하는 API 번호·필드명(camelCase)·상태값(6종)이다.
 
-**화면 2. 작업요청 상세 = 에이전트 타임라인 + 승인 패널 (데모 핵심)**
-- 상단: 요청 정보(설비, 부품, 증상, 현장 확인 메모)
-- 중앙: **에이전트 타임라인** — A1 규격·호환 / A2 법령 / A3 안전서류 / A4 벤더 4개 카드, 각각 `대기 → 실행 중 → 완료` 상태와 결과 요약, 클릭하면 상세(조문 인용, 호환표, 서류 초안)
-- 우측: **승인 패널** — 적용 법령 목록(조문 링크), 필수 절차 체크리스트(작업허가·위험성평가·LOTO·가스차단 — 미체크 시 승인 버튼 비활성), 서류 초안 열람, 승인/반려/보완요청 + 코멘트(엔지니어에게 바로 전달 — "메신저 왕복" 대체)
-- 데모 시나리오(90초): 요청 생성 → 에이전트 4개가 2~3초 간격으로 완료 → 승인 패널 활성화 → 안전관리자 계정으로 전환 → 체크리스트 4개 체크 → 승인 → 상태 `APPROVED`, 대시보드 평균 승인시간 갱신
-- (선택 채널) 같은 화면의 `/glass` 라우트로 현장에서 결과 확인 — 필수 아님
+| Screen ID | 경로 | 역할 | 비고 |
+|---|---|---|---|
+| `WRA_C_00` | `/login` | 공통 | 성공 시 역할 분기 → E_01 / S_01 |
+| `WRA_C_01` | `/signup` | 공통 | 역할 선택 필수(엔지니어/안전관리자) |
+| `WRA_E_01` | `/home` | 엔지니어 | KPI 4(작성중·진행중·승인대기·반려) + 최근 요청. **평균 승인시간·진행률 컬럼 없음** |
+| `WRA_E_02` | `/requests/new` | 엔지니어 | 제품 유형 5종 동적 스펙 + 사진 업로드 |
+| `WRA_E_03` | `/requests/{id}/run` | 엔지니어 | 에이전트 **3종** 카드, 2~3초 폴링 |
+| `WRA_E_04` | `/requests/{id}/result` | 엔지니어 | 결과 **편집**(항목 추가/삭제/편집) + 설명 작성 후 제출 — **데모 클라이맥스** |
+| `WRA_E_05` | `/my/requests` | 엔지니어 | 상태 탭 필터, 거절 사유 열람·재제출 |
+| `WRA_S_01` | `/manage/requests` | 안전관리자 | KPI 4 + 승인 대기 목록 + 거절 사유 TOP5 |
+| `WRA_S_02` | `/manage/requests/{id}` | 안전관리자 | AI 결과 **읽기 전용** + 승인/거절+사유 — **데모 클라이맥스** |
 
-## 7. AI-Ready 설계 포인트
+**데모 시나리오(핵심 흐름)**: 로그인(엔지니어) → `WRA_E_02`에서 제품 유형 선택(동적 스펙 전환) + 사진 첨부 → 'AI 검증 시작' → `WRA_E_03`에서 3개 카드가 2~3초 간격으로 완료 → `WRA_E_04`에서 결과를 직접 편집(예: 서류 누락 항목 채우기) → 설명 작성 후 제출 → 안전관리자 계정으로 전환 → `WRA_S_01`에서 승인 대기 건 클릭 → `WRA_S_02`에서 AI 결과(읽기전용)·사진 확인 → 승인 → 상태 `APPROVED`.
+
+`WRA_E_04`(결과 편집)가 v1.0 대비 가장 큰 변화다. v1.0은 "서류의 누락 항목만 보완"이었지만 v2.0은 A1/A2/A3 결과 전체를 엔지니어가 항목 단위로 고칠 수 있고, 고친 항목은 `edited=true`로 AI 원본과 화면에서 시각적으로 구분된다 — Human-in-the-loop 원칙을 화면으로 가장 직접 증명하는 지점이다.
+
+체크리스트 4항목 blocking(v1.0 `WRA_S_02` 승인 게이트)은 v2.0에서 **완전히 삭제**되고 승인/거절(사유 필수) 2択으로 단순화됐다. `/glass` 선택 채널은 v2.0 화면정의서에 언급이 없어 이번 범위에서 제외한다.
+
+와이어프레임 상세는 `docs/03_wireframe/wireframe_spec.md`(요소·API 매핑 표), Figma 제작 지시는 `docs/03_wireframe/figma_build_guide.md`(디자인 토큰·컴포넌트·AC 매핑, UX 담당 산출물) 참조.
+
+## 7. AI-Ready 설계 포인트 (v3.0)
 
 | 원칙 | 설계 |
 |---|---|
-| Interface First | FE는 `GET /agent-runs/{id}` JSON만 안다. `AgentOrchestrator` + 4개 `AgentService` 인터페이스, 지금은 Mock 구현체, 추후 LLM 구현체로 교체 |
-| Structured Data | `agent_runs.steps_json`에 에이전트별 상태·결과, 검색용 컬럼(`overall_status`, `model_name`, `prompt_version`). 법령 결과는 `legal_findings` 테이블로 정규화(조문 단위 추적) |
-| Asynchronous Pipeline | `POST /work-requests/{id}/agent-runs` → 202 + `run_id`. `GET /agent-runs/{id}` → steps별 `PENDING/RUNNING/DONE/FAILED`. 3초 폴링. Mock은 호출마다 다음 step을 완료시켜 타임라인이 "살아 움직이게" |
-| Security & Config Isolation | **온프레미스 전제**: `ai_configs.provider`에 `LOCAL_LLM`(사내 GPU) / `AX_PLATFORM` / `OPENAI` 선택, 외부 전송 여부 `egress_allowed=false` 기본. 법령 인덱스는 사내에 사전 적재. 프롬프트 버전·에이전트별 모델 분리 |
+| Interface First | FE는 `GET /agent-runs/{runId}`(API#12) JSON만 안다. `AgentOrchestrator` + **3개**(`A1`/`A2`/`A3`) 에이전트 인터페이스, 지금은 Mock 구현체, 추후 LLM 구현체로 교체해도 FE 변경 0 |
+| **사실/추론/행동 3층 분리** | 입력(`work_requests`) · AI 산출(`agent_runs`/`agent_steps`/`agent_results`) · 사람 결정(`approvals`)을 테이블로 분리하고 **위 층이 아래 층을 덮어쓰지 않는다**(팀 ERD 원칙 그대로). `agent_steps`(오케스트레이터가 초 단위 갱신)와 `agent_results`(엔지니어가 편집)를 굳이 나눈 이유도 갱신 주체·주기가 달라 같은 행을 UPDATE 경합시키지 않기 위함 |
+| Asynchronous Pipeline | `POST /agent-runs`(API#11, body `{workRequestId}`) → 202. `GET /agent-runs/{runId}`(API#12) → `steps[]`(`WAITING/RUNNING/DONE/FAILED`) + `allDone` + `pollIntervalMs:2500`(서버가 값을 내려줌). step 하나가 실패해도 HTTP는 200 유지, 해당 step만 `FAILED`+`errorMessage` |
+| **AI 원본 보존 (신규)** | `agent_results.original_json`에 AI 최초 생성 스냅샷을 보존하고 `payload_json`이 수정본이 된다(CONTRACT는 [제안]으로 적었지만 실측: `backend/app/models/agent.py`에 이미 컬럼으로 구현됨) — "`edited:true`만 있으면 무엇이 바뀌었는지 알 수 없다"는 팀 ERD 근거의 DB 구현. `docs/05_ai_ready/prompts.md`의 가드레일(수정본을 AI 원본과 시각적으로 구분)과 한 세트로 서술 |
+| Security & Config Isolation | `ai_configs`[제안]: `agentCode`·`provider`(MOCK/LOCAL_LLM/OPENAI)·`modelName`·`promptVersion`·`temperature`·`maxTokens`·`egressAllowed`(default false)·`isActive`(부분 유니크 `UNIQUE(agentCode) WHERE isActive`). **API 키는 테이블에 없다 — 환경변수로 관리**. `promptVersion`은 `docs/05_ai_ready/prompts.md` 실제 버전(`replaceflow-v0.3`)과 매칭 |
+| 인증·역할 분리 | `users.password_hash`(bcrypt), JWT Bearer. 가입 시 역할(`ENGINEER`/`SAFETY_MANAGER`) 선택이 로그인 응답의 `redirectPath`(서버 계산)로 화면을 분기시킨다 |
+| Human-in-the-loop 결과 편집 | 엔지니어가 `A1`/`A2`/`A3` 결과를 `PATCH /agent-results/{id}`(API#13, **전체 치환**)로 편집. `items[]`/`documents[]`의 개별 `edited`가 true가 되어 화면에서 AI 원본과 시각적으로 구분됨. `PENDING`/`APPROVED`에서는 409 `RESULT_LOCKED`로 잠김 |
+| 동적 스펙 | `productType`(밸브/피팅·튜브/레귤레이터/필터/`ETC`) 별로 `specJson` 필수 키가 다르며, 서버가 불일치 시 400 `SPEC_SCHEMA_MISMATCH`로 검증한다 |
 
-### 프롬프트 설계 예 (A2 법령 에이전트)
-```
-[System]
-당신은 반도체 제조 사업장의 안전보건 담당자입니다. 주어진 설비·물질·작업 내용에 대해
-적용되는 법령 조문과 작업 전 필요한 절차를 찾아 목록화합니다.
-- 반드시 제공된 법령 발췌(법제처 인덱스)에서만 인용하고, 조문 번호와 원문을 함께 제시하세요.
-- 절차는 '작업 전 / 작업 중 / 작업 후'로 구분하고, 필수 여부와 근거 조문을 붙이세요.
-- 근거를 못 찾은 항목은 required=UNKNOWN으로 두고 안전관리자 확인 요청 문구를 넣으세요.
-- 출력은 JSON만.
-[User]
-설비: {equipment}  물질: {substances}  작업: {work_type}  법령 발췌: {law_excerpts}
-```
+**Phase 2 범위 주의**: 법령·설비·부품 마스터·호환표 테이블이 v3.0 DB 7종에 전혀 없다(CONTRACT §5). `A1`·`A2`는 이 3일 범위에서 마스터 데이터 조인 없이 Mock/정적 참고 데이터로 동작한다 — 상세는 `docs/05_ai_ready/prompts.md`.
 
-### 에이전트 실행 JSON (`GET /agent-runs/{id}`)
-```json
-{
-  "run_id": "RUN-0042", "work_request_id": "WR-20260902-011", "overall_status": "REVIEW",
-  "steps": [
-    { "agent": "SPEC", "status": "DONE", "result": { "spec_match": true, "current_part": "VLV-SS316-1/4-NC", "alternatives": [ { "part_no": "VLV-SS316-1/4-NC-EQ", "grade": "EQUIVALENT", "diff": "시트 재질 PCTFE→PTFE", "allowed_for_toxic_gas": false } ] } },
-    { "agent": "LEGAL", "status": "DONE", "result": { "applicable_laws": [ { "law": "산업안전보건기준에 관한 규칙", "article": "제92조", "title": "정비등의 작업 시의 운전정지 등", "quote": "…운전을 정지하고 … 잠금장치 및 표지판을…" }, { "law": "화학물질관리법", "article": "제24조", "title": "취급시설의 설치·관리 기준" }, { "law": "고압가스 안전관리법 시행규칙", "article": "별표", "title": "특정고압가스 사용시설 기준" } ], "required_procedures": [ { "name": "작업허가서(가스 배관 작업)", "phase": "BEFORE", "required": true }, { "name": "위험성평가", "phase": "BEFORE", "required": true }, { "name": "LOTO·가스 차단·퍼지 확인", "phase": "BEFORE", "required": true }, { "name": "가스 감지기 정상 확인", "phase": "AFTER", "required": true } ] } },
-    { "agent": "SAFETY_DOC", "status": "DONE", "result": { "documents": [ { "type": "WORK_PERMIT", "draft_uri": "/docs/WR-011-permit.md", "missing": ["작업자 2명 이름"] }, { "type": "RISK_ASSESSMENT", "draft_uri": "/docs/WR-011-ra.md", "missing": [] } ] } },
-    { "agent": "VENDOR", "status": "DONE", "result": { "rfq_draft": "…VLV-SS316-1/4-NC 2EA 견적 및 납기 요청…", "lead_time_est_days": 3, "last_purchase": "2026-02-14" } }
-  ],
-  "summary": "OEM 동일 규격 밸브 교체. 유독가스 라인이라 호환품 불가. 작업허가·위험성평가·LOTO 필수. 서류 초안 2건 생성, 작업자 명단만 보완 필요.",
-  "approval_required_by": "SAFETY_MANAGER",
-  "model_name": "mock-v1", "prompt_version": "replaceflow-v0.1",
-  "created_at": "2026-09-02T15:10:02+09:00", "completed_at": "2026-09-02T15:11:30+09:00"
-}
-```
+전문·JSON Schema는 `docs/05_ai_ready/prompts.md`, `docs/05_ai_ready/schemas/*.schema.json` 참조. (SPEC/LEGAL/SAFETY_DOC·`result_id`·`overall_status` 등 v2.0 필드명은 전부 폐기 — v1.0에 있던 A4 VENDOR 필드도 동일하게 없다)
 
 ## 8. 시스템 아키텍처
 
 ```
-[모니터링(외부, Mock)] ─알람─▶ ┌────────── BE (Spring Boot / FastAPI) ──────────┐
-[웹 (Vue/Vite)] ◀─REST JSON─▶ │ WorkRequest API                                 │──▶ [DB PostgreSQL]
-  화면1 목록/대시보드          │ AgentOrchestrator ─┬─ SpecAgent   (Mock/LLM)   │
-  화면2 타임라인+승인 패널      │                    ├─ LegalAgent  (Mock/LLM+RAG)│──▶ [법령 인덱스(사내, 법제처 API 사전 적재)]
-  (/glass 선택 채널)           │                    ├─ SafetyDocAgent           │──▶ [서류 템플릿]
-                               │                    └─ VendorAgent              │──▶ [BOM·구매이력]
-                               │ ApprovalService (상태머신, 체크리스트 게이트)     │
-                               │ ai_configs: provider=LOCAL_LLM, egress=false    │
-                               └────────────────────────────────────────────────┘
-확장: [Queue] [사내 GPU LLM] [Vector DB] [ERP/구매 연동] [사내 메신저 알림]
+[웹 (Vue 3/Vite)] ◀─REST JSON(camelCase)─▶ ┌───── BE (FastAPI) ─────┐
+  C_00/C_01 인증                            │ auth / work-requests    │──▶ [DB PostgreSQL(Supabase)/SQLite]
+  E_01~E_05 엔지니어 5화면                    │  / agent-runs / approvals│
+  S_01·S_02 안전관리자 2화면                  │ AgentOrchestrator ─┬─ A1(Mock/LLM) │
+                                             │                    ├─ A2(Mock/LLM) │
+                                             │                    └─ A3(Mock/LLM) │
+                                             │ ApprovalService(역할분리, 체크리스트 없음)│
+                                             │ Settings(env var): validate_egress()  │
+                                             │  — 외부 provider+egressAllowed=false면│
+                                             │    기동 자체를 거부(fail-fast)         │
+                                             └────────────────────────┘
+확장: [Queue] [사내 GPU LLM] [법령·설비·부품 마스터(Phase 2)] [`ai_configs` 테이블(Phase 2 승격 대상)]
 ```
+`/glass` 선택 채널, 법령 인덱스 박스, `VendorAgent`는 v1.0 산출물이며 v3.0 범위에 없다(§4, `docs/02_usecase/usecase_spec.md` §3.5). `ai_configs`는 CONTRACT §10 실측 정정에 따라 미구현이고, 설정 격리는 `backend/app/core/config.py`의 환경변수 계층 + `validate_egress()` fail-fast로 대체 구현돼 있다.
 
-## 9. ERD
+## 9. ERD (8테이블 — CONTRACT §5)
 
 | 테이블 | 주요 컬럼 | 관계 |
 |---|---|---|
-| `tenants` | id, name, plan | 1:N 이하 전부 |
-| `users` | id, tenant_id, name, role(ENGINEER/SAFETY_MANAGER/BUYER/ADMIN) | |
-| `equipments` | id, tenant_id, name, type(GAS_CABINET/VALVE/PIPING/SCRUBBER…), line, substances(JSON) | 1:N work_requests, equipment_parts |
-| `parts` | id, tenant_id, part_no, name, spec(JSON), grade, toxic_gas_allowed(bool), stock | 1:N part_compatibility |
-| `equipment_parts` | equipment_id, part_id, installed_at, last_replaced_at | |
-| `part_compatibility` | part_id, alt_part_id, diff, allowed_for_toxic_gas | |
-| `work_requests` | id, equipment_id, part_id, symptom, site_check_note, requested_by, status(REQUESTED/RUNNING/REVIEW/PENDING_APPROVAL/APPROVED/REJECTED/DONE), created_at | 1:N agent_runs, approvals |
-| `agent_runs` | id, work_request_id, overall_status, steps_json, summary, model_name, prompt_version, created_at, completed_at | 1:N legal_findings, documents |
-| `legal_findings` | id, agent_run_id, law, article, title, quote, procedure_name, phase, required | |
-| `documents` | id, agent_run_id, type(WORK_PERMIT/RISK_ASSESSMENT/LOTO_CHECKLIST/RFQ), body, missing_json, version | |
-| `approvals` | id, work_request_id, approver_id, decision(APPROVE/REJECT/REQUEST_INFO), checklist_json, comment, decided_at | |
-| `law_index` | id, law, article, text, effective_date, source_uri (법제처 사전 적재) | |
-| `ai_configs` | tenant_id, agent_type, provider(LOCAL_LLM/AX_PLATFORM/OPENAI), model_name, prompt_version, egress_allowed | |
-| `audit_logs` | user_id, entity, entity_id, action, before_json, after_json, created_at | |
+| `users` | id(uuid) PK, name, email UNIQUE, password_hash(bcrypt), role(`ENGINEER`\|`SAFETY_MANAGER`), created_at | 1:N work_requests, approvals |
+| `work_requests` | id PK, **request_no UNIQUE**(`WR-YYYYMMDD-NNN`), requester_id FK, equipment, line, substance, operating_condition(jsonb), product_name, product_type, spec_json(jsonb), symptom, site_memo, engineer_note, status(6종) default DRAFT, created_at/updated_at/submitted_at | 1:N photos·agent_runs(재실행)·approvals(append-only) |
+| `work_request_photos` | id PK, work_request_id FK, file_name, storage_key, thumbnail_key, size, uploaded_at | 최대 5장 |
+| `agent_runs` | id PK, work_request_id FK, status(RUNNING/DONE/FAILED), started_at/finished_at, **input_snapshot(jsonb) — 구현됨**, ai_config_id FK(미구현) | 1:N agent_steps(고정3)·agent_results(고정3) |
+| `agent_steps` | id PK, run_id FK, agent_code(A1/A2/A3), status(WAITING/RUNNING/DONE/FAILED), message, error_message, started_at/finished_at, **UNIQUE(run_id, agent_code)** | |
+| `agent_results` | id PK, run_id FK, agent_code, payload_json(jsonb), edited bool, updated_at, **original_json(jsonb) — 구현됨**, **UNIQUE(run_id, agent_code)** | |
+| `approvals` | id PK, work_request_id FK, approver_id FK, decision(APPROVE/REJECT), reason, reason_category(varchar30, 자유입력), decided_at | append-only(재제출 후 재결정도 새 행) |
+| `ai_configs` **[제안·미구현]** | agent_code, provider(MOCK/LOCAL_LLM/OPENAI), model_name, prompt_version, temperature, max_tokens, egress_allowed default false, is_active | CONTRACT §10: 설정 격리는 현재 env var 계층으로 실구현, 이 테이블은 멀티테넌트 확장 시 승격 대상 |
 
-정규화 포인트: 요청(사실) / 에이전트 산출(agent_runs·legal_findings·documents) / 사람의 결정(approvals) 3층 분리. 법령은 `law_index`(원문)와 `legal_findings`(이 건에 적용된 조문) 분리로 법 개정 시 과거 판단 보존.
+**N:M 없음(팀 ERD 명시)**: 법령·설비·부품 마스터·호환표가 전부 Phase 2라 v3.0 8테이블은 전부 1:N이다(D-07, 루브릭 리스크는 `erd.md`에서 완화 방안 서술). 사실(`work_requests`)/AI 산출(`agent_runs`·`agent_steps`·`agent_results`)/사람 결정(`approvals`) 3층 분리, append-only 이력이 정규화 포인트다.
 
-## 10. REST API
+## 10. REST API — 15개 (CONTRACT §4)
 
-| Method | Path | 설명 | 응답 |
+| # | Method | Path | 화면 |
 |---|---|---|---|
-| GET/POST | `/api/v1/work-requests` | 목록 / 생성 | 200 / 201 |
-| GET | `/api/v1/work-requests/{id}` | 상세(+최신 run, approvals) | 200/404 |
-| POST | `/api/v1/work-requests/{id}/agent-runs` | **에이전트 실행(비동기)** | **202** `{run_id, overall_status:"RUNNING"}` |
-| GET | `/api/v1/agent-runs/{runId}` | steps 상태·결과(폴링) | 200 |
-| PATCH | `/api/v1/work-requests/{id}/submit-approval` | 승인 요청(누락 항목 있으면 422) | 200/422 |
-| POST | `/api/v1/work-requests/{id}/approvals` | 승인/반려/보완요청(필수 체크리스트 미완료 시 409) | 201/409 |
-| GET | `/api/v1/documents/{docId}` | 서류 초안 | 200 |
-| GET | `/api/v1/parts/{partId}/compatibility` | 호환표 | 200 |
-| GET | `/api/v1/laws/search?q=&equipmentType=&substance=` | 법령 인덱스 검색 | 200 |
-| GET | `/api/v1/dashboard/summary` | KPI·평균 승인 소요시간 | 200 |
-| GET/PUT | `/api/v1/tenants/{id}/ai-config` | 에이전트별 모델·egress 설정 | 200 |
+| 1 | POST | `/auth/signup` | C_01 |
+| 2 | POST | `/auth/login` | C_00 |
+| 3 | GET | `/auth/me` | 공통 |
+| 4 | GET | `/dashboard/summary?role=` | E_01, S_01 |
+| 5 | POST | `/work-requests` | E_02 |
+| 6 | GET | `/work-requests?mine=&status=&page=&size=&sort=` | E_01, E_05, S_01 |
+| 7 | GET | `/work-requests/{id}` | E_04, E_05, S_02 |
+| 8 | PATCH | `/work-requests/{id}` | E_02, E_04 |
+| 9 | POST | `/work-requests/{id}/photos` | E_02 |
+| 10 | GET | `/work-requests/{id}/photos` | S_02 |
+| 11 | POST | `/agent-runs`(최상위, body `{workRequestId}`) | E_02 |
+| 12 | GET | `/agent-runs/{runId}` | E_03 |
+| 13 | PATCH | `/agent-results/{id}`(전체 치환) | E_04 |
+| 14 | PATCH | `/work-requests/{id}/submit-approval` | E_04 |
+| 15 | POST | `/approvals`(최상위, body `{workRequestId,...}`) | S_02 |
 
-Mock: `POST …/agent-runs` 후 `GET` 호출마다 step 하나씩 `DONE`으로 전이(4회 호출 = 약 12초) → `REVIEW`. 오류: 404, 409(체크리스트 미완료 승인), 422(누락 정보).
+**v1.0에 있었으나 v3.0엔 없는 것**: `/laws/search`·`/parts`·`/equipments`·`/documents`·`/tenants/{id}/ai-config`·완료 보고 전용 엔드포인트(`.../complete`). 오류 포맷은 `{code, message, fieldErrors?}` 단일 규격(코드 23종, CONTRACT §6) — FastAPI 기본 `{"detail":...}`이 아니다. **승인은 체크리스트 없이 즉시, 거절만 사유(10자 이상) 필수**(400 `REJECT_REASON_REQUIRED`).
 
 ## 11. 3일 일정·R&R
 
@@ -213,26 +211,25 @@ Mock: `POST …/agent-runs` 후 `GET` 호출마다 step 하나씩 `DONE`으로 �
 
 ## 12. 한계·확장
 
-- 한계: 에이전트 4개 전부 Mock, 법령 인덱스는 샘플 6개 조문, 벤더·ERP 미연동, 온프레미스 LLM 미구축
-- 확장 1: 법제처 Open API 전량 적재 + 사내 GPU LLM(또는 A.X 플랫폼) → A2 실제 RAG. 사내 메신저 알림 연동
-- 확장 2: A1을 ERP·BOM 실연동, A4를 벤더 포털 연동, 승인 이력으로 프롬프트 튜닝
-- 확장 3: 알람 → 자동 작업요청 생성(모니터링 연동), 예방정비 주기와 결합해 교체 선제 제안
-- 확산: 같은 구조로 조선·에너지(한전기술)·화학 등 "법정 승인이 병목인" 모든 설비 산업 → AXgenticWire 위의 도메인 에이전트 팩
+- 한계: 에이전트 **3개**(A1·A2·A3) 전부 Mock, 법령·설비·부품 마스터·호환표는 DB 테이블 자체가 없음(전부 Phase 2 — 샘플 조문조차 DB에 없고 프롬프트에 정적으로 내장), `ai_configs` 테이블 미구현(env var로 대체), 온프레미스 LLM 미구축
+- 확장 1: 법령 마스터 테이블 신설 + 법제처 Open API 적재 + 사내 GPU LLM → A2 실제 RAG
+- 확장 2: A1을 부품 마스터·호환표 실연동, A4 벤더 에이전트 추가(외부 연동 전제 해소 후), `ai_configs` 테이블 승격으로 멀티테넌트·프롬프트 버전 관리 고도화
+- 확장 3: 모니터링 알람 → 자동 작업요청 생성, 예방정비 주기와 결합해 교체 선제 제안
+- 확산: 같은 구조로 조선·에너지·화학 등 "법정 승인이 병목인" 설비 산업 → 도메인 에이전트 팩
 
 ## 13. 예상 Q&A
 
-- 에이전틱이라면서 사람이 다 승인하면 뭐가 자동화인가? → 일주일 중 정보수집·서류·문의(5일)를 에이전트가 하고, 사람은 판단(승인)만. 산업안전 규제상 승인 주체는 사람이어야 하며, 그 자체가 설계 요건.
-- 외부 클라우드 못 쓰는데 LLM은? → `ai_configs.provider=LOCAL_LLM`, `egress_allowed=false`. GaiA(하이닉스 폐쇄망 LLM)가 선례. 3일 범위는 Mock.
-- 법령이 바뀌면? → `law_index` 재적재, `legal_findings`는 건별 스냅샷이라 과거 판단 보존.
-- 법령 답변이 틀리면? → 조문 인용 없는 답은 표시하지 않음, `required=UNKNOWN`으로 안전관리자에게 넘김. 가이드라인상 AI는 보조수단.
-- 스마트글라스는? → 선택 채널. 같은 API의 `/glass` 라우트. 필수 아님.
+- 에이전틱이라면서 사람이 다 승인하면 뭐가 자동화인가? → 정보수집·서류 초안을 에이전트가 하고, 사람은 판단(승인)만. 체크리스트 게이트는 v2.0에서 폐지됐지만 **승인 자체를 SAFETY_MANAGER 역할로만 제한**하고(403 `FORBIDDEN_ROLE`) 요청 생성은 ENGINEER만 하므로, 역할 분리 자체가 Human-in-the-loop 장치다.
+- 외부 클라우드 못 쓰는데 LLM은? → `backend/app/core/config.py`의 `validate_egress()`가 외부 provider + `egressAllowed=false` 조합이면 **기동 자체를 거부**(fail-fast). `ai_configs` 테이블은 Phase 2 승격 대상. 3일 범위는 Mock.
+- 법령이 바뀌면? → v3.0은 법령 마스터 테이블이 없다. 지금은 A2 프롬프트에 정적으로 내장된 조문(시드)을 근거로 답하고, 확장 시 법령 마스터+RAG로 교체한다.
+- 재제출하면 이전 거절 이력은? → `approvals`는 append-only라 재결정도 새 행을 추가한다. 다만 이번 라이브 E2E는 상태 전이(`REJECTED→PENDING`)만 실측했고 "이력이 실제로 조회 가능한지"는 별도 assert가 추가되는 대로 검증 예정(발표에서 과장하지 않는다).
 
-## 14. 전임교수님께 여쭐 것
+## 14. 확인이 필요한 사항 (CONTRACT §8 "팀 확인 필요" 10건 중 발표에 영향 있는 것)
 
-1. 에이전트 4개 + 오케스트레이터 구조를 "AI 확장 지점"으로 정의한 것이 적절한지, 1개로 줄이는 게 채점에 유리한지
-2. 승인 상태머신(REQUESTED→…→APPROVED)과 체크리스트 게이트(409)를 핵심 화면 2개 안에서 시연하는 범위가 적정한지
-3. 법령 인덱스(`law_index`)를 DB 테이블로 두고 RAG는 확장으로 미룬 설계가 Structured Data 요건을 충족하는지
-4. 온프레미스 제약을 `ai_configs.provider/egress_allowed`로 표현한 것이 Security & Config Isolation 평가 기준에 맞는지
+1. 사진 업로드가 "요청 생성 이후" 구조라 `WRA_E_02`에서 저장 전 업로드하려면 DRAFT 선생성이 전제된다 — 화면 흐름에 노출할지 팀 확인 필요
+2. `approvals` append-only 다건 유지를 그대로 시연할지, 단건 갱신처럼 보이게 UI를 단순화할지
+3. `ai_configs` 테이블이 Phase 2인 채로 "설정 격리"를 발표에서 어떻게 프레이밍할지(env var 계층 vs DB 테이블)
+4. N:M 관계 부재가 루브릭 감점 요인인지("1:N, N:M" 요구), `erd.md`의 Phase 2 예비 설계로 방어 가능한지
 
 
 ---
@@ -241,12 +238,12 @@ Mock: `POST …/agent-runs` 후 `GET` 호출마다 step 하나씩 `DONE`으로 �
 
 | 루브릭 | 세부 기준 | 산출물 (경로) | 검증 |
 |---|---|---|---|
-| 서비스 기획 & Architecture (30) | Use-Case 정의·UI 와이어프레임 완성도 | `docs/02_usecase/usecase_spec.md`, `usecase_diagram.svg`, `user_flow.svg` / `docs/03_wireframe/wireframe.html`(데모 애니메이션 포함), `wireframe_spec.md`(Figma 구조) | ✅ Mermaid 렌더, HTML 동작 |
-| | AI 확장 지점 정의·프롬프트/JSON 스키마 타당성 | 본 문서 4·7장 / `docs/05_ai_ready/prompts.md`(4 에이전트+오케스트레이터 정책+가드레일+Playground 검증 절차) / `docs/05_ai_ready/schemas/*.schema.json` | ✅ 샘플 JSON이 스키마 통과, 역예제 거부 확인 |
+| 서비스 기획 & Architecture (30) | Use-Case 정의·UI 와이어프레임 완성도 | `docs/02_usecase/usecase_spec.md`(UC-01~12), `usecase_diagram.svg`, `user_flow.svg` / `docs/03_wireframe/wireframe_spec.md`, `figma_build_guide.md` | ✅ Mermaid 렌더 확인, 9화면 실연동 캡처 11장(`docs/10_project_record/02_evidence/screenshots/`) |
+| | AI 확장 지점 정의·프롬프트/JSON 스키마 타당성 | 본 문서 4·7장 / `docs/05_ai_ready/prompts.md`(A1·A2·A3+오케스트레이터 정책+가드레일, `replaceflow-v0.3`) / `docs/05_ai_ready/schemas/agent_run.schema.json`·`agent_result_items.schema.json`·`agent_result_documents.schema.json`·`approval.schema.json` (VENDOR는 `_phase2/`로 이동) | ✅ jsonschema Draft2020-12 검증 15/15 PASS(`docs/05_ai_ready/prompts.md` §7), `load_prompt()` 파서와 헤딩 포맷 실물 대조 |
 | | GitHub 관리·R&R 분담 | `README.md`, `docs/01_planning/rnr_and_schedule.md`, `docs/01_planning/github_guide.md`, `.github/PULL_REQUEST_TEMPLATE.md`, `.gitignore` | ✅ |
-| | FE-BE-DB 전체 시스템 구조 다이어그램 | `docs/04_architecture/architecture.svg`, `architecture.md`(4원칙 매핑), `state_machine.svg`, `sequence_agent_run.svg` | ✅ |
-| 시스템 설계 & Scaffolding (30) | ERD 관계(1:N, N:M)·정규화 | `docs/06_erd/replaceflow.dbml`(dbdiagram), `schema_postgres.sql`, `seed_data.sql`, `erd.md` | ✅ PostgreSQL 16 실제 실행·재실행, CHECK 게이트 동작 |
-| | Mock API RESTful 규격(Method/Path/Status) | `docs/07_api/openapi.yaml`(Swagger), `api_spec.md`, `postman/ReplaceFlow.postman_collection.json`(52 예시 응답, Mock Server용) | ✅ Redocly lint 0 error |
-| | FE/BE 구조·DB 연동 | `frontend/`(Vue3+Vite, Mock 모드 토글), `backend/`(FastAPI, SQLAlchemy, SQLite↔PostgreSQL) | ✅ FE 빌드 성공, BE pytest 8/8 |
-| | Mock API 데이터 바인딩 화면 시연 | 화면1·2 실동작: POST 202 → 폴링 4회 step 전이 → REVIEW → 승인 요청 → 체크리스트 409 → 승인 201 → APPROVED | ✅ 실제 BE에 curl로 E2E 재현 |
-| Peer (40) | 기획·UX / 시스템 설계 / AI-Ready 확장성 / 구현·Pitch | `docs/08_presentation/`(구성안·대본·데모 시나리오), `docs/09_qa/qa_bank.md`, `e2e_test_checklist.md`, `self_review_rubric.md`, `retrospective_template.md` | ✅ |
+| | FE-BE-DB 전체 시스템 구조 다이어그램 | `docs/04_architecture/`(아키텍처·상태머신·시퀀스, A1/A2/A3 기준 갱신) | 다른 트랙 담당 — 본 문서 §8 요약과 정합 확인 필요 |
+| 시스템 설계 & Scaffolding (30) | ERD 관계(1:N)·정규화 | `docs/06_erd/`(8테이블, N:M 부재는 Phase 2 예비 설계로 방어) | 다른 트랙 담당 |
+| | Mock API RESTful 규격(Method/Path/Status) | `docs/07_api/`(API 15개, camelCase, 단일 오류 포맷) | 다른 트랙 담당 |
+| | FE/BE 구조·DB 연동 | `frontend/`, `backend/` — **pytest 30 passed, 라이브 E2E 64 통과/0 실패, FE 빌드 223.58 kB**(`docs/10_project_record/02_evidence/test_results/`) | ✅ 실측 로그 원본 보존 |
+| | Mock API 데이터 바인딩 화면 시연 | 9화면 실동작: 등록→AI검증(폴링 2500ms)→결과편집(항목단위)→제출→승인/거절(토글+확정, 체크리스트 없음) | ✅ `scripts/e2e_live_v3.sh` curl 재현 |
+| Peer (40) | 기획·UX / 시스템 설계 / AI-Ready 확장성 / 구현·Pitch | `docs/08_presentation/`, `docs/09_qa/`, `docs/10_project_record/`(결정 로그·사고 로그·실측 증거) | ✅ |
