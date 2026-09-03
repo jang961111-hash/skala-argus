@@ -10,7 +10,7 @@
 ## 0. 시작 전 1회 확인 (발표 30분 전)
 
 ```bash
-cd ~/projects/replaceflow
+cd ~/projects/argus
 git status --porcelain --branch          # main 이고 clean 인지만 본다 — 여기서 뭘 고치지 않는다
 bash --version | head -1                  # 3.2 면 §5 함정 참고
 python3 --version                         # 3.9 면 §5 함정 참고
@@ -30,7 +30,7 @@ grep DATABASE_URL backend/.env
 
 ### ① 백엔드 먼저
 ```bash
-cd ~/projects/replaceflow/backend
+cd ~/projects/argus/backend
 source .venv/bin/activate               # 안 되어 있으면: python3.11 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8000
 ```
@@ -44,7 +44,7 @@ curl -s -o /dev/null -w '%{http_code}\n' http://localhost:8000/api/v1/dashboard/
 
 ### ② 프론트엔드
 ```bash
-cd ~/projects/replaceflow/frontend
+cd ~/projects/argus/frontend
 npm run dev
 ```
 **대기**: 터미널에 `VITE vX.X.X ready in NNN ms` 뜨면 준비된 것. 실측 **255~310ms** (vite 자체 기준. npm 래퍼 포함 실측 체감 1초 이내).
