@@ -36,7 +36,7 @@ from app.repositories.work_request_repo import WorkRequestRepository
 from app.schemas.agent import AgentResultUpdate
 from app.services.agents import AgentContext, get_agent
 
-log = logging.getLogger("replaceflow.agents")
+log = logging.getLogger("argus.agents")
 
 ITEM_KEY_BY_AGENT = {AgentCode.A1: "items", AgentCode.A2: "items", AgentCode.A3: "documents"}
 ID_KEY_BY_COLLECTION = {"items": "itemId", "documents": "docId"}

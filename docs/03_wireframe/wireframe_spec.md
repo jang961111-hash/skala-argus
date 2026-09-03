@@ -1,4 +1,4 @@
-# ReplaceFlow 와이어프레임 스펙 v3.0 — 화면별 요소·API 매핑
+# Argus 와이어프레임 스펙 v3.0 — 화면별 요소·API 매핑
 
 - 기준 문서: `docs/CONTRACT.md` v3.0(팀 「API 명세서 v1.0」+「데이터 모델 정의서 v3.0」+「WRA 화면정의서 v2.0」 원문 이관)
 - **디자인 토큰·컴포넌트 목록·Figma 페이지 구조·Acceptance Criteria 매핑·우선순위는 `docs/03_wireframe/figma_build_guide.md`(UX 담당, 읽기 전용)를 단일 진실 원천으로 삼는다.** 그 문서는 v2.0 화면정의서를 기준으로 작성됐지만 **9화면 Screen ID·Route·AC 번호는 CONTRACT §7 화면↔API 매트릭스와 그대로 일치**하므로 재작업 없이 참조한다. 이 문서는 그것과 중복하지 않고 **화면별 요소·호출 API 번호 표만** 남긴다.

@@ -1,6 +1,6 @@
-# ReplaceFlow Frontend (Vue 3 + Vite)
+# Argus Frontend (Vue 3 + Vite)
 
-반도체 설비 부품 교체 승인 프로세스 에이전트 **ReplaceFlow** 의 웹 프론트엔드.
+반도체 설비 부품 교체 승인 프로세스 에이전트 **Argus** 의 웹 프론트엔드.
 `docs/CONTRACT.md` 의 REST/JSON 계약만 바라보며 동작한다.
 
 ## 1. 설치 / 실행

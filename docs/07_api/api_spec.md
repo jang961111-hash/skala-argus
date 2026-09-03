@@ -1,6 +1,6 @@
-# ReplaceFlow REST API 명세 (발표용)
+# Argus REST API 명세 (발표용)
 
-- Base URL: `http://localhost:8000/api/v1` (Mock: Postman Mock Server, 컬렉션 `postman/ReplaceFlow.postman_collection.json`)
+- Base URL: `http://localhost:8000/api/v1` (Mock: Postman Mock Server, 컬렉션 `postman/Argus.postman_collection.json`)
 - 형식: JSON (UTF-8), 시각은 ISO-8601 + 오프셋(`+09:00`)
 - 인증: `Authorization: Bearer <JWT>` — 클레임 `role` (ENGINEER / SAFETY_MANAGER / BUYER / ADMIN). PoC 는 Mock 토큰.
 - 기계 판독 명세: [`openapi.yaml`](./openapi.yaml) (OpenAPI 3.0.3, `redocly lint` 통과)
@@ -86,7 +86,7 @@ POST /api/v1/work-requests/WR-20260902-011/approvals
 - 그 외: 생성은 **201** + `Location` (`/work-requests`, `/approvals`), 조회·갱신은 **200**, 존재하지 않는 ID 는 **404**.
 
 ### 4.3 409 vs 422 구분 기준
-| 코드 | 의미 | ReplaceFlow 적용 | 클라이언트 대응 |
+| 코드 | 의미 | Argus 적용 | 클라이언트 대응 |
 |---|---|---|---|
 | **422 Unprocessable Entity** | 요청 문법은 맞지만 **내용이 불충분/부적합** — 요청 본문을 고치면 해결 | `submit-approval` 시 서류 `missing` 잔존(작업자 이름 미입력), 본문 필드 검증 실패 | `details.missing` 을 폼에 표시하고 **같은 요청을 보완해 재시도** |
 | **409 Conflict** | 요청 자체는 유효하지만 **리소스의 현재 상태와 충돌** — 본문을 고쳐도 안 되고 상태가 바뀌어야 함 | (a) APPROVED/DONE 에 에이전트 재실행, (b) run 미완료 상태에서 승인 요청, (c) 체크리스트 미완료 상태에서 APPROVE | 상태 새로고침 / 선행 단계(폴링 완료, 체크리스트 체크) 유도. **재시도 금지** |
@@ -114,6 +114,6 @@ POST /api/v1/work-requests/WR-20260902-011/approvals
 |---|---|
 | `docs/07_api/openapi.yaml` | 기계 판독 명세 (Swagger UI / Redoc / FastAPI 스텁 생성) |
 | `docs/07_api/redocly.yaml` | lint 설정 |
-| `postman/ReplaceFlow.postman_collection.json` | 요청 15개 + 저장 예시 52개 (Mock Server 용), 데모 시나리오 폴더 |
-| `postman/ReplaceFlow.postman_environment.json` | `baseUrl` 등 환경 변수 |
+| `postman/Argus.postman_collection.json` | 요청 15개 + 저장 예시 52개 (Mock Server 용), 데모 시나리오 폴더 |
+| `postman/Argus.postman_environment.json` | `baseUrl` 등 환경 변수 |
 | `docs/05_ai_ready/schemas/*.schema.json` | AgentRun / 에이전트별 결과 / Approval JSON Schema 2020-12 |

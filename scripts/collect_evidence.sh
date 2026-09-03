@@ -32,7 +32,7 @@ echo "== 4/4 인벤토리 =="
   printf "%-24s %s\n" "frontend .vue"   "$(find frontend/src -name '*.vue' | wc -l | tr -d ' ')"
   printf "%-24s %s\n" "docs 파일"        "$(find docs -type f | wc -l | tr -d ' ')"
   printf "%-24s %s\n" "OpenAPI paths"   "$(grep -cE '^  /' docs/07_api/openapi.yaml)"
-  printf "%-24s %s\n" "ERD 테이블"       "$(grep -c '^Table ' docs/06_erd/replaceflow.dbml)"
+  printf "%-24s %s\n" "ERD 테이블"       "$(grep -c '^Table ' docs/06_erd/argus.dbml)"
   echo '```'; echo
   echo "## 디렉터리 구조 (깊이 3)"; echo '```'
   find . -maxdepth 3 -type d -not -path "*/.git*" -not -path "*/node_modules*" \

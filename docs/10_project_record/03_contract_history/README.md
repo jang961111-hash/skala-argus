@@ -26,4 +26,4 @@
 | N:M | 2개 | 2개 | **0개** (Phase 2) |
 
 ## 미확정 (계약 §8 — 팀 확인 필요)
-서비스명(FixGuide/ReplaceFlow) · `reasonCategory` enum화 여부 · 사진 업로드 시 DRAFT 선생성 전제 · `approvals` append-only 유지 여부 · 결과 수정을 항목 단위 API 로 쪼갤지
+서비스명(FixGuide/Argus) · `reasonCategory` enum화 여부 · 사진 업로드 시 DRAFT 선생성 전제 · `approvals` append-only 유지 여부 · 결과 수정을 항목 단위 API 로 쪼갤지

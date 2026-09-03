@@ -1,6 +1,6 @@
-%% ReplaceFlow(FixGuide) ERD — v3.0, CONTRACT.md §5 그대로 옮김 (8테이블)
+%% Argus(FixGuide) ERD — v3.0, CONTRACT.md §5 그대로 옮김 (8테이블)
 %% 컬럼은 핵심만: PK/FK, 업무 식별자(request_no/email), 상태·enum 컬럼만 표기.
-%% 타임스탬프·자유텍스트(jsonb 포함)는 슬라이드 가독성을 위해 뺐다 — 전체 컬럼은 replaceflow.dbml/schema_postgres.sql 참조.
+%% 타임스탬프·자유텍스트(jsonb 포함)는 슬라이드 가독성을 위해 뺐다 — 전체 컬럼은 argus.dbml/schema_postgres.sql 참조.
 erDiagram
     USERS ||--o{ WORK_REQUESTS : "requester_id"
     USERS ||--o{ APPROVALS : "approver_id"

@@ -1,5 +1,5 @@
 -- ============================================================
--- ReplaceFlow(FixGuide) — 샘플 데이터
+-- Argus(FixGuide) — 샘플 데이터
 -- 기준: docs/CONTRACT.md v3.0 (§2 상태값, §5 DB). CONTRACT 에 "샘플 데이터" 절은 없어
 --       WorkRequestStatus 6종 각 1건을 기준으로 이 파일이 직접 설계했다.
 -- 실행 순서: schema_postgres.sql 실행 후 본 파일 실행
@@ -15,16 +15,16 @@ BEGIN;
 --    단독 실행 경로용 자리값이며, 실서비스 해시는 BE 트랙 소유다.
 -- ------------------------------------------------------------
 INSERT INTO users (id, name, email, password_hash, role, created_at) VALUES
-  ('00000000-0000-0000-0000-000000000001', '김민준', 'engineer@replaceflow.test', '<seeded-by-backend>', 'ENGINEER',       '2026-08-01T09:00:00+09:00'),
-  ('00000000-0000-0000-0000-000000000002', '이정호', 'safety@replaceflow.test',   '<seeded-by-backend>', 'SAFETY_MANAGER', '2026-08-01T09:00:00+09:00');
+  ('00000000-0000-0000-0000-000000000001', '김민준', 'engineer@argus.test', '<seeded-by-backend>', 'ENGINEER',       '2026-08-01T09:00:00+09:00'),
+  ('00000000-0000-0000-0000-000000000002', '이정호', 'safety@argus.test',   '<seeded-by-backend>', 'SAFETY_MANAGER', '2026-08-01T09:00:00+09:00');
 
 -- ------------------------------------------------------------
 -- 2. ai_configs (3) — [제안] 테이블. agent_code 당 활성 설정 1개(부분 유니크)
 -- ------------------------------------------------------------
 INSERT INTO ai_configs (id, agent_code, provider, model_name, prompt_version, temperature, max_tokens, egress_allowed, is_active) VALUES
-  ('00000000-0000-0000-0000-0000000000a1', 'A1', 'MOCK', 'mock-v1', 'replaceflow-v0.3', 0.20, 1024, FALSE, TRUE),
-  ('00000000-0000-0000-0000-0000000000a2', 'A2', 'MOCK', 'mock-v1', 'replaceflow-v0.3', 0.20, 1024, FALSE, TRUE),
-  ('00000000-0000-0000-0000-0000000000a3', 'A3', 'MOCK', 'mock-v1', 'replaceflow-v0.3', 0.20, 1024, FALSE, TRUE);
+  ('00000000-0000-0000-0000-0000000000a1', 'A1', 'MOCK', 'mock-v1', 'argus-v0.3', 0.20, 1024, FALSE, TRUE),
+  ('00000000-0000-0000-0000-0000000000a2', 'A2', 'MOCK', 'mock-v1', 'argus-v0.3', 0.20, 1024, FALSE, TRUE),
+  ('00000000-0000-0000-0000-0000000000a3', 'A3', 'MOCK', 'mock-v1', 'argus-v0.3', 0.20, 1024, FALSE, TRUE);
 
 -- ------------------------------------------------------------
 -- 3. work_requests (6) — WorkRequestStatus 6종 각 1건: DRAFT/AI_RUNNING/AI_DONE/PENDING/APPROVED/REJECTED

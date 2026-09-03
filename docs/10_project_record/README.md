@@ -51,5 +51,5 @@ bash scripts/e2e_live_v3.sh                   # 기대: 통과 64 / 실패 0
 # 화면 (BE 8000 + FE 5173)
 cd backend && .venv/bin/python -m uvicorn app.main:app --port 8000 &
 cd frontend && npm install && npm run dev -- --port 5173
-# 로그인: engineer@replaceflow.test / safety@replaceflow.test · 비밀번호 Passw0rd!
+# 로그인: engineer@argus.test / safety@argus.test · 비밀번호 Passw0rd!
 ```

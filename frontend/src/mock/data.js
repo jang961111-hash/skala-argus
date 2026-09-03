@@ -20,8 +20,8 @@ const U = {
 
 // password 는 Mock 인증 전용이다. 실제 API 응답(User)에는 절대 포함되지 않는다.
 export const users = [
-  { id: U.engineer, name: '김민준', email: 'engineer@replaceflow.test', role: ROLE.ENGINEER, password: 'Passw0rd!', createdAt: '2026-08-01T09:00:00+09:00' },
-  { id: U.safety, name: '이정호', email: 'safety@replaceflow.test', role: ROLE.SAFETY_MANAGER, password: 'Passw0rd!', createdAt: '2026-08-01T09:00:00+09:00' },
+  { id: U.engineer, name: '김민준', email: 'engineer@argus.test', role: ROLE.ENGINEER, password: 'Passw0rd!', createdAt: '2026-08-01T09:00:00+09:00' },
+  { id: U.safety, name: '이정호', email: 'safety@argus.test', role: ROLE.SAFETY_MANAGER, password: 'Passw0rd!', createdAt: '2026-08-01T09:00:00+09:00' },
 ]
 
 // ---------------------------------------------------------------------------

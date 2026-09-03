@@ -1,5 +1,5 @@
 -- ============================================================
--- ReplaceFlow(FixGuide) — PostgreSQL DDL (Supabase SQL Editor 에서 그대로 실행)
+-- Argus(FixGuide) — PostgreSQL DDL (Supabase SQL Editor 에서 그대로 실행)
 -- 기준: docs/CONTRACT.md v3.0 §5 "DB — 테이블 7개 + 제안 1개" (팀 「FixGuide 데이터 모델 정의서 v3.0」 번역)
 -- 실행 순서: schema_postgres.sql → seed_data.sql
 -- gen_random_uuid() 는 PostgreSQL 13+ 내장 함수(pgcrypto 불필요)

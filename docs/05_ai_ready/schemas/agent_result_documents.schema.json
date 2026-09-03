@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://replaceflow.local/schemas/agent_result_documents.schema.json",
+  "$id": "https://argus.local/schemas/agent_result_documents.schema.json",
   "title": "AgentResultDocuments — A3 결과 / PATCH agent-results 요청 본문 (문서형, v3.0)",
   "type": "object",
   "description": "CONTRACT v3.0 §4-13. A3(안전서류) 에이전트의 출력 구조이자 PATCH /agent-results/{id}(API#13)의 요청 본문. 배열은 전체 치환(PUT-like) — 응답에 없는 기존 docId는 삭제, docId 없이 오면 신규 추가로 처리된다.",

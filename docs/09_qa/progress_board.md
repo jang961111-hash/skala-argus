@@ -1,4 +1,4 @@
-# ReplaceFlow 진척 보드 (Day 2 스탠드업 — D2-13)
+# Argus 진척 보드 (Day 2 스탠드업 — D2-13)
 
 작성: PM·DBA 은태현 · 기준시각 **2026-09-03 (Day 2)** · 발표 **2026-09-04 15:00**
 판정 기준: 팀 노션 계획표 30개 태스크(D1-1~D3-7)를 **레포 실물 파일과 대조**했다.
@@ -32,7 +32,7 @@
 | D1-5 | 시스템 아키텍처 초안 | PM(A)+API(D) | **완료** | `docs/04_architecture/architecture.md` 156줄 + SVG 3종(`architecture.svg` 82KB, `state_machine.svg` 87KB, `sequence_agent_run.svg` 64KB) + `.mmd` 원본 3종 |
 | D1-6 | FE 프로젝트 생성 (Vue+Vite) | FE(E) | **완료** | `frontend/src/` 12파일, `main.js`·`router/index.js`·`vite.config.js`(프록시 `/api`→8000) |
 | D1-7 | **BE 프로젝트 생성 (Spring Boot)** | BE(F) | **완료 (스택 대체)** | `backend/app/` 5계층 실재(`main.py`·`api/v1/routers/`·`services/`·`repositories/`·`models/`). **Spring Boot 아님 — FastAPI**. 판정은 아래 §2 |
-| D1-8 | DB 인스턴스 생성 (Supabase/Neon) | DA(C) | **부분** | DDL·적용절차는 완비: `docs/06_erd/schema_postgres.sql` 285줄, `erd.md` §6 Supabase 적용 6단계. 그러나 **실제 구동 DB는 SQLite**: `backend/app/core/config.py:31` `database_url = "sqlite:///./replaceflow.db"`, `backend/.env.example:3` 동일. 호스팅 인스턴스 접속 근거 레포에 없음 |
+| D1-8 | DB 인스턴스 생성 (Supabase/Neon) | DA(C) | **부분** | DDL·적용절차는 완비: `docs/06_erd/schema_postgres.sql` 285줄, `erd.md` §6 Supabase 적용 6단계. 그러나 **실제 구동 DB는 SQLite**: `backend/app/core/config.py:31` `database_url = "sqlite:///./argus.db"`, `backend/.env.example:3` 동일. 호스팅 인스턴스 접속 근거 레포에 없음 |
 | D1-9 | AI 프롬프트 초안 + JSON 사전 검증 | API(D) | **완료** | `docs/05_ai_ready/prompts.md` 337줄 — §0 공통 가드레일, A1~A4 각각 System/User/입력샘플/기대출력, §6 Playground 검증 절차, §7 버전 관리. JSON Schema 6종(`schemas/agent_run.schema.json` 834줄 포함) |
 | D1-10 | Day1 정리 스탠드업 | PM(A) | **부분** | `docs/00_INDEX.md:6-20`이 1일차 산출물 8행을 ☑ 표로 정리해 사실상 체크리스트 역할. 다만 **스탠드업 기록 문서 자체는 없음** |
 
@@ -40,10 +40,10 @@
 
 | ID | 업무 | 담당 | 판정 | 근거 (레포 실물) |
 |---|---|---|---|---|
-| D2-1 | ERD 데이터 모델링 | DA(C) | **완료** | `docs/06_erd/replaceflow.dbml` 402줄 = Table 14개, `erd.md` 189줄(§2 관계, §3 정규화, §4 JSON 사유, §5 인덱스). 1:N·N:M 실물 검증은 아래 §3 |
+| D2-1 | ERD 데이터 모델링 | DA(C) | **완료** | `docs/06_erd/argus.dbml` 402줄 = Table 14개, `erd.md` 189줄(§2 관계, §3 정규화, §4 JSON 사유, §5 인덱스). 1:N·N:M 실물 검증은 아래 §3 |
 | D2-2 | DB 스키마 생성 (DDL 적용) | DA(C)+BE(F) | **부분** | DDL·시드 작성 완료(`schema_postgres.sql` 285줄, `seed_data.sql` 270줄), ORM 14 테이블 실재(`backend/app/models/*.py`의 `__tablename__` 14개 = ERD 14개와 1:1). 실행 테이블은 `main.py`의 `Base.metadata.create_all` → **SQLite**. `erd.md` §8의 "PostgreSQL 16 실제 실행"은 **문서 주장이라 근거로 채택하지 않음**, 팀 공용 PostgreSQL 인스턴스는 미생성 |
 | D2-3 | REST API 명세 (Method/Path/Status) | API(D) | **완료** | `docs/07_api/openapi.yaml` **1,731줄**, `api_spec.md` 119줄, `redocly.yaml` |
-| D2-4 | Mock API Endpoint 설계 | API(D) | **완료** | `postman/ReplaceFlow.postman_collection.json` — 요청 **21개**(고유 엔드포인트 15개 + "데모 시나리오(90초)" 6스텝이 그중 6개를 재사용), **예시 응답 78개**(폴링 `GET /agent-runs/{runId}` 는 7개 = 5단계 시뮬), `ReplaceFlow.postman_environment.json`. ⚠ `docs/00_INDEX.md:16` 의 "52 예시 응답"은 **데모 폴더를 뺀 수**라 총계로는 틀렸다 — 정구현 실측(`postman_verification.md` §0)이 맞다 |
+| D2-4 | Mock API Endpoint 설계 | API(D) | **완료** | `postman/Argus.postman_collection.json` — 요청 **21개**(고유 엔드포인트 15개 + "데모 시나리오(90초)" 6스텝이 그중 6개를 재사용), **예시 응답 78개**(폴링 `GET /agent-runs/{runId}` 는 7개 = 5단계 시뮬), `Argus.postman_environment.json`. ⚠ `docs/00_INDEX.md:16` 의 "52 예시 응답"은 **데모 폴더를 뺀 수**라 총계로는 틀렸다 — 정구현 실측(`postman_verification.md` §0)이 맞다 |
 | D2-5 | BE Entity·Repository 구성 | BE(F) | **완료** | `backend/app/models/` 5파일에 `__tablename__` **14개** — tenants·users·ai_configs·audit_logs·equipments·parts·equipment_parts·part_compatibility·work_requests·approvals·agent_runs·legal_findings·documents·law_index. `repositories/` 5파일(`work_request_repo`·`agent_run_repo`·`approval_repo`·`master_repo`·`ids`) |
 | D2-6 | BE Service·Controller (핵심 1~2개) | BE(F) | **완료 (초과 달성)** | `api/v1/routers/` 7파일 **16 라우트** = CONTRACT 15개 전부 + `PATCH /{id}/complete`(`work_requests.py:85`). 노션은 "핵심 API 1~2개"만 요구. `services/` 4종(`orchestrator`·`work_request_service`·`approval_service`·`dashboard_service`) |
 | D2-7 | FE 공통 레이아웃·라우팅 | FE(E) | **완료** | `frontend/src/router/index.js` 3라우트(`/`, `/work-requests/:id`, catch-all), `App.vue` 85줄, `assets/main.css` |
@@ -184,7 +184,7 @@ DDL(`schema_postgres.sql`) 을 직접 열어 확인했다. 테이블 14개, FK 2
 
 | 결정 | 담당 | 왜 오늘인가 |
 |---|---|---|
-| **명칭 통일** — FixGuide / ReplaceFlow / 부품 교체 요청·승인 시스템 | 팀장 | **발표 표지에 들어간다.** 슬라이드 제작 전에 확정돼야 함 |
+| **명칭 통일** — FixGuide / Argus / 부품 교체 요청·승인 시스템 | 팀장 | **발표 표지에 들어간다.** 슬라이드 제작 전에 확정돼야 함 |
 | **Figma vs Stitch** 도구 선택 | 팀장 | 제작 착수 시점이 밀린다. 가이드(`figma_build_guide.md` 319줄)는 이미 있음 |
 | **N:M 0개 대응 서사** 확정 | 은태현 | 발표에서 먼저 꺼낼지 방어할지 — 대본이 갈린다 |
 | **커밋·PR 방침** 최종 확인 | 팀장 | 통합 커밋 + 본문에 역할·이름 명시로 정해졌으나 `develop`·`feature/*`·PR 은 미생성 |

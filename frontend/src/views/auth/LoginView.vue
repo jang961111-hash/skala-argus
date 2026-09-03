@@ -47,7 +47,7 @@ function fill(email) {
     <form class="card auth-card stack" @submit.prevent="submit">
       <div class="head">
         <span class="logo">RF</span>
-        <h1>ReplaceFlow</h1>
+        <h1>Argus</h1>
         <p class="muted small">부품 교체 요청·승인 시스템</p>
       </div>
 
@@ -72,8 +72,8 @@ function fill(email) {
       <div v-if="USE_MOCK" class="demo">
         <p class="small muted">데모 계정 (비밀번호 <code>Passw0rd!</code>)</p>
         <div class="row" style="gap: 6px">
-          <button class="sm" type="button" @click="fill('engineer@replaceflow.test')">엔지니어</button>
-          <button class="sm" type="button" @click="fill('safety@replaceflow.test')">안전관리자</button>
+          <button class="sm" type="button" @click="fill('engineer@argus.test')">엔지니어</button>
+          <button class="sm" type="button" @click="fill('safety@argus.test')">안전관리자</button>
         </div>
       </div>
     </form>

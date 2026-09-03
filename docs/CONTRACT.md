@@ -7,7 +7,7 @@
 
 스택: FE Vue 3 + Vite + axios · BE FastAPI (Python 3.10+) · DB PostgreSQL(Supabase) — 로컬 SQLite 폴백
 
-> ⚠️ **명칭 미확정**: ERD 문서 제목은 **FixGuide**, 저장소·기획서는 **ReplaceFlow**, API 명세서는 "부품 교체 요청·승인 시스템". **팀 확인 필요.** 확정 전까지 코드·문서는 기존 `ReplaceFlow` 를 유지한다.
+> ✅ **명칭 확정: `Argus`** (2026-09-03, 팀장 결정). 이전 표기였던 `ReplaceFlow` 와 ERD 문서 제목의 `FixGuide` 는 전부 폐기한다. 코드·문서·발표자료·시드 계정 이메일(`@argus.test`)까지 이 이름 하나로 통일한다.
 
 ---
 

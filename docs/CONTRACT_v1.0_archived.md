@@ -1,6 +1,6 @@
-# ReplaceFlow 공통 계약서 (모든 산출물이 반드시 따를 것)
+# Argus 공통 계약서 (모든 산출물이 반드시 따를 것)
 
-서비스명: **ReplaceFlow** — 반도체 설비 부품 교체 승인 프로세스 에이전트
+서비스명: **Argus** — 반도체 설비 부품 교체 승인 프로세스 에이전트
 기획서 원본: /home/claude/E안v3_설비교체_승인_에이전트_기획서_PoC발표용.md (반드시 먼저 읽을 것)
 스택: FE Vue 3 + Vite + axios · BE FastAPI (Python 3.11) · DB PostgreSQL(Supabase) — 로컬 개발은 SQLite 폴백 · API 명세 OpenAPI 3.0 · Mock Postman · ERD dbdiagram(DBML)
 
@@ -68,7 +68,7 @@ AgentRun
     { "agent": "VENDOR", "status": "DONE", "result": { "rfq_doc_id": "DOC-0103", "rfq_summary": "VLV-SS316-1/4-NC 2EA 견적·납기 요청", "lead_time_est_days": 3, "last_purchase": "2026-02-14" } }
   ],
   "summary": "OEM 동일 규격 밸브 교체. 유독가스 라인이라 호환품 불가. 작업허가·위험성평가·LOTO 필수. 서류 초안 2건 생성, 작업자 명단만 보완 필요.",
-  "approval_required_by": "SAFETY_MANAGER", "model_name": "mock-v1", "prompt_version": "replaceflow-v0.1",
+  "approval_required_by": "SAFETY_MANAGER", "model_name": "mock-v1", "prompt_version": "argus-v0.1",
   "created_at": "2026-09-02T15:10:02+09:00", "completed_at": "2026-09-02T15:11:30+09:00" }
 ```
 

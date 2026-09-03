@@ -1,4 +1,4 @@
-# ReplaceFlow — E2E 연동 테스트 체크리스트 (DevOps용)
+# Argus — E2E 연동 테스트 체크리스트 (DevOps용)
 
 담당: 신서현 · 실행 시점: 2일차 17:00 CP4(1차) · 3일차 09:30(2차, 전 항목) · 3일차 14:00 코드 프리즈 후(3차, P0만)
 기준: `docs/CONTRACT.md` REST API 표 · Mock 동작 · 승인 규칙. 결과 칸은 ✔ / ✘ / — (미실행) 으로 기록하고 실패 시 이슈 번호를 적는다.
@@ -98,7 +98,7 @@
 # SQLite 기본
 cd backend
 pkill -f uvicorn || true
-rm -f replaceflow.db
+rm -f argus.db
 uvicorn app.main:app --port 8000        # 기동 시 자동 시드 (요청 5건 초기 상태로 복원)
 
 # 확인

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ReplaceFlow 와이어프레임 (Lo-Fi)</title>
+<title>Argus 와이어프레임 (Lo-Fi)</title>
 <style>
   /* ---------- Lo-Fi 그레이박스 스타일 (Balsamiq 풍) ---------- */
   :root{
@@ -185,7 +185,7 @@
 <div class="app">
   <!-- ================= 좌측 네비 ================= -->
   <aside class="nav">
-    <div class="logo">ReplaceFlow</div>
+    <div class="logo">Argus</div>
     <div class="sub">Lo-Fi 와이어프레임 · 2026-09-02</div>
     <div class="grp">화면</div>
     <button class="active" data-frame="f1" onclick="showFrame('f1',this)">화면1 · 작업요청 목록/대시보드</button>
@@ -209,7 +209,7 @@
     <div class="layout">
       <div class="canvas screen">
         <div class="topbar">
-          <div class="brand">ReplaceFlow</div>
+          <div class="brand">Argus</div>
           <div class="wmuted">| 작업요청</div><div class="wmuted">| 지식관리</div><div class="wmuted">| 설정</div>
           <div class="spacer"></div>
           <div class="search">🔍 설비·부품·요청ID 검색</div>
@@ -298,7 +298,7 @@
     <div class="layout">
       <div class="canvas screen">
         <div class="topbar">
-          <div class="brand">ReplaceFlow</div><div class="wmuted">‹ 목록으로</div>
+          <div class="brand">Argus</div><div class="wmuted">‹ 목록으로</div>
           <div class="spacer"></div>
           <span style="position:relative"><span class="ann">9</span>
             <span class="role-sw" id="roleSw">
@@ -601,7 +601,7 @@
     st.textContent={PENDING:'대기',RUNNING:'실행 중',DONE:'완료'}[status];
     const res=c.querySelector('[data-res]');
     if(status==='DONE') res.innerHTML=RESULTS[agent];
-    else if(status==='RUNNING') res.innerHTML='<div class="sk"></div><div class="sk s"></div><div class="wmuted" style="font-size:11px">실행 중… (mock-v1 / replaceflow-v0.1)</div>';
+    else if(status==='RUNNING') res.innerHTML='<div class="sk"></div><div class="sk s"></div><div class="wmuted" style="font-size:11px">실행 중… (mock-v1 / argus-v0.1)</div>';
     else res.innerHTML='<div class="sk"></div><div class="sk s"></div>';
   }
   function setWR(status){ const s=document.getElementById('wrStatus'); s.className='chip '+status; s.textContent=status; }

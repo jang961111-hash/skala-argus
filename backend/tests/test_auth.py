@@ -13,7 +13,7 @@ ME = "/api/v1/auth/me"
 
 NEW_USER = {
     "name": "신규엔지니어",
-    "email": "New.Engineer@replaceflow.test",
+    "email": "New.Engineer@argus.test",
     "password": "Passw0rd!",
     "passwordConfirm": "Passw0rd!",
     "role": "ENGINEER",
@@ -49,7 +49,7 @@ def test_signup_201(client):
     # 엔티티 자신의 id 는 `id` 와 `userId` 두 키로 나온다 (FE 는 `id`, 계약 §1 예시는 한정명)
     assert set(user) == {"id", "userId", "name", "email", "role", "redirectPath", "createdAt"}
     assert user["id"] == user["userId"]
-    assert user["email"] == "new.engineer@replaceflow.test"  # 소문자로 정규화
+    assert user["email"] == "new.engineer@argus.test"  # 소문자로 정규화
     assert user["role"] == "ENGINEER" and user["redirectPath"] == "/home"
     assert user["createdAt"].endswith("+09:00")  # KST 오프셋 포함
     _assert_no_hash(user)
@@ -59,13 +59,13 @@ def test_signup_409_duplicate_email(client):
     assert_error(client.post(SIGNUP, json=NEW_USER), 409, "EMAIL_ALREADY_EXISTS", has_field_errors=False)
     # 대소문자만 다른 이메일도 중복이다
     assert_error(
-        client.post(SIGNUP, json={**NEW_USER, "email": "NEW.ENGINEER@replaceflow.test"}),
+        client.post(SIGNUP, json={**NEW_USER, "email": "NEW.ENGINEER@argus.test"}),
         409, "EMAIL_ALREADY_EXISTS",
     )
 
 
 def test_signup_400_password_mismatch(client):
-    r = client.post(SIGNUP, json={**NEW_USER, "email": "mismatch@replaceflow.test", "passwordConfirm": "Other1234!"})
+    r = client.post(SIGNUP, json={**NEW_USER, "email": "mismatch@argus.test", "passwordConfirm": "Other1234!"})
     assert_error(r, 400, "PASSWORD_MISMATCH", has_field_errors=True)
 
 
@@ -85,7 +85,7 @@ def test_signup_400_validation_failed(client):
 
 
 def test_login_200_returns_redirect_path(client):
-    r = client.post(LOGIN, json={"email": "engineer@replaceflow.test", "password": "Passw0rd!"})
+    r = client.post(LOGIN, json={"email": "engineer@argus.test", "password": "Passw0rd!"})
     assert r.status_code == 200, r.text
     body = r.json()
     assert set(body) == {"accessToken", "tokenType", "role", "redirectPath"}
@@ -93,18 +93,18 @@ def test_login_200_returns_redirect_path(client):
     assert body["redirectPath"] == "/home"
     _assert_no_hash(body)
 
-    r = client.post(LOGIN, json={"email": "safety@replaceflow.test", "password": "Passw0rd!"})
+    r = client.post(LOGIN, json={"email": "safety@argus.test", "password": "Passw0rd!"})
     assert r.json()["role"] == "SAFETY_MANAGER" and r.json()["redirectPath"] == "/manage/requests"
 
 
 def test_login_401(client):
     assert_error(
-        client.post(LOGIN, json={"email": "engineer@replaceflow.test", "password": "WrongPass1!"}),
+        client.post(LOGIN, json={"email": "engineer@argus.test", "password": "WrongPass1!"}),
         401, "INVALID_CREDENTIALS",
     )
     # 없는 계정도 같은 응답 — 계정 존재 여부를 흘리지 않는다
     assert_error(
-        client.post(LOGIN, json={"email": "nobody@replaceflow.test", "password": "Passw0rd!"}),
+        client.post(LOGIN, json={"email": "nobody@argus.test", "password": "Passw0rd!"}),
         401, "INVALID_CREDENTIALS",
     )
 
@@ -112,7 +112,7 @@ def test_login_401(client):
 def test_me_200(client, engineer):
     r = client.get(ME, headers=engineer)
     assert r.status_code == 200
-    assert r.json()["email"] == "engineer@replaceflow.test"
+    assert r.json()["email"] == "engineer@argus.test"
     _assert_no_hash(r.json())
 
 

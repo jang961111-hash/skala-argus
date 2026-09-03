@@ -8,7 +8,7 @@ BACKEND = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(BACKEND))
 
 # 앱 모듈이 설정을 읽기 전에 테스트 전용 DB·업로드 경로를 잡는다
-_test_db = BACKEND / "test_replaceflow.db"
+_test_db = BACKEND / "test_argus.db"
 _test_uploads = BACKEND / "test_uploads"
 if _test_db.exists():
     _test_db.unlink()
@@ -28,8 +28,8 @@ from PIL import Image  # noqa: E402
 from app.main import app  # noqa: E402
 
 SEED_PASSWORD = "Passw0rd!"
-ENGINEER_EMAIL = "engineer@replaceflow.test"
-SAFETY_EMAIL = "safety@replaceflow.test"
+ENGINEER_EMAIL = "engineer@argus.test"
+SAFETY_EMAIL = "safety@argus.test"
 
 UPLOADS_DIR = _test_uploads
 
@@ -79,7 +79,7 @@ def jpeg_bytes(size=(200, 150), color=(120, 30, 30), with_exif: bool = False) ->
     image = Image.new("RGB", size, color)
     if with_exif:
         exif = Image.Exif()
-        exif[0x010F] = "ReplaceFlow Test Camera"  # Make
+        exif[0x010F] = "Argus Test Camera"  # Make
         exif[0x0110] = "RF-1000"  # Model
         image.save(buffer, format="JPEG", exif=exif.tobytes())
     else:

@@ -305,7 +305,7 @@ def test_role_scoping(client, engineer, safety):
 
     # 다른 엔지니어는 남의 요청을 볼 수 없다
     other = {
-        "name": "박서준", "email": "other.engineer@replaceflow.test",
+        "name": "박서준", "email": "other.engineer@argus.test",
         "password": "Passw0rd!", "passwordConfirm": "Passw0rd!", "role": "ENGINEER",
     }
     client.post("/api/v1/auth/signup", json=other)
@@ -438,7 +438,7 @@ def test_photo_exif_is_stripped(client, engineer):
     wr_id = create_ready_request(client, engineer)
     original = jpeg_bytes(with_exif=True)
     with Image.open(__import__("io").BytesIO(original)) as image:
-        assert image.getexif().get(0x010F) == "ReplaceFlow Test Camera"  # 업로드 전엔 있다
+        assert image.getexif().get(0x010F) == "Argus Test Camera"  # 업로드 전엔 있다
 
     r = client.post(WR + f"/{wr_id}/photos", files=[("files", ("exif.jpg", original, "image/jpeg"))], headers=engineer)
     assert r.status_code == 201, r.text
