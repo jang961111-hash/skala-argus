@@ -1,14 +1,14 @@
 # 산출물 인벤토리
 
-생성: 2026-09-03 16:55 · **작업 트리 실측**(커밋 시점 아님)
+생성: 2026-09-03 16:59 · **작업 트리 실측**(커밋 시점 아님)
 
 ## 규모
 ```
 추적 파일(git)       171
-변경/신규(미커밋) 3
+변경/신규(미커밋) 1
 backend .py              54
 frontend .vue            18
-docs 파일              108
+docs 파일              111
 OpenAPI paths            12
 ERD 테이블            8
 ```
@@ -230,6 +230,7 @@ views/safety/ManageRequestsView.vue
 10_project_record/02_evidence/test_results/e2e_live_v3_20260903_1605.log
 10_project_record/02_evidence/test_results/e2e_live_v3_20260903_1637.log
 10_project_record/02_evidence/test_results/e2e_live_v3_20260903_1655.log
+10_project_record/02_evidence/test_results/e2e_live_v3_20260903_1659.log
 10_project_record/02_evidence/test_results/fe_build_20260903_1527.log
 10_project_record/02_evidence/test_results/fe_build_20260903_1534.log
 10_project_record/02_evidence/test_results/fe_build_20260903_1537.log
@@ -238,6 +239,7 @@ views/safety/ManageRequestsView.vue
 10_project_record/02_evidence/test_results/fe_build_20260903_1605.log
 10_project_record/02_evidence/test_results/fe_build_20260903_1637.log
 10_project_record/02_evidence/test_results/fe_build_20260903_1655.log
+10_project_record/02_evidence/test_results/fe_build_20260903_1659.log
 10_project_record/02_evidence/test_results/pytest_20260903_1527.log
 10_project_record/02_evidence/test_results/pytest_20260903_1534.log
 10_project_record/02_evidence/test_results/pytest_20260903_1537.log
@@ -245,6 +247,7 @@ views/safety/ManageRequestsView.vue
 10_project_record/02_evidence/test_results/pytest_20260903_1558.log
 10_project_record/02_evidence/test_results/pytest_20260903_1605.log
 10_project_record/02_evidence/test_results/pytest_20260903_1655.log
+10_project_record/02_evidence/test_results/pytest_20260903_1659.log
 10_project_record/03_contract_history/README.md
 10_project_record/04_team/rnr_and_contributions.md
 10_project_record/05_retrospective/retrospective.md

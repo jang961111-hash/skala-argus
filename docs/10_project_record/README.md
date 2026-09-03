@@ -5,11 +5,12 @@
 >
 > **최신화 규칙은 `RECORD_KEEPING.md` 에 있다. 팀원 전원 적용.**
 
-최종 갱신: 2026-09-03 16:37 · 갱신자: PM 은태현
+최종 갱신: 2026-09-03 16:59 · 갱신자: PM 은태현
 
 ## 지금 상태 한 줄
 
-**프로젝트명 `Argus` 확정. 계약 v3.0 구현 완료 — `pytest 30 passed` · 라이브 E2E `72/0` · FE 9화면 실연동 캡처 완료 · `develop`+`feature/*` 9개 브랜치 `--no-ff` 병합 후 push 완료.**
+**이름 통일 완료 — 프로젝트·레포(`skala-argus`)·로컬 경로(`~/projects/argus`)가 `Argus` 하나다.**
+계약 v3.0 구현 완료: `pytest 30` · 라이브 E2E **72/0** · FE 빌드 223.88 kB · 화면 9종 캡처 11장 · **커밋 37 / 브랜치 12 / 파일 171 / 미커밋 0**(푸시 완료).
 남은 건 **발표 준비**(슬라이드·회고·리허설 3회)와 **Supabase 실행(미검증)** · Stitch 진행분. 커밋은 **1인 명의**(통합 커밋 방침).
 
 ## 폴더 구조
@@ -25,18 +26,18 @@
 | `04_team/` | R&R과 담당별 산출물 | "누가 뭘 했나?" |
 | `05_retrospective/` | 회고 | 발표 5번 섹션 |
 
-## 실측 증거 (이 숫자만 발표에 쓴다) — `20260903_1637` 직접 실행
+## 실측 증거 (이 숫자만 발표에 쓴다) — `20260903_1659` 직접 실행
 
 | 항목 | 값 | 원본 |
 |---|---|---|
-| 백엔드 테스트 | **30 passed** | `02_evidence/test_results/pytest_20260903_1637.log` |
-| 라이브 E2E (실 uvicorn) | **72 통과 / 0 실패** | `..._/e2e_live_v3_20260903_1637.log` |
-| 프론트 빌드 | 성공 · **223.88 kB** (gzip **81.98 kB**) | `..._/fe_build_20260903_1637.log` |
+| 백엔드 테스트 | **30 passed** | `02_evidence/test_results/pytest_20260903_1659.log` |
+| 라이브 E2E (실 uvicorn) | **72 통과 / 0 실패** | `..._/e2e_live_v3_20260903_1659.log` |
+| 프론트 빌드 | 성공 · **223.88 kB** (gzip **81.98 kB**) | `..._/fe_build_20260903_1659.log` |
 | 화면 | 9종 · argus_ 캡처 9장 | `02_evidence/screenshots/` |
 | API | 15개 (OpenAPI 12 paths / 15 operations) | `docs/07_api/openapi.yaml` |
 | ERD | 8테이블 · 1:N 8개 · **N:M 0개(Phase 2)** | `docs/06_erd/` |
 | 에러 코드 | 23종 — E2E 가 경로 커버 | `docs/CONTRACT.md` §6 |
-| Git | 33커밋 · `develop`+`feature/*` 9개 · `--no-ff` 병합 10건+ | `git log --merges` |
+| Git | **커밋 37** · 브랜치 **12**(`main`+`develop`+`feature/*` 10) · 파일 **171** · `--no-ff` 병합 10건+ | `git log --merges` |
 
 ### 미검증 (억지로 통과 표시하지 않음)
 | 항목 | 상태 |

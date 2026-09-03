@@ -4,16 +4,16 @@
 **최종 기입: 2026-09-03 16:37, PM 은태현** — `bash scripts/collect_evidence.sh` 를 **직접 실행**한 출력만 인용.
 프로젝트명 **`Argus` 확정**(팀장 결정) 반영. `ReplaceFlow`·`FixGuide` 는 폐기.
 
-## 실측 증거 (내가 직접 돌린 값 — `20260903_1637`)
+## 실측 증거 (내가 직접 돌린 값 — `20260903_1659`)
 
 | 항목 | 값 | 원본 로그 |
 |---|---|---|
-| `pytest -q` | **30 passed** (2 warnings, 2.19s) | `02_evidence/test_results/pytest_20260903_1637.log` |
-| `scripts/e2e_live_v3.sh` | **72 통과 / 0 실패** (사진 업로드 §14 추가로 64→72) | `..._/e2e_live_v3_20260903_1637.log` |
-| `npm run build` | 성공 · **223.88 kB** (gzip **81.98 kB**) | `..._/fe_build_20260903_1637.log` |
+| `pytest -q` | **30 passed** (2 warnings, 2.19s) | `02_evidence/test_results/pytest_20260903_1659.log` |
+| `scripts/e2e_live_v3.sh` | **72 통과 / 0 실패** (사진 업로드 §14 추가로 64→72) | `..._/e2e_live_v3_20260903_1659.log` |
+| `npm run build` | 성공 · **223.88 kB** (gzip **81.98 kB**) | `..._/fe_build_20260903_1659.log` |
 | 화면 실연동 캡처 | **argus_ 접두 9장** 재촬영 + v1.0 대조 2장 | `02_evidence/screenshots/` |
-| Git 브랜치 | `develop` + **`feature/*` 9개**, `--no-ff` 병합 이력 실재 | `git branch -a`, `git log --merges` |
-| 커밋 | **33개 / 1인 명의** | `git shortlog -sn` |
+| Git | **커밋 37** · **브랜치 12**(`main`+`develop`+`feature/*` **10**) · 추적 파일 **171** · 미커밋 **0** | `git branch`, `git rev-list --count` |
+| 레포 | **`skala-argus`** (구 `skala-replaceflow` 폐기) · 기여자 **1인** | `git remote -v`, `git shortlog -sn` |
 
 > ⚠️ 팀장 공유값 `gzip 82.56 kB` 와 내 실측 `81.98 kB` 가 다르다 — 빌드마다 해시가 달라 생기는 차이다. **내가 돌린 값을 적었다**(`RECORD_KEEPING.md` §2-1).
 > ⛔ **무효(지우지 않고 표시)**: v1.0 `pytest 8/8`·`e2e 35/35`, v3.0 중간 `e2e 64/0`. 틀린 게 아니라 **검증 대상이 늘어난 것**이다.
@@ -73,8 +73,8 @@
 |---|---|---|---|
 | README 에 팀 R&R 표 | `README.md` §7 | ✔ | 5명 역할·산출물·담당파일 |
 | R&R 상세 + 3일 일정 + 리스크 | `docs/01_planning/rnr_and_schedule.md` | ✔ | 93줄 |
-| 브랜치 전략·커밋 규칙·PR 템플릿 문서 | `docs/01_planning/github_guide.md`, `.github/` | ✔ | 문서 + **실적용 확인**: `develop` + `feature/*` **9개** 브랜치 실재, `--no-ff` 병합 이력 10건+ (`git log --merges`) |
-| 5명 전원 커밋, 편중 없음 | `git shortlog -sn` | ✖ | **33커밋 전부 1인 명의**(`git shortlog -sn`). 팀 방침 = **통합 커밋 + 커밋 본문에 담당 역할·이름 명시**. 담당별 산출물은 `10_project_record/04_team/rnr_and_contributions.md`. **"각자 계정으로 커밋했다"고 말하면 안 된다** |
+| 브랜치 전략·커밋 규칙·PR 템플릿 문서 | `docs/01_planning/github_guide.md`, `.github/` | ✔ | 문서 + **실적용 확인**: `main`←`develop`←`feature/*` **10개** 브랜치 실재(원격 포함), `--no-ff` 병합 이력 10건+ (`git log --merges`) |
+| 5명 전원 커밋, 편중 없음 | `git shortlog -sn` | ✖ | **37커밋 전부 1인 명의**(`git shortlog -sn`). 팀 방침 = **통합 커밋 + 커밋 본문에 담당 역할·이름 명시**. 담당별 산출물은 `10_project_record/04_team/rnr_and_contributions.md`. **"각자 계정으로 커밋했다"고 말하면 안 된다** |
 | PR 5건 이상, 리뷰 코멘트 | `gh pr list` | ✖ | PR 0건. 다만 **`--no-ff` 병합 이력이 브랜치 단위 작업 분리를 증명**한다 — 이걸 근거로 설명 |
 | 이슈에 담당자·라벨 지정 | `gh issue list` | ✖ | **0건** |
 | `.gitignore` 로 `.env`·DB 미커밋 | 레포 트리 | ✔ | `.env` 미추적 확인, `.env.example` 은 커밋 |
@@ -125,7 +125,7 @@
 | DB 연동: `DATABASE_URL` SQLite ↔ Supabase | `backend/app/db/`, `docs/09_qa/supabase_runbook.md` | ◐ | 런북 `06_erd/supabase_apply.md` 준비. **Supabase 실제 실행은 팀장 대기 — 미검증** |
 | 실제 DB 쓰기·읽기 유지 | E2E | ✔ | **E2E 72/0** — 등록→사진업로드→폴링→편집→승인 왕복 |
 | README 빠른 시작 5분 내 기동 | `README.md` | ◐ | v3.0 절차로 갱신 필요 |
-| pytest 1개 이상 | `backend/tests/` | ✔ | **30 passed** (`pytest_20260903_1637.log`) |
+| pytest 1개 이상 | `backend/tests/` | ✔ | **30 passed** (`pytest_20260903_1659.log`) |
 
 ### 2-4. 데이터 바인딩 화면 시연
 | 점검 항목 | 근거 산출물 | 상태 | 보완 필요 사항 |
@@ -202,9 +202,36 @@
 2. **☐ 6건이 실질 병목** — 리허설 3회·슬라이드 캡처·회고 §3§4·명칭 통일. 전부 사람이 해야 하고 내일 오전에 몰려 있다
 3. **미검증이라고 쓴 2건**(Supabase 실행 · Swagger UI 직접 호출)은 **억지로 ✔ 로 올리지 않았다.** 돌려본 사람이 갱신한다
 
+### 📌 PM 판정 — "GitHub 레포지토리 관리" 항목 (재평가)
+
+**판정: 부분 충족.** 미충족도 완전 충족도 아니다. 세부 8항목을 갈라 보면 **5 충족 / 3 미충족**이다.
+
+| 충족 (5) | 근거 (실측) |
+|---|---|
+| 브랜치 전략 **실적용** | `main` ← `develop` ← `feature/*` **10개**, 원격에도 존재. 문서만 있고 `main` 단독이던 어제와 질적으로 다르다 |
+| 이력 보존 | **`--no-ff` 병합 10건+** — 스쿼시했으면 사라졌을 브랜치 단위 작업 경계가 남아 있다 |
+| 커밋 규율 | 커밋 본문마다 **담당 역할·이름 + 계약 조항 번호**. 어느 커밋이 어느 트랙·어느 계약 조항인지 추적된다 |
+| R&R 문서화 | `README.md` §7 + `10_project_record/04_team/rnr_and_contributions.md` |
+| `.gitignore` 위생 | `.env` 미추적, `.env.example` 커밋, **미커밋 0** |
+
+| 미충족 (3) | 사실 |
+|---|---|
+| 5명 전원 커밋·편중 없음 | **`git shortlog -sn` = 1인 / 37커밋.** Contributors 그래프도 1명 |
+| PR 5건 이상 + 리뷰 코멘트 | **PR 0건** |
+| 이슈 담당자·라벨 | **이슈 0건** |
+
+**왜 "미충족"이 아닌가**: 이 항목이 실제로 보려는 것은 *"협업을 통제했는가"*다. 브랜치를 10개로 갈라 `--no-ff` 로 병합하고 커밋마다 담당·조항을 남긴 건 그 통제의 증거다. 이걸 0점으로 보는 건 과소평가다.
+**왜 "충족"도 아닌가**: 루브릭이 **"5명 전원 커밋, 편중 없음"** 을 문자로 명시한다. 계정 단위 기여 분산은 실제로 못 했고, 채점자가 Insights 를 열면 1명이 보인다. 이걸 충족이라 쓰면 과대평가이자 **위장**이다.
+
+**발표 화법 (이 판정에 맞춰 말한다)**
+> "브랜치는 `main`←`develop`←`feature/*` 10개로 나눠 `--no-ff` 로 병합했고, 커밋 본문마다 담당 역할과 계약 조항 번호를 남겼습니다. **다만 커밋 계정은 한 명입니다.** 팀이 통합 커밋 방식을 택했고, 담당별 기여는 커밋 본문과 `04_team/rnr_and_contributions.md` 로 추적됩니다. 계정 단위 기여 분산을 못 한 건 저희 한계입니다."
+
+❌ **"5명이 각자 커밋했습니다"는 사실이 아니므로 말하지 않는다.**
+✅ Contributors 그래프 대신 **`git log --graph --merges` 캡처**(브랜치 10개 분기·병합)를 슬라이드에 넣는다.
+
 ### 발표에서 먼저 꺼낼 한계 3가지
 - **N:M 0개** — 마스터 테이블이 없는 범위라 연결 테이블만 만들면 빈 테이블이 된다(`erd.md` §3) + `erd_phase2.mmd` 확장 설계 제시
 - **Supabase 미실행** — 로컬 SQLite 로 검증했고 DDL·런북은 준비돼 있다
-- **커밋이 1인 명의** — 통합 커밋 방침이었고 담당별 산출물은 `04_team/` 에 기록
+- **커밋이 1인 명의** — 브랜치 10개·`--no-ff` 병합·커밋 본문 담당 표기는 있으나 **계정 단위 분산은 못 했다**(위 PM 판정)
 
 처리 불가 항목은 숨기지 말고 **"한계"로 먼저 언급**한다.

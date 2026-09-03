@@ -8,7 +8,7 @@
 >   v3.0에서 실측 대상이 되는 가드는 이것들이다 — `403 FORBIDDEN_ROLE`(엔지니어의 승인 시도) · `403 FORBIDDEN_NOT_OWNER`(남의 요청 조회) · `422 SUBMIT_REQUIRED_FIELD_MISSING`(결과 3종·설명·**A2 법령 1건**) · `400 REJECT_REASON_REQUIRED`(거절 사유 10자) · `400 SPEC_SCHEMA_MISMATCH`(유형별 스펙 키) · `409 RUN_ALREADY_IN_PROGRESS` / `IMMUTABLE_STATUS` / `RESULT_LOCKED` / `ALREADY_DECIDED` · `413 FILE_TOO_LARGE` · 404 2종.
 > - **Q5(수치 근거)** — v3.0 기준으로 본문을 다시 썼다. 논지가 더 강해졌다: 평균 승인 소요시간 KPI를 **화면뿐 아니라 API에서도 제거**했으므로 "측정 못 하는 숫자는 아예 지웠다"고 말할 수 있다.
 > - 다섯 번째 문항이 필요하면 **"어제 설계를 오늘 왜 뒤집었나"** 또는 **"N:M이 하나도 없는데"** 를 쓴다 → `v2_framing_notes.md` §1·§4.
-> - ✅ **최종 수치(`..._1637.log`)**: pytest **30 passed** · E2E **72/0** · 빌드 **223.88 kB**(gzip **81.98**). 발표자 대조 완료.
+> - ✅ **최종 수치(`..._1655/1659.log`)**: pytest **30 passed** · E2E **72/72** · 빌드 **223.88 kB**(gzip **82.56**). 발표자 대조 완료.
 > - **서비스명 `Argus` 확정.** 옛 이름 언급 금지(구버전 캡처 파일명만 예외).
 > - ⚠️ **Supabase 미검증 · Figma 0건 · 캡처 8종(C_01 없음) · 커밋 1인 명의.** 넷 다 발표에서 사실대로 말한다.
 

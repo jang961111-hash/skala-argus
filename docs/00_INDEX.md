@@ -5,8 +5,8 @@
 표기: **☑** 검증 완료 · **⏳** 구현 중 · **🔄** 갱신 중 · **☐** 미착수 · **✖** 미충족
 ⚠️ **경로와 판정만 적는다.** 여러 트랙이 동시에 파일을 고치는 중이라 내용을 복사해 두면 몇 분 뒤 틀린다.
 
-> ⚠️ **명칭 미확정** — ERD 문서는 **FixGuide**, 저장소·기획서는 **Argus**, API 명세서는 "부품 교체 요청·승인 시스템".
-> **발표 표지에 들어가므로 슬라이드 제작 전 반드시 하나로 확정할 것.**
+> ✅ **명칭 확정: `Argus`** — 코드·문서·화면·**GitHub 레포(`skala-argus`)·로컬 경로(`~/projects/argus`)**까지 통일 완료.
+> `ReplaceFlow`·`FixGuide` 는 폐기. 아래에 남은 `FixGuide` 표기는 **팀 노션 원본 문서의 제목**이라 이력으로 보존한다.
 
 ---
 
@@ -70,21 +70,20 @@
 
 ---
 
-## 확정 실측치 — **직접 실행 검증** (`collect_evidence.sh`, 20260903_1537)
+## 확정 실측치 — **직접 실행 검증** (`collect_evidence.sh`, 20260903_1659)
 
-원본 로그: `docs/10_project_record/02_evidence/test_results/`
+레포: **https://github.com/jang961111-hash/skala-argus** · 로컬 `~/projects/argus` · 원본 로그 `docs/10_project_record/02_evidence/test_results/`
 
 | 항목 | 값 | 원본 |
 |---|---|---|
-| `pytest -q` | **30 passed** (2 warnings, 2.20s) | `pytest_20260903_1537.log` |
-| `scripts/e2e_live_v3.sh` | **64 통과 / 0 실패** (실 uvicorn 상대) | `e2e_live_v3_20260903_1537.log` |
-| `npm run build` | 성공 · **223.58 kB** (gzip 81.73 kB) | `fe_build_20260903_1537.log` |
-| 화면 실연동 캡처 | v3.0 **9장** + v1.0 대조 **2장** | `02_evidence/screenshots/` |
+| `pytest -q` | **30 passed** | `pytest_20260903_1659.log` |
+| `scripts/e2e_live_v3.sh` | **72 통과 / 0 실패** | `e2e_live_v3_20260903_1659.log` |
+| `npm run build` | 성공 · **223.88 kB** (gzip **81.98 kB**) | `fe_build_20260903_1659.log` |
+| 화면 | 9종 · 캡처 **11장**(argus 9 + v1.0 대조 2) | `02_evidence/screenshots/` |
 | ERD | **8테이블** · 1:N **8개** · **N:M 0개(Phase 2)** | `docs/06_erd/` |
-| API | **15개** (OpenAPI **12 paths / 15 operations**) | `docs/07_api/openapi.yaml` |
+| API | **15개** (OpenAPI 12 paths / 15 operations) · 에러코드 **23종** | `docs/07_api/openapi.yaml` |
 | Postman | 요청 **16개** / 예시 **67개** | `postman/` |
-| 에러 코드 | **23종** — E2E 가 경로 커버 | `CONTRACT.md` §6 |
-| 코드 규모 | backend **.py 54** · frontend **.vue 18** · docs **89** | `02_evidence/inventory/artifacts_inventory.md` |
+| Git | **커밋 37** · **브랜치 12**(`main`+`develop`+`feature/*` **10**) · 추적 파일 **171** · **미커밋 0** | `git log --merges` |
 
 ### ⛔ 무효가 된 실측치 (지우지 않고 표시 — `RECORD_KEEPING.md` §2-3)
 | 항목 | 값 | 사유 |
@@ -107,7 +106,8 @@ PM 책임: `README.md` 상태 한 줄 + 실측 표(하루 1회 이상) · `01_ti
 노션 사본: https://app.notion.com/p/3d0a7f29102a812cbafee720e548f73c (로컬이 원본, 노션이 사본)
 
 ## 남은 수동 항목 (사람이 직접)
-**Figma 또는 Stitch 제작(미착수)** · **Supabase DDL 실행(미검증)** · 발표 슬라이드 조판 · **명칭 통일 결정(FixGuide/Argus)** · 회고 §3·§4 작성 · 리허설 3회 · **커밋(변경분 134개 미커밋)** · `.omc` 이력 purge
+**Stitch 제작(진행 중)** · **Supabase DDL 실행(미검증)** · 발표 슬라이드 조판 · 회고 §3·§4 작성 · 리허설 3회 · 타 조 질의 1개 확정
+*(명칭 통일·커밋·푸시는 완료 — 미커밋 0)*
 
 ---
 *스캔 시점: 2026-09-03 저녁. 6개 트랙 동시 작업 중 — 판정이 아니라 경로를 신뢰하라.*
