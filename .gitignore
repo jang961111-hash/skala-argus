@@ -11,6 +11,9 @@ venv/
 *.sqlite3
 backend/.env
 
+# --- 업로드된 현장 사진 (CONTRACT §4 photos) ---
+backend/uploads/
+
 # --- Node / Vite ---
 node_modules/
 frontend/dist/

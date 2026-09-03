@@ -1,0 +1,12 @@
+967ffcb  09-03 14:30  chore(ops): 에이전트 도구 세션 상태를 레포에서 제외
+1962937  09-03 14:19  chore(ops): 잔여 파일 정리
+f0f731f  09-03 14:19  test(ops): 라이브 E2E 검증 스크립트 + Python 3.10+ 요구사항 명시
+1b3ce21  09-03 14:19  docs(ops): 발표 대본·데모 시나리오 · E2E 체크리스트 · Q&A 25문항
+934d29b  09-03 14:19  feat(fe): Vue3+Vite 화면 2종 — 요청 목록 · 에이전트 타임라인/승인 패널
+417cfab  09-03 14:19  feat(be): FastAPI 15 엔드포인트 · 상태머신 · 에이전트 오케스트레이터
+5222aed  09-03 14:14  docs(api): OpenAPI 3.0 명세 + Postman Mock 컬렉션
+4060a61  09-03 14:14  docs(db): ERD DBML 14테이블 + PostgreSQL DDL + 시드
+45cb6bd  09-03 14:14  docs(api): 아키텍처 다이어그램·상태머신·시퀀스 + AI-Ready 규격
+9fb7460  09-03 14:14  docs(planning): 기획서 최종본·UC 명세·와이어프레임·R&R
+c63afda  09-03 14:14  docs(contract): 필드명·상태값·API·샘플데이터 단일 계약 + 산출물 인덱스
+c30a020  09-03 14:14  chore(ops): 레포 스캐폴딩 — README·.gitignore·PR 템플릿

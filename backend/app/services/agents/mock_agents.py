@@ -1,163 +1,117 @@
-"""Mock agents returning the fixed results defined in docs/CONTRACT.md (AgentRun sample).
+"""Mock 에이전트 3종 — A1 규격·호환 / A2 법령·조문 / A3 안전서류.
 
-SafetyDocMockAgent and VendorMockAgent create real `documents` rows so that
-GET /documents/{docId} works against the doc_ids returned in the step result.
-LegalMockAgent also normalises its output into `legal_findings` rows.
+입력 스냅샷(설비·라인·물질·운전조건·제품명·유형·스펙)을 실제로 읽어 문장을 만든다.
+LLM 을 붙일 때 이 클래스만 `llm_agents.py` 의 구현으로 갈아끼우면 된다.
+
+Phase 2: A1 의 부품 마스터·호환표 연동, A4 벤더 에이전트.
 """
 from __future__ import annotations
 
 from typing import Any
 
-from app.models import Document, LegalFinding
-from app.repositories.ids import next_document_id
-from app.services.agents.base import AgentContext, AgentService
+from app.core.enums import AgentCode
+from app.services.agents.base import AgentContext, AgentService, document, item
+
+
+def _spec_text(snapshot: dict[str, Any]) -> str:
+    spec = snapshot.get("specJson") or {}
+    return ", ".join(f"{k}={v}" for k, v in spec.items()) or "스펙 미입력"
 
 
 class SpecMockAgent(AgentService):
-    agent_type = "SPEC"
+    """A1 — 입력 스펙 기준의 규격·호환 판정."""
+
+    agent_code = AgentCode.A1
+
+    def message(self) -> str:
+        return "규격·호환 검토 완료"
 
     def run(self, context: AgentContext) -> dict[str, Any]:
-        part = context.part
-        current_part = part.part_no if part else "VLV-SS316-1/4-NC"
-        alternatives = []
-        if part is not None:
-            from app.repositories.master_repo import MasterRepository
+        s = context.snapshot
+        product = s.get("productName") or "대상 부품"
+        product_type = s.get("productType") or "ETC"
+        substance = s.get("substance") or "미지정 물질"
+        condition = s.get("operatingCondition") or {}
+        pressure = condition.get("pressure") or "운전압력 미입력"
+        temperature = condition.get("temperature") or "운전온도 미입력"
 
-            for pc, alt in MasterRepository(context.db).alternatives(part.id):
-                alternatives.append(
-                    {
-                        "part_no": alt.part_no,
-                        "grade": alt.grade,
-                        "diff": pc.diff,
-                        "allowed_for_toxic_gas": pc.allowed_for_toxic_gas,
-                    }
-                )
-        if not alternatives:
-            alternatives = [
-                {
-                    "part_no": "VLV-SS316-1/4-NC-EQ",
-                    "grade": "EQUIVALENT",
-                    "diff": "시트 재질 PCTFE→PTFE",
-                    "allowed_for_toxic_gas": False,
-                }
-            ]
-        return {"spec_match": True, "current_part": current_part, "alternatives": alternatives}
+        items = [
+            item(1, f"{product}({product_type}) 입력 스펙: {_spec_text(s)}"),
+            item(2, f"운전조건 {temperature} / {pressure} 기준으로 규격 적합 판정."),
+            item(3, f"{substance} 라인이므로 시트·개스킷 재질은 내식성 등급을 유지해야 한다."),
+            item(4, "호환품 적용 시 시트 재질 변경(PCTFE→PTFE)은 유독가스 라인에서 허용되지 않는다."),
+            item(5, "동일 규격 OEM 품으로 교체할 것을 권고한다. 부품 마스터 대조는 Phase 2."),
+        ]
+        return {"items": items}
 
 
 class LegalMockAgent(AgentService):
-    agent_type = "LEGAL"
+    """A2 — 적용 법령·조문. submit-approval 이 여기 items 를 1건 이상 요구한다."""
 
-    RESULT: dict[str, Any] = {
-        "applicable_laws": [
-            {
-                "law": "산업안전보건기준에 관한 규칙",
-                "article": "제92조",
-                "title": "정비등의 작업 시의 운전정지 등",
-                "quote": "…운전을 정지하고 … 잠금장치 및 표지판을…",
-            },
-            {"law": "화학물질관리법", "article": "제24조", "title": "취급시설의 설치·관리 기준", "quote": ""},
-            {"law": "고압가스 안전관리법 시행규칙", "article": "별표", "title": "특정고압가스 사용시설 기준", "quote": ""},
-        ],
-        "required_procedures": [
-            {"name": "작업허가서(가스 배관 작업)", "phase": "BEFORE", "required": True},
-            {"name": "위험성평가", "phase": "BEFORE", "required": True},
-            {"name": "LOTO·가스 차단·퍼지 확인", "phase": "BEFORE", "required": True},
-            {"name": "가스 감지기 정상 확인", "phase": "AFTER", "required": True},
-        ],
-    }
+    agent_code = AgentCode.A2
+
+    def message(self) -> str:
+        return "적용 법령 검토 완료"
 
     def run(self, context: AgentContext) -> dict[str, Any]:
-        result = {k: [dict(x) for x in v] for k, v in self.RESULT.items()}
-        findings = [
-            LegalFinding(agent_run_id=context.run.id, law=l["law"], article=l["article"], title=l["title"], quote=l["quote"])
-            for l in result["applicable_laws"]
-        ] + [
-            LegalFinding(
-                agent_run_id=context.run.id,
-                procedure_name=p["name"],
-                phase=p["phase"],
-                required=p["required"],
-                law="산업안전보건기준에 관한 규칙",
-                article="제92조",
-            )
-            for p in result["required_procedures"]
+        s = context.snapshot
+        substance = s.get("substance") or "취급 물질"
+        items = [
+            item(1, "산업안전보건기준에 관한 규칙 제92조(정비등의 작업 시의 운전정지 등) — "
+                    "정비·교체 작업 전 운전을 정지하고 기동장치에 잠금장치와 표지판을 설치한다."),
+            item(2, "산업안전보건기준에 관한 규칙 제93조(방호장치의 해체 금지) — "
+                    "방호장치를 임의로 해체하거나 사용을 정지해서는 안 된다."),
+            item(3, f"화학물질관리법 제24조(취급시설의 설치·관리 기준) — {substance} 취급시설은 "
+                    "환경부령 기준에 따라 설치·운영하고 정기 검사를 받아야 한다."),
+            item(4, "고압가스 안전관리법 시행규칙 별표(특정고압가스 사용시설 기준) — "
+                    "가스누출 검지경보장치를 설치하고 배관 작업 전 가스 차단·퍼지를 실시한다."),
+            item(5, "필수 절차: 작업허가서 발행 → 위험성평가 → LOTO·가스 차단·퍼지 → 작업 후 가스 감지기 정상 확인."),
         ]
-        context.db.add_all(findings)
-        context.db.flush()
-        return result
+        return {"items": items}
 
 
 class SafetyDocMockAgent(AgentService):
-    agent_type = "SAFETY_DOC"
+    """A3 — 안전서류 초안. A2 결과를 이어받아 필수 절차를 본문에 옮긴다."""
+
+    agent_code = AgentCode.A3
+
+    def message(self) -> str:
+        return "안전서류 초안 생성 완료"
 
     def run(self, context: AgentContext) -> dict[str, Any]:
-        wr = context.work_request
-        eq_name = context.equipment.name if context.equipment else wr.equipment_id
-        part_no = context.part.part_no if context.part else wr.part_id
-        legal = context.prior_results.get("LEGAL", {})
-        procedures = "\n".join(
-            f"- [{p['phase']}] {p['name']} (필수: {'예' if p['required'] else '아니오'})"
-            for p in legal.get("required_procedures", [])
+        s = context.snapshot
+        equipment = s.get("equipment") or "대상 설비"
+        line = s.get("line") or "라인 미지정"
+        product = s.get("productName") or "대상 부품"
+        substance = s.get("substance") or "취급 물질"
+        request_no = s.get("requestNo") or ""
+
+        legal = context.prior_results.get(AgentCode.A2) or {}
+        procedures = "\n".join(f"- {i['text']}" for i in legal.get("items", [])[-2:]) or "- 작업허가·위험성평가·LOTO"
+
+        permit = (
+            f"# 작업허가서 (가스 배관 작업)\n\n"
+            f"- 작업요청: {request_no}\n- 설비: {equipment} ({line})\n- 대상 부품: {product}\n"
+            f"- 취급 물질: {substance}\n- 작업 내용: {s.get('symptom') or '부품 교체'}\n\n"
+            f"## 근거 및 필수 절차\n{procedures}\n\n"
+            f"## 확인 서명\n- 작업 책임자: ____________\n- 안전관리자: ____________\n"
         )
-        permit = Document(
-            id=next_document_id(context.db),
-            agent_run_id=context.run.id,
-            type="WORK_PERMIT",
-            body=(
-                f"# 작업허가서 (가스 배관 작업)\n\n"
-                f"- 작업요청: {wr.id}\n- 설비: {eq_name}\n- 부품: {part_no}\n- 작업 내용: {wr.symptom} / {wr.site_check_note or ''}\n"
-                f"- 작업자: (누락) 작업자 2명 이름\n\n## 필수 절차\n{procedures}\n"
-            ),
-            missing_json=["작업자 2명 이름"],
+        risk = (
+            f"# 위험성평가표\n\n- 대상: {equipment} / {product}\n"
+            f"- 유해위험요인: {substance} 누출, 잔압 분출, 협착\n"
+            f"- 최초 위험도: 높음\n- 감소 대책: 가스 차단·퍼지·LOTO 후 작업, 2인 1조, 보호구 착용\n"
+            f"- 잔여 위험도: 낮음\n- 작업 후 확인: 가스 감지기 정상 동작 확인\n"
         )
-        context.db.add(permit)
-        context.db.flush()
-        ra = Document(
-            id=next_document_id(context.db),
-            agent_run_id=context.run.id,
-            type="RISK_ASSESSMENT",
-            body=(
-                f"# 위험성평가표\n\n- 대상: {eq_name} / {part_no}\n"
-                f"- 유해위험요인: 유독가스 누출, 잔압, 협착\n- 위험도: 높음 → 가스 차단·퍼지·LOTO 후 작업으로 감소\n"
-                f"- 관리대책: 가스 감지기 상시 감시, 2인 1조, 보호구 착용\n"
-            ),
-            missing_json=[],
-        )
-        context.db.add(ra)
-        context.db.flush()
         return {
             "documents": [
-                {"doc_id": permit.id, "type": "WORK_PERMIT", "missing": list(permit.missing_json)},
-                {"doc_id": ra.id, "type": "RISK_ASSESSMENT", "missing": list(ra.missing_json)},
+                document(1, "WORK_PERMIT", "작업허가서 초안", permit),
+                document(2, "RISK_ASSESSMENT", "위험성평가표 초안", risk),
             ]
         }
 
 
-class VendorMockAgent(AgentService):
-    agent_type = "VENDOR"
-
-    def run(self, context: AgentContext) -> dict[str, Any]:
-        part_no = context.part.part_no if context.part else "VLV-SS316-1/4-NC"
-        summary = f"{part_no} 2EA 견적·납기 요청"
-        rfq = Document(
-            id=next_document_id(context.db),
-            agent_run_id=context.run.id,
-            type="RFQ",
-            body=(
-                f"# 견적요청서 (RFQ)\n\n수신: OEM 밸브 공급사 담당자님\n\n"
-                f"아래 품목의 견적 및 납기를 요청드립니다.\n\n- 품번: {part_no}\n- 수량: 2 EA\n"
-                f"- 희망 납기: 3일 이내\n- 최근 구매: 2026-02-14\n\n감사합니다.\n"
-            ),
-            missing_json=[],
-        )
-        context.db.add(rfq)
-        context.db.flush()
-        return {"rfq_doc_id": rfq.id, "rfq_summary": summary, "lead_time_est_days": 3, "last_purchase": "2026-02-14"}
-
-
-MOCK_AGENTS: dict[str, type[AgentService]] = {
-    "SPEC": SpecMockAgent,
-    "LEGAL": LegalMockAgent,
-    "SAFETY_DOC": SafetyDocMockAgent,
-    "VENDOR": VendorMockAgent,
+MOCK_AGENTS: dict[AgentCode, type[AgentService]] = {
+    AgentCode.A1: SpecMockAgent,
+    AgentCode.A2: LegalMockAgent,
+    AgentCode.A3: SafetyDocMockAgent,
 }

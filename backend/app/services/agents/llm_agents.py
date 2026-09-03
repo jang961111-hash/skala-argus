@@ -1,13 +1,13 @@
-"""LLM implementations of the AgentService interface (NOT implemented in PoC).
+"""LLM 구현체 자리 (PoC 범위 밖 — NotImplementedError + TODO).
 
-Swap-in point: app.services.agents.get_agent() returns these classes when
-Settings.ai_provider (or ai_configs.provider for the tenant) is LOCAL_LLM /
-AX_PLATFORM / OPENAI. Prompts are versioned in docs/05_ai_ready/prompts.md and
-loaded via `load_prompt(agent_type)` — never hard-coded here.
+교체 지점: `app.services.agents.get_agent()` 가 Settings.ai_provider 가 LOCAL_LLM /
+AX_PLATFORM / OPENAI 일 때 이 클래스들을 돌려준다. 오케스트레이터·라우터·스키마는
+한 줄도 바뀌지 않는다. 프롬프트는 `docs/05_ai_ready/prompts.md` 에 버전으로 관리하고
+`load_prompt(agent_code)` 로 읽는다 — 여기 하드코딩하지 않는다.
 
-Security & Config Isolation: an LLM agent must call `settings.validate_egress()`
-before touching any network; LOCAL_LLM uses Settings.local_llm_url, external
-providers require EGRESS_ALLOWED=true.
+Security & Config Isolation: LLM 에이전트는 네트워크를 건드리기 전에 반드시
+`settings.validate_egress()` 를 호출한다. LOCAL_LLM 은 사내 GPU 엔드포인트를 쓰고,
+외부 provider 는 EGRESS_ALLOWED=true 가 있어야 한다.
 """
 from __future__ import annotations
 
@@ -16,19 +16,20 @@ from functools import lru_cache
 from typing import Any
 
 from app.core.config import get_settings
+from app.core.enums import AgentCode
 from app.services.agents.base import AgentContext, AgentService
 
 
 @lru_cache
-def load_prompt(agent_type: str) -> str:
-    """Read the `## <AGENT_TYPE>` section of docs/05_ai_ready/prompts.md."""
+def load_prompt(agent_code: str) -> str:
+    """`docs/05_ai_ready/prompts.md` 의 `## …(\\`A1\\`)` 섹션을 읽는다."""
     path = get_settings().prompts_path
     if not path.exists():
         raise FileNotFoundError(f"prompt file not found: {path}")
     text = path.read_text(encoding="utf-8")
-    m = re.search(rf"^##[^\n]*\(`{re.escape(agent_type)}`\)[^\n]*\n(.*?)(?=^##\s|\Z)", text, re.S | re.M)
+    m = re.search(rf"^##[^\n]*\(`{re.escape(agent_code)}`\)[^\n]*\n(.*?)(?=^##\s|\Z)", text, re.S | re.M)
     if not m:
-        raise KeyError(f"no '## {agent_type}' section in {path}")
+        raise KeyError(f"no '## {agent_code}' section in {path}")
     return m.group(1).strip()
 
 
@@ -36,56 +37,44 @@ class _LLMAgentBase(AgentService):
     def _client(self):
         settings = get_settings()
         settings.validate_egress()
-        # TODO: return an LLM client based on settings.ai_provider
-        #   LOCAL_LLM  -> OpenAI-compatible endpoint at settings.local_llm_url (사내 GPU)
-        #   AX_PLATFORM-> SK AX platform SDK
-        #   OPENAI     -> openai.OpenAI(api_key=settings.openai_api_key)
+        # TODO: settings.ai_provider 에 따라 클라이언트를 만든다
+        #   LOCAL_LLM   -> OpenAI 호환 엔드포인트 (settings.local_llm_url, 사내 GPU)
+        #   AX_PLATFORM -> SK AX 플랫폼 SDK
+        #   OPENAI      -> openai.OpenAI(api_key=settings.openai_api_key)
         raise NotImplementedError("LLM client wiring is out of PoC scope")
 
 
 class SpecLLMAgent(_LLMAgentBase):
-    agent_type = "SPEC"
+    agent_code = AgentCode.A1
 
     def run(self, context: AgentContext) -> dict[str, Any]:
-        # TODO: build prompt = load_prompt("SPEC") + BOM/part spec/vendor catalog (사내 DB) → LLM → JSON
-        #       validate output with pydantic before returning {spec_match, current_part, alternatives[]}
-        raise NotImplementedError("SpecLLMAgent: TODO LLM + BOM lookup")
+        # TODO: prompt = load_prompt("A1") + context.snapshot(제품유형·specJson·운전조건)
+        #       → LLM → {"items":[{itemId,text,edited}]} 로 정규화 후 pydantic 검증
+        raise NotImplementedError("SpecLLMAgent: TODO LLM + 스펙 대조 (부품 마스터 연동은 Phase 2)")
 
 
 class LegalLLMAgent(_LLMAgentBase):
-    agent_type = "LEGAL"
+    agent_code = AgentCode.A2
 
     def run(self, context: AgentContext) -> dict[str, Any]:
         # TODO (RAG):
-        #   1. retrieve law excerpts from law_index (MasterRepository.search_laws or a vector DB)
-        #      filtered by equipment.type and equipment.substances  — index is on-premise, no egress
-        #   2. prompt = load_prompt("LEGAL").format(equipment=..., substances=..., work_type=..., law_excerpts=...)
-        #   3. LLM → JSON {applicable_laws[], required_procedures[]}; entries without a citation → required="UNKNOWN"
-        #   4. persist as legal_findings rows (조문 단위 추적) exactly as LegalMockAgent does
-        raise NotImplementedError("LegalLLMAgent: TODO LLM + RAG over law_index")
+        #   1. 사내 법령 인덱스에서 설비·물질로 조문 후보를 검색 (온프레미스, 외부 전송 없음)
+        #   2. prompt = load_prompt("A2").format(equipment=…, substance=…, law_excerpts=…)
+        #   3. LLM → {"items":[…]}. 출처 조문이 없는 항목은 반환하지 않는다
+        raise NotImplementedError("LegalLLMAgent: TODO LLM + 법령 인덱스 RAG (인덱스는 Phase 2)")
 
 
 class SafetyDocLLMAgent(_LLMAgentBase):
-    agent_type = "SAFETY_DOC"
+    agent_code = AgentCode.A3
 
     def run(self, context: AgentContext) -> dict[str, Any]:
-        # TODO: prompt = load_prompt("SAFETY_DOC") + context.prior_results["LEGAL"] + 서류 템플릿
-        #       → generate WORK_PERMIT / RISK_ASSESSMENT / LOTO_CHECKLIST drafts → Document rows → {documents[]}
-        raise NotImplementedError("SafetyDocLLMAgent: TODO LLM + document templates")
+        # TODO: prompt = load_prompt("A3") + context.prior_results[AgentCode.A2] + 서류 템플릿
+        #       → {"documents":[{docId,type,name,content,edited}]}
+        raise NotImplementedError("SafetyDocLLMAgent: TODO LLM + 서류 템플릿")
 
 
-class VendorLLMAgent(_LLMAgentBase):
-    agent_type = "VENDOR"
-
-    def run(self, context: AgentContext) -> dict[str, Any]:
-        # TODO: prompt = load_prompt("VENDOR") + context.prior_results["SPEC"] + 구매 이력(ERP)
-        #       → RFQ draft Document + {rfq_doc_id, rfq_summary, lead_time_est_days, last_purchase}
-        raise NotImplementedError("VendorLLMAgent: TODO LLM + purchase history")
-
-
-LLM_AGENTS: dict[str, type[AgentService]] = {
-    "SPEC": SpecLLMAgent,
-    "LEGAL": LegalLLMAgent,
-    "SAFETY_DOC": SafetyDocLLMAgent,
-    "VENDOR": VendorLLMAgent,
+LLM_AGENTS: dict[AgentCode, type[AgentService]] = {
+    AgentCode.A1: SpecLLMAgent,
+    AgentCode.A2: LegalLLMAgent,
+    AgentCode.A3: SafetyDocLLMAgent,
 }

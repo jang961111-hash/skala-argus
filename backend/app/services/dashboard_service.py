@@ -1,62 +1,79 @@
+"""DashboardService — 역할별 KPI (CONTRACT §4-4).
+
+`role` 은 필수이고 토큰 역할과 다르면 403 `FORBIDDEN_ROLE`.
+엔지니어 KPI 는 **본인 요청 기준**이다(E_01 은 개인 화면이고 §1 권한 규약도 본인 것만 허용).
+'오늘'·'이번 달'은 KST 기준으로 센다.
+"""
 from __future__ import annotations
 
 from collections import Counter
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.models import Approval, WorkRequest
+from app.core.enums import ApprovalDecision, Role, WorkRequestStatus
+from app.core.errors import AppError, ErrorCode
+from app.models import Approval, User, WorkRequest
+from app.repositories.approval_repo import ApprovalRepository
+from app.repositories.work_request_repo import WorkRequestRepository
 
-AS_IS_BASELINE_HOURS = 168.0  # As-Is: 약 7일 (기획서)
-IN_PROGRESS = ["REQUESTED", "RUNNING", "REVIEW", "PENDING_APPROVAL"]
+KST = timezone(timedelta(hours=9))
 
 
-def _aware(dt: datetime) -> datetime:
-    return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+def _to_kst(value: datetime) -> datetime:
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=timezone.utc)
+    return value.astimezone(KST)
 
 
 class DashboardService:
     def __init__(self, db: Session):
         self.db = db
+        self.work_requests = WorkRequestRepository(db)
+        self.approvals = ApprovalRepository(db)
 
-    def summary(self) -> dict[str, Any]:
-        wrs = list(self.db.scalars(select(WorkRequest)).all())
-        approvals = list(self.db.scalars(select(Approval)).all())
-        by_wr = {wr.id: wr for wr in wrs}
+    def summary(self, role: str, current: User) -> dict[str, Any]:
+        expected = Role.ENGINEER if role == "engineer" else Role.SAFETY_MANAGER
+        if current.role is not expected:
+            raise AppError(ErrorCode.FORBIDDEN_ROLE, "토큰 역할과 요청한 대시보드 역할이 다릅니다")
+        return self._engineer(current) if expected is Role.ENGINEER else self._safety()
 
-        in_progress = sum(1 for wr in wrs if wr.status in IN_PROGRESS)
-        pending = sum(1 for wr in wrs if wr.status == "PENDING_APPROVAL")
-
-        hours: list[float] = []
-        for ap in approvals:
-            if ap.decision == "APPROVE" and ap.work_request_id in by_wr:
-                delta = _aware(ap.decided_at) - _aware(by_wr[ap.work_request_id].created_at)
-                hours.append(delta.total_seconds() / 3600)
-        avg = round(sum(hours) / len(hours), 1) if hours else 0.0
-
-        now = datetime.now(timezone.utc)
-        completed = sum(
-            1
-            for wr in wrs
-            if wr.status in {"APPROVED", "DONE"} and _aware(wr.updated_at).year == now.year and _aware(wr.updated_at).month == now.month
-        )
-
-        reasons = Counter(_reason(ap.comment) for ap in approvals if ap.decision == "REJECT")
-        top = [{"reason": r, "count": c} for r, c in reasons.most_common(5)]
+    def _engineer(self, current: User) -> dict[str, Any]:
+        counts = self.work_requests.count_by_status(requester_id=current.id)
         return {
-            "in_progress": in_progress,
-            "pending_approval": pending,
-            "avg_approval_hours": avg,
-            "as_is_baseline_hours": AS_IS_BASELINE_HOURS,
-            "completed_this_month": completed,
-            "reject_reasons_top": top,
+            "draft": counts.get(WorkRequestStatus.DRAFT, 0),
+            "aiRunning": counts.get(WorkRequestStatus.AI_RUNNING, 0),
+            "pending": counts.get(WorkRequestStatus.PENDING, 0),
+            "rejected": counts.get(WorkRequestStatus.REJECTED, 0),
+        }
+
+    def _safety(self) -> dict[str, Any]:
+        pending = self.db.scalar(
+            select(func.count()).select_from(WorkRequest).where(WorkRequest.status == WorkRequestStatus.PENDING)
+        ) or 0
+
+        now = _to_kst(datetime.now(timezone.utc))
+        approvals = self.approvals.all()
+        today = sum(1 for a in approvals if _to_kst(a.decided_at).date() == now.date())
+        this_month = [
+            a for a in approvals
+            if _to_kst(a.decided_at).year == now.year and _to_kst(a.decided_at).month == now.month
+        ]
+        reasons = Counter(_reason_key(a) for a in approvals if a.decision is ApprovalDecision.REJECT)
+        return {
+            "pending": pending,
+            "todayProcessed": today,
+            "monthApproved": sum(1 for a in this_month if a.decision is ApprovalDecision.APPROVE),
+            "monthRejected": sum(1 for a in this_month if a.decision is ApprovalDecision.REJECT),
+            "rejectReasonsTop": [{"reason": r, "count": c} for r, c in reasons.most_common(5)],
         }
 
 
-def _reason(comment: str | None) -> str:
-    """Reject comment convention: '<사유>: <상세>' → 사유. Fallback '기타'."""
-    if not comment:
-        return "기타"
-    return comment.split(":")[0].strip() or "기타"
+def _reason_key(approval: Approval) -> str:
+    """집계 키는 `reason_category` 가 우선이다. 없으면 사유 앞머리(`분류: 상세`)를 쓴다."""
+    if approval.reason_category:
+        return approval.reason_category
+    text = approval.reason or ""
+    return text.split(":")[0].strip()[:30] or "기타"

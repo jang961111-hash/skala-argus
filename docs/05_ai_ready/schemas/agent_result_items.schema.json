@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://replaceflow.local/schemas/agent_result_items.schema.json",
+  "title": "AgentResultItems — A1·A2 결과 / PATCH agent-results 요청 본문 (항목형, v3.0)",
+  "type": "object",
+  "description": "CONTRACT v3.0 §4-13. A1(규격·호환)·A2(법령·조문) 에이전트의 통일 출력 구조이자 PATCH /agent-results/{id}(API#13)의 요청 본문. 배열은 전체 치환(PUT-like) — 응답에 없는 기존 itemId는 삭제, itemId 없이 text만 오면 신규 추가로 처리된다.",
+  "required": [
+    "items"
+  ],
+  "properties": {
+    "items": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Item"
+      },
+      "examples": [
+        [
+          { "itemId": "i-01", "text": "입력 스펙(압력 등급 3000 psi)이 요구치(2500 psi) 이상으로 적합합니다.", "edited": false }
+        ]
+      ]
+    }
+  },
+  "$defs": {
+    "Item": {
+      "type": "object",
+      "description": "itemId는 서버 채번 코드(`i-01` 형식, UUID 아님 — backend/app/services/agent_service.py 실측). PATCH 요청에서 신규 항목을 추가할 때는 itemId를 생략한다(text만 포함).",
+      "required": [
+        "text"
+      ],
+      "properties": {
+        "itemId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "기존 항목의 식별자. 신규 추가 시 생략 가능(서버가 채번). **실측(backend/app/services/agent_service.py `_replace_collection`)**: UUID가 아니라 `i-01`, `i-02`… 형식의 짧은 순번 코드다.",
+          "examples": [
+            "i-01"
+          ]
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "description": "A1: 스펙 적합성 판정문 또는 참고 대체품 설명. A2: 법령명+조문+원문 인용을 포함한 한 줄 근거.",
+          "examples": [
+            "산업안전보건기준에 관한 규칙 제92조(정비등의 작업 시의 운전정지 등): \"…운전을 정지하고 … 잠금장치 및 표지판을…\" — 작업허가서·LOTO 필요"
+          ]
+        },
+        "edited": {
+          "type": "boolean",
+          "default": false,
+          "description": "엔지니어가 이 항목을 편집했는지. AI가 처음 생성한 항목은 false. 화면에서 true 항목은 AI 원본과 시각적으로 구분한다(가드레일, prompts.md §0).",
+          "examples": [
+            false
+          ]
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "items": [
+        { "itemId": "i-01", "text": "입력 스펙(압력 등급 3000 psi)이 요구치(2500 psi) 이상으로 적합합니다.", "edited": false },
+        { "itemId": "i-02", "text": "산업안전보건기준에 관한 규칙 제92조: \"…운전을 정지하고 … 잠금장치 및 표지판을…\" — 작업허가서·LOTO 필요", "edited": true }
+      ]
+    }
+  ]
+}
