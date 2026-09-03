@@ -4,7 +4,16 @@ uvicorn[standard]>=0.29
 sqlalchemy>=2.0,<3.0
 pydantic>=2.5,<3.0
 python-dotenv>=1.0
+# multipart/form-data — POST /work-requests/{id}/photos (파트명 files)
+python-multipart>=0.0.9
+# JWT Bearer (CONTRACT §1)
+PyJWT>=2.8
+# 비밀번호 해싱 (CONTRACT §5 users.password_hash)
+# NOTE: passlib 1.7.4 (2020년 마지막 릴리스)는 bcrypt>=4.1 에서 기동하지 않아 bcrypt 를 직접 쓴다.
+bcrypt>=4.1
+# 사진 EXIF 제거 + 320px 썸네일 (CONTRACT §4-9)
+Pillow>=10.0
 httpx>=0.27
 pytest>=8.0
-# Optional: PostgreSQL (Supabase). Local dev falls back to SQLite via DATABASE_URL.
+# Optional: PostgreSQL (Supabase). 로컬은 DATABASE_URL 로 SQLite 폴백.
 # psycopg2-binary>=2.9

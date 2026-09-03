@@ -1,9 +1,10 @@
 """Security & Config Isolation point.
 
-Every environment-dependent value (DB URL, AI provider, egress policy, API keys,
-local LLM endpoint) is read here and nowhere else. Services receive a Settings
-object; they never touch os.environ directly. This is what lets the same code run
-on-premise (LOCAL_LLM, egress_allowed=false) or with an external provider.
+Every environment-dependent value (DB URL, JWT signing key, AI provider, egress
+policy, API keys, local LLM endpoint, upload limits) is read here and nowhere
+else. Services receive a Settings object; they never touch os.environ directly.
+This is what lets the same code run on-premise (LOCAL_LLM, egress_allowed=false)
+or with an external provider.
 """
 from __future__ import annotations
 
@@ -16,6 +17,8 @@ from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parents[2]  # backend/
 load_dotenv(BASE_DIR / ".env")
+
+DEV_SECRET_KEY = "dev-insecure-secret-change-me"
 
 
 def _bool(value: str | None, default: bool = False) -> bool:
@@ -38,6 +41,21 @@ class Settings:
     cors_origins: list[str] = field(default_factory=lambda: ["http://localhost:5173"])
     seed_on_startup: bool = True
 
+    # --- 인증 (CONTRACT §1: JWT Bearer) ---
+    secret_key: str = DEV_SECRET_KEY
+    jwt_algorithm: str = "HS256"
+    token_ttl_hours: int = 72
+
+    # --- 사진 업로드 (CONTRACT §4-9) ---
+    uploads_dir: Path = BASE_DIR / "uploads"
+    max_upload_bytes: int = 10 * 1024 * 1024  # 파일당 10MB 초과 → 413
+    max_photos_per_request: int = 5  # 요청당 5장 초과 → 409
+    thumbnail_px: int = 320
+    allowed_upload_types: tuple[str, ...] = ("image/jpeg", "image/png", "image/webp")
+
+    # --- 폴링 (CONTRACT §4-12: 서버가 내려준다) ---
+    poll_interval_ms: int = 2500
+
     def validate_egress(self) -> None:
         """Refuse to start an external provider when egress is disabled."""
         if self.ai_provider in {"OPENAI", "AX_PLATFORM"} and not self.egress_allowed:
@@ -49,6 +67,7 @@ class Settings:
 @lru_cache
 def get_settings() -> Settings:
     prompts = os.getenv("PROMPTS_PATH")
+    uploads = os.getenv("UPLOADS_DIR")
     return Settings(
         database_url=os.getenv("DATABASE_URL", "sqlite:///./replaceflow.db"),
         ai_provider=os.getenv("AI_PROVIDER", "MOCK").upper(),
@@ -59,4 +78,12 @@ def get_settings() -> Settings:
         prompts_path=(BASE_DIR / prompts).resolve() if prompts else Settings.prompts_path,
         cors_origins=[o.strip() for o in os.getenv("CORS_ORIGINS", "http://localhost:5173").split(",") if o.strip()],
         seed_on_startup=_bool(os.getenv("SEED_ON_STARTUP"), True),
+        secret_key=os.getenv("SECRET_KEY") or DEV_SECRET_KEY,
+        jwt_algorithm=os.getenv("JWT_ALGORITHM", "HS256"),
+        token_ttl_hours=int(os.getenv("TOKEN_TTL_HOURS", "72")),
+        uploads_dir=(BASE_DIR / uploads).resolve() if uploads else Settings.uploads_dir,
+        max_upload_bytes=int(os.getenv("MAX_UPLOAD_BYTES", str(10 * 1024 * 1024))),
+        max_photos_per_request=int(os.getenv("MAX_PHOTOS_PER_REQUEST", "5")),
+        thumbnail_px=int(os.getenv("THUMBNAIL_PX", "320")),
+        poll_interval_ms=int(os.getenv("POLL_INTERVAL_MS", "2500")),
     )
