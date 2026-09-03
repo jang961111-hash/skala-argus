@@ -134,3 +134,57 @@
 2. **`I-12`(값과 무관하게 항상 통과, "미해결")는 사실상 해결됐다.** 뒤쪽 `I-09`가 같은 증상의 근본 원인(명령치환 단어 분리로 `chk` 인자 6개 수신)을 찾아 10곳을 고쳤고 이후 72/0이다. **`I-12`를 "미해결"로 둔 채 제출하면 로그가 자기모순이다.** 소유자(API Architect·오케스트레이터) 확인 후 상태 갱신 필요.
 
 **발표 대본에서는** 이 사고를 **"검증 스크립트가 인자를 잘못 받아 실패 경로에서 조용히 통과할 수 있었던 건"** 이라고 **설명으로 부르고, ID를 말하지 않는다.** 재번호가 끝나면 ID를 붙인다.
+
+---
+
+## I-11 · Stitch 브라우저 자동화 불가 — 원인 규명 완료 (2026-09-03)
+
+**상태: 원인 확정. 해결 불가(우회로 없음). 재시도 금지.**
+
+여러 세션에 걸쳐 10회 이상 시도했으나 "화면은 보이는데 입력이 안 먹는다"로만
+관측되고 원인을 몰랐다. 이번에 DOM·콘솔 수준에서 확정했다.
+
+### 관측 사실
+
+1. `https://stitch.withgoogle.com/projects/{id}` 문서에는 **DOM 노드가 6개뿐**이다.
+   `appcompanion-root > router-outlet + appcompanion-host > div > iframe` 이 전부다.
+   버튼 0개, 입력창 0개, `body.innerText.length === 0`.
+
+2. 실제 Stitch 편집기는 **크로스 오리진 iframe** 안에 있다.
+   - 상위 문서 origin: `https://stitch.withgoogle.com`
+   - iframe origin: `https://app-companion-430619.appspot.com`
+   - `iframe.contentDocument === null`, `window.frames[0].document` 접근 시 예외.
+   - iframe 은 뷰포트 전체(1455x827, 0,0)를 덮는다. 주소창만 보면 알 수 없다.
+
+3. MCP 탭은 `document.visibilityState === "hidden"`, `document.hasFocus() === false`.
+   따라서 크로스 오리진 iframe 이 페인트되지 않아 스크린샷이 검은 화면으로 나온다.
+
+### 왜 모든 시도가 실패했는가
+
+| 시도 | 실패 이유 |
+| --- | --- |
+| 스크린샷 | 탭이 hidden 이라 iframe 미페인트 → 빈 화면 |
+| `find` / `read_page` | 접근 가능한 DOM 에 앱이 없음 (노드 6개) |
+| 좌표 클릭 / 타이핑 | 확장 콘텐츠 스크립트가 오리진 경계를 넘지 못함 → 이벤트 무시 |
+| 탭 포그라운드 전환 | 렌더링만 복구, 입력은 여전히 무반응 (경계 문제는 그대로) |
+
+### 우회 시도와 그 결과
+
+iframe URL(`app-companion-430619.appspot.com/projects/{id}`)을 **최상위로 직접 열면**
+동일 오리진이 되어 스크립팅이 가능해진다. 실제로 열어봤다.
+
+- 문서는 잡혔다 (노드 6개 → 75개, `<div id="root">` React 앱, title "Stitch")
+- 그러나 **UI 가 끝내 렌더링되지 않았다.** 10초 후에도 버튼 0개, 텍스트 0자
+- 콘솔에 **`PostMessageClient` 예외 1,456건**
+  (`assets/PostMessageClient-BlXoOtNi.js`)
+
+즉 이 앱은 부모 프레임(`stitch.withgoogle.com`)과 `postMessage` 핸드셰이크를
+해야만 부팅된다. 단독으로 열면 부모가 없어 재시도 루프를 돌다 렌더를 포기한다.
+
+### 결론
+
+- **iframe 안(정상 사용)**: 앱은 동작하지만 크로스 오리진이라 확장이 조작 불가
+- **단독 실행(우회)**: 확장은 조작 가능하지만 앱이 부팅 거부
+
+양쪽 문이 모두 닫혀 있다. 타이밍·포커스·권한 문제가 아니라 **아키텍처 경계**다.
+Stitch 는 사람이 직접 프롬프트를 붙여 넣는 방식으로만 진행한다.
