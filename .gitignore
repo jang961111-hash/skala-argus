@@ -36,3 +36,8 @@ Thumbs.db
 # --- 발표 산출물 중 대용량 ---
 docs/08_presentation/*.pptx
 docs/08_presentation/*.mp4
+
+# --- 에이전트 도구 세션 상태 (레포에 들어가면 안 됨) ---
+.omc/
+**/.omc/
+.claude/
