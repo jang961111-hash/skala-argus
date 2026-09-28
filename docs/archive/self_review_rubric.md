@@ -73,7 +73,7 @@
 |---|---|---|---|
 | README 에 팀 R&R 표 | `README.md` §7 | ✔ | 5명 역할·산출물·담당파일 |
 | R&R 상세 + 3일 일정 + 리스크 | `docs/01_planning/rnr_and_schedule.md` | ✔ | 93줄 |
-| 브랜치 전략·커밋 규칙·PR 템플릿 문서 | `docs/01_planning/github_guide.md`, `.github/` | ✔ | 문서 + **실적용 확인**: `main`←`develop`←`feature/*` **10개** 브랜치 실재(원격 포함), `--no-ff` 병합 이력 10건+ (`git log --merges`) |
+| 브랜치 전략·커밋 규칙·PR 템플릿 문서 | `docs/archive/github_guide.md`, `.github/` | ✔ | 문서 + **실적용 확인**: `main`←`develop`←`feature/*` **10개** 브랜치 실재(원격 포함), `--no-ff` 병합 이력 10건+ (`git log --merges`) |
 | 5명 전원 커밋, 편중 없음 | `git shortlog -sn` | ✖ | **37커밋 전부 1인 명의**(`git shortlog -sn`). 팀 방침 = **통합 커밋 + 커밋 본문에 담당 역할·이름 명시**. 담당별 산출물은 `10_project_record/04_team/rnr_and_contributions.md`. **"각자 계정으로 커밋했다"고 말하면 안 된다** |
 | PR 5건 이상, 리뷰 코멘트 | `gh pr list` | ✖ | PR 0건. 다만 **`--no-ff` 병합 이력이 브랜치 단위 작업 분리를 증명**한다 — 이걸 근거로 설명 |
 | 이슈에 담당자·라벨 지정 | `gh issue list` | ✖ | **0건** |

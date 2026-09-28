@@ -241,7 +241,7 @@ v1.0의 화면 2개(목록/대시보드, 상세=타임라인+승인패널)가 **
 |---|---|---|---|
 | 서비스 기획 & Architecture (30) | Use-Case 정의·UI 와이어프레임 완성도 | `docs/02_usecase/usecase_spec.md`(UC-01~12), `usecase_diagram.svg`, `user_flow.svg` / `docs/03_wireframe/wireframe_spec.md`, `figma_build_guide.md` | ✅ Mermaid 렌더 확인, 9화면 실연동 캡처 11장(`docs/10_project_record/02_evidence/screenshots/`) |
 | | AI 확장 지점 정의·프롬프트/JSON 스키마 타당성 | 본 문서 4·7장 / `docs/05_ai_ready/prompts.md`(A1·A2·A3+오케스트레이터 정책+가드레일, `argus-v0.3`) / `docs/05_ai_ready/schemas/agent_run.schema.json`·`agent_result_items.schema.json`·`agent_result_documents.schema.json`·`approval.schema.json` (VENDOR는 `_phase2/`로 이동) | ✅ jsonschema Draft2020-12 검증 15/15 PASS(`docs/05_ai_ready/prompts.md` §7), `load_prompt()` 파서와 헤딩 포맷 실물 대조 |
-| | GitHub 관리·R&R 분담 | `README.md`, `docs/01_planning/rnr_and_schedule.md`, `docs/01_planning/github_guide.md`, `.github/PULL_REQUEST_TEMPLATE.md`, `.gitignore` | ✅ |
+| | GitHub 관리·R&R 분담 | `README.md`, `docs/01_planning/rnr_and_schedule.md`, `docs/archive/github_guide.md`, `.github/PULL_REQUEST_TEMPLATE.md`, `.gitignore` | ✅ |
 | | FE-BE-DB 전체 시스템 구조 다이어그램 | `docs/04_architecture/`(아키텍처·상태머신·시퀀스, A1/A2/A3 기준 갱신) | 다른 트랙 담당 — 본 문서 §8 요약과 정합 확인 필요 |
 | 시스템 설계 & Scaffolding (30) | ERD 관계(1:N)·정규화 | `docs/06_erd/`(8테이블, N:M 부재는 Phase 2 예비 설계로 방어) | 다른 트랙 담당 |
 | | Mock API RESTful 규격(Method/Path/Status) | `docs/07_api/`(API 15개, camelCase, 단일 오류 포맷) | 다른 트랙 담당 |

@@ -112,7 +112,7 @@ $ git ls-files | grep -c '^\.omc'
 
 ## 5. 브랜치 보호 규칙 — GitHub 웹 설정 클릭 순서
 
-`docs/01_planning/github_guide.md`의 브랜치 전략(`main` 보호, PR 필수, 리뷰 1명, force-push 금지)을 실제로 걸려면 저장소 관리자가 아래 순서로 클릭한다 (Actions/워크플로 설정은 이미 코드로 커밋되지만, 브랜치 보호는 GitHub 웹 UI에서만 가능하다).
+`docs/archive/github_guide.md`의 브랜치 전략(`main` 보호, PR 필수, 리뷰 1명, force-push 금지)을 실제로 걸려면 저장소 관리자가 아래 순서로 클릭한다 (Actions/워크플로 설정은 이미 코드로 커밋되지만, 브랜치 보호는 GitHub 웹 UI에서만 가능하다).
 
 1. 저장소 페이지 상단 **Settings** 탭 클릭
 2. 좌측 메뉴 **Branches** 클릭

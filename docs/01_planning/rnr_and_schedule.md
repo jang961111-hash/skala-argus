@@ -13,14 +13,14 @@
 |---|---|---|---|---|---|
 | **PM** | 은태현 | 범위 확정(기획서 v3), 일정·체크포인트 운영, 데일리 스탠드업, 산출물 통합 검수, 발표 슬라이드 | 기획서, R&R·일정표, 샘플 데이터, 슬라이드 | `docs/01_planning/`, `docs/08_presentation/`(슬라이드), `docs/CONTRACT.md`(샘플 데이터) | 매 체크포인트에 산출물 상태표 갱신, 3일차 13:00 슬라이드 완성 |
 | **Product & UX / FE** | 문승은 | Actor·Use-Case 정의, 핵심 화면 와이어프레임, Vue 화면 구현, Mock/실 API 데이터 바인딩 | UC 7개, 와이어프레임 2장, 화면1(목록/대시보드), 화면2(타임라인+승인 패널) | `docs/02_usecase/`, `docs/03_wireframe/`, `frontend/src/views/`, `frontend/src/components/`, `frontend/src/api/`, `frontend/src/mock/` | `npm run dev:mock` 으로 90초 데모 전 구간 화면 동작, 2일차 오후 실 API 연동 |
-| **DevOps & Infra** | 신서현 | GitHub 레포·브랜치·PR 템플릿·라벨, 로컬 환경(.env·CORS·vite proxy), FE-BE 연동, E2E 테스트, 데모 환경·백업(Postman Mock) | GitHub 가이드, .gitignore·PR 템플릿, E2E 체크리스트, 데모 리허설 체크리스트 | `docs/01_planning/github_guide.md`, `.github/`, `.gitignore`, `docs/09_qa/`, `frontend/vite.config.js`, `backend/.env.example` | 1일차 레포 세팅 완료·전원 첫 커밋, 2일차 17:00 FE→BE 실호출 성공, 3일차 E2E 전 항목 통과 |
+| **DevOps & Infra** | 신서현 | GitHub 레포·브랜치·PR 템플릿·라벨, 로컬 환경(.env·CORS·vite proxy), FE-BE 연동, E2E 테스트, 데모 환경·백업(Postman Mock) | GitHub 가이드, .gitignore·PR 템플릿, E2E 체크리스트, 데모 리허설 체크리스트 | `docs/archive/github_guide.md`, `.github/`, `.gitignore`, `docs/09_qa/`, `frontend/vite.config.js`, `backend/.env.example` | 1일차 레포 세팅 완료·전원 첫 커밋, 2일차 17:00 FE→BE 실호출 성공, 3일차 E2E 전 항목 통과 |
 | **API Architect / BE** | 정구현 | FE-BE-DB 아키텍처 다이어그램, OpenAPI 3.0 명세, Postman Mock 서버, FastAPI 라우터·스키마(Pydantic) | 아키텍처 문서, `openapi.yaml`, Postman Collection, 라우터 | `docs/04_architecture/`, `docs/07_api/`, `postman/`, `backend/app/api/v1/routers/`, `backend/app/schemas/` | Swagger에 CONTRACT의 15개 엔드포인트가 Method/Path/Status 그대로 노출, Postman Mock으로 FE 단독 구동 가능 |
 | **BE / 발표** | 장병헌 | AI 확장 지점 설계(오케스트레이터·에이전트 인터페이스), 프롬프트·AgentRun JSON, Mock step 전이·승인 상태머신·체크리스트 게이트(409) 구현, 발표·Q&A | AI-Ready 문서, 프롬프트, 오케스트레이터·승인 서비스, 발표 스크립트 | `docs/05_ai_ready/`, `backend/app/services/`, `backend/app/services/agents/`, `docs/08_presentation/`(스크립트·Q&A) | `GET /agent-runs/{runId}` 4회 호출로 REVIEW 도달, 체크리스트 미완료 APPROVE → 409, 15분 리허설 2회 |
 | **DBA** (겸임) | 은태현 | ERD(DBML) 작성, 1:N / N:M · 정규화 근거, SQLAlchemy 모델, 시드 데이터, Supabase/SQLite 연결 | ERD, 모델, 시드 스크립트 | `docs/06_erd/`, `backend/app/models/`, `backend/app/db/` | dbdiagram 렌더 이미지 첨부, 기동 시 샘플 5건 시드, `DATABASE_URL` 교체만으로 Postgres 전환 |
 
 ### 공통 규칙
 - 산출물 간 불일치가 생기면 **CONTRACT.md 가 우선**이며, CONTRACT 변경은 PM 승인 후 PR로만 한다.
-- 각자 담당 폴더는 본인이 커밋한다 (R&R 채점 대비, `github_guide.md` §6).
+- 각자 담당 폴더는 본인이 커밋한다 (R&R 채점 대비, `docs/archive/github_guide.md` §6).
 - 데일리 스탠드업 09:30 / 체크포인트 12:00·17:00, 10분 이내.
 
 ---
@@ -63,7 +63,7 @@
 |---|---|---|---|---|---|---|
 | 09:00~09:30 | 스탠드업 | 남은 결함 우선순위 | | | | |
 | 09:30~11:00 | E2E · 마감 | 슬라이드 완성(문제→해결→아키텍처→ERD→API→AI-Ready→데모→확장) | 화면 마무리, 에러 토스트 문구 | **E2E 체크리스트 전 항목 실행**(`docs/09_qa/e2e_test_checklist.md`), Postman Mock 백업 경로 재확인 | Swagger 스크린샷, API 표 슬라이드용 | 발표 스크립트 완성, Q&A 답변 정리 |
-| 11:00~12:00 | ◆ CP5 | **루브릭 자체 점검**(`docs/09_qa/self_review_rubric.md`) 전원 함께 체크, 보완 항목 배정 | | | | |
+| 11:00~12:00 | ◆ CP5 | **루브릭 자체 점검**(`docs/archive/self_review_rubric.md`) 전원 함께 체크, 보완 항목 배정 | | | | |
 | 13:00~14:00 | 리허설 1 | 타이머 15분 측정 | 데모 클릭 담당(또는 신서현) | 데모 환경 세팅(브라우저·데이터 리셋) | Q&A 보조 | 발표 |
 | 14:00~14:40 | 리허설 2 + 코드 프리즈 | main 최종 머지, README 최종 확인 | | 데이터 리셋, 백업 탭 준비 | | 시간 초과 구간 삭감 |
 | 14:40~15:00 | 이동·세팅 | | | 화면 공유·해상도 확인 | | |

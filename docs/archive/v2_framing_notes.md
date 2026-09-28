@@ -173,7 +173,7 @@ Keep·Problem·Try를 다 읽으면 시간이 없고 심사자에게 남지도 �
 
 ## 5. 데모 시나리오
 
-**`docs/08_presentation/pitch_outline_and_script.md`의 90초 타임코드가 단일 원본이다.** v3.0 화면 ID·API·상태값 기준으로 확정돼 있고, FE 구현 완료 후 실화면으로 재조정한다. 여기 중복해 두지 않는다.
+**`docs/archive/pitch_outline_and_script.md`의 90초 타임코드가 단일 원본이다.** v3.0 화면 ID·API·상태값 기준으로 확정돼 있고, FE 구현 완료 후 실화면으로 재조정한다. 여기 중복해 두지 않는다.
 
 ---
 
