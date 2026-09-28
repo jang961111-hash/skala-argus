@@ -24,7 +24,14 @@ def next_request_no(db: Session, now: datetime | None = None) -> str:
     from app.models import WorkRequest
 
     prefix = _prefix(now or datetime.now(timezone.utc))
-    stmt = select(func.max(WorkRequest.request_no)).where(WorkRequest.request_no.like(f"{prefix}%"))
+    # 문자열 max 는 "999" > "1000" 으로 판단해 1000 번째부터 같은 번호를 재발급한다.
+    # 접두어가 같으므로 길이가 긴 쪽이 큰 수 → 길이, 문자열 순으로 정렬해 숫자 순서를 얻는다.
+    stmt = (
+        select(WorkRequest.request_no)
+        .where(WorkRequest.request_no.like(f"{prefix}%"))
+        .order_by(func.length(WorkRequest.request_no).desc(), WorkRequest.request_no.desc())
+        .limit(1)
+    )
     if db.bind is not None and db.bind.dialect.name == "postgresql":
         # 같은 날짜 묶음을 잠가 동시 채번이 같은 번호를 읽지 못하게 한다
         db.execute(
