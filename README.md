@@ -1,6 +1,6 @@
 # Argus Solo — 반도체 설비 부품 교체 승인 워크플로 (개인 재구현)
 
-> 설비 엔지니어가 부품 교체 요청을 올리면 AI 에이전트 3종(규격·법령·안전서류)이 순서대로 검토 근거를 만들고, 안전관리자가 그 근거를 보고 승인·반려하는 **Human-in-the-loop 승인 워크플로**를 FastAPI + Vue 3로 구현했다.
+> 설비 엔지니어가 부품 교체 요청을 올리면 AI 에이전트 3종(규격·법령·안전서류, 현재 규칙 기반 Mock — 법령 에이전트 LLM 구현은 진행 중)이 순서대로 검토 근거를 만들고, 안전관리자가 그 근거를 보고 승인·반려하는 **Human-in-the-loop 승인 워크플로**를 FastAPI + Vue 3로 구현했다.
 
 [![CI](https://github.com/jang961111-hash/skala-argus/actions/workflows/ci.yml/badge.svg)](https://github.com/jang961111-hash/skala-argus/actions/workflows/ci.yml) ![License](https://img.shields.io/badge/license-MIT-blue)
 
