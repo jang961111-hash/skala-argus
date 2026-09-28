@@ -5,7 +5,7 @@
 | 담당 | 역할 | 주요 산출물 |
 |---|---|---|
 | **장병헌** | 지휘·BE·발표 | 범위 결정(게이트) · Figma/Stitch · Supabase · 발표 · `docs/08_presentation/` |
-| 은태현 | PM · DBA | `docs/00_INDEX.md` · `09_qa/self_review_rubric.md` · `09_qa/progress_board.md` · ERD 검증 |
+| 은태현 | PM · DBA | `docs/00_INDEX.md` · `archive/self_review_rubric.md` · `archive/progress_board.md` · ERD 검증 |
 | 문승은 | Product & UX · FE | `frontend/**` 9화면 · `03_wireframe/figma_build_guide.md` · `wireframe_spec.md` |
 | 신서현 | DevOps & Infra | `.github/workflows/ci.yml` · `09_qa/devops_report.md` · E2E · 재현 환경 |
 | 정구현 | API Architect · BE | `docs/07_api/openapi.yaml` · `postman/` · `scripts/e2e_live_v3.sh` · `09_qa/postman_verification.md` |

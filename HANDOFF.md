@@ -43,7 +43,7 @@ pytest 30 passed · 라이브 E2E 72/72 · FE 빌드 223.88 kB
 1. `docs/CONTRACT.md` — 계약 v3.0. **팀 노션 원본을 옮긴 것이며, 원본과 다르면 원본이 맞다**
 2. `docs/10_project_record/01_timeline/decision_log.md` — 결정 11건과 번복 이유
 3. `docs/10_project_record/01_timeline/incident_log.md` — 사고 9건. **같은 실수를 반복하지 않으려면 필수**
-4. `docs/09_qa/self_review_rubric.md` — 루브릭 73항목 현재 판정
+4. `docs/archive/self_review_rubric.md` — 루브릭 73항목 현재 판정
 
 ---
 

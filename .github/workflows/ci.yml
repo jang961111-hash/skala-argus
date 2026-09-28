@@ -1,6 +1,6 @@
 name: CI
 
-# push · PR 둘 다에서 돈다 — develop/main 모두 대상 (docs/01_planning/github_guide.md 브랜치 전략과 일치)
+# push · PR 둘 다에서 돈다 — develop/main 모두 대상 (docs/archive/github_guide.md 브랜치 전략과 일치)
 on:
   push:
     branches: ["**"]

@@ -252,7 +252,7 @@
                 }
               ],
               "cookie": [],
-              "body": "{\n  \"accessToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2MDUyMzNlMi1hZTc2LTRiODUtOTEwMC02ZDJlNGJhYzcwYzQiLCJyb2xlIjoiRU5HSU5FRVIiLCJpYXQiOjE3ODg0MTc3NDIsImV4cCI6MTc4ODY3Njk0Mn0.tSMRQUQCIjuWnUD2zyZTdhuVQd-P4bCF4D2I3rejB9Q\",\n  \"tokenType\": \"Bearer\",\n  \"role\": \"ENGINEER\",\n  \"redirectPath\": \"/home\"\n}"
+              "body": "{\n  \"accessToken\": \"<token>\",\n  \"tokenType\": \"Bearer\",\n  \"role\": \"ENGINEER\",\n  \"redirectPath\": \"/home\"\n}"
             },
             {
               "name": "401 INVALID_CREDENTIALS",

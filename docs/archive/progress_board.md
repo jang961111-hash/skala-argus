@@ -25,7 +25,7 @@
 
 | ID | 업무 | 담당 | 판정 | 근거 (레포 실물) |
 |---|---|---|---|---|
-| D1-1 | 페르소나 + 문제 정의 | UX(B) | **부분** | 문제 정의는 강함: `docs/01_planning/planning_final.md:35-51` As-Is 6단계 표(③④⑤ 일주일 / ⑥ 2시간). 페르소나는 `planning_final.md:32` **한 줄**("설비 엔지니어 + 안전관리자")뿐 — 노션이 요구한 **페르소나 시트 산출물 없음**. `docs/08_presentation/pitch_outline_and_script.md:14`에 슬라이드4 항목으로만 예약됨 |
+| D1-1 | 페르소나 + 문제 정의 | UX(B) | **부분** | 문제 정의는 강함: `docs/01_planning/planning_final.md:35-51` As-Is 6단계 표(③④⑤ 일주일 / ⑥ 2시간). 페르소나는 `planning_final.md:32` **한 줄**("설비 엔지니어 + 안전관리자")뿐 — 노션이 요구한 **페르소나 시트 산출물 없음**. `docs/archive/pitch_outline_and_script.md:14`에 슬라이드4 항목으로만 예약됨 |
 | D1-2 | Actor 도출 · Use-Case 정의 | UX(B) | **완료** | `docs/02_usecase/usecase_spec.md:8` Actor 정의표, `:24-247` UC-01~07 7건 정식 명세(전제·흐름·결과상태). 다이어그램 `usecase_diagram.svg`(343KB), `user_flow.svg`(134KB) + `.mmd` 원본 |
 | D1-3 | AI 확장 지점 식별·표시 | API(D) | **완료** | `usecase_spec.md:248-291` §3.1 원칙 / §3.2 확장 지점 / §3.3 **사람이 유지하는 곳** / §3.4 상태전이별 책임주체. 문서만이 아니라 코드로 실재: `backend/app/services/agents/base.py`, `mock_agents.py`, `llm_agents.py` |
 | D1-4 | UI/UX 화면 흐름도 (**Figma**) | UX(B) | **부분** | 대체물은 실재: `docs/03_wireframe/wireframe.html` **51,760 bytes** 동작 목업 + `wireframe_spec.md` 117줄(`:1` 제목이 "Figma **재작업용**", `:77` §5 "Figma 페이지 구조 **제안**"). 레포 전수 grep 결과 **Figma 파일·URL 0건**. `docs/00_INDEX.md:47`이 스스로 "Figma 실제 제작"을 미완 수동항목으로 적어둠 |
@@ -52,7 +52,7 @@
 | D2-10 | FE ↔ Mock API 연동 | FE(E)+API(D) | **완료** | `client.js:14` `USE_MOCK` 토글, `client.js:50~` 동일 계약 인메모리 Mock(CONTRACT 폴링 동작 시뮬), `mock/data.js` 165줄(CONTRACT 샘플과 동일 ID) |
 | D2-11 | E2E 데이터 흐름 검증 | DevOps | **완료** | `scripts/e2e_live.sh` — 실 uvicorn 기동 후 HTTP status 실측, **35/35 통과**(상태머신·409·422·404·설정격리). `backend/tests/test_flow.py` **8 test 8/8**. `docs/09_qa/e2e_test_checklist.md` 123줄(정상 22·오류 14·비기능 10) |
 | D2-12 | 아키텍처 다이어그램 **확정본(v2)** | PM(A) | **미착수** | `docs/04_architecture/architecture.md:3` 이 여전히 `문서 버전: v1.0 (2026-09-02)`. v2 갱신 흔적 없음 — **내(PM) 몫, 오늘 처리** |
-| D2-13 | Day2 정리 스탠드업 | PM(A) | **진행 중** | **이 문서(`docs/09_qa/progress_board.md`)가 산출물** |
+| D2-13 | Day2 정리 스탠드업 | PM(A) | **진행 중** | **이 문서(`docs/archive/progress_board.md`)가 산출물** |
 
 ## 3. Epic 3 — Day 3 (검증 & 발표)
 
@@ -60,7 +60,7 @@
 |---|---|---|---|---|
 | D3-1 | API 테스트 정리 (Postman·Status Code) | API(D)+BE(F) | **완료 (내 스캔 직후 도착)** | `docs/09_qa/postman_verification.md` 91줄 — 실서버 36회 호출로 Postman 예시와 필드 단위 대조. **상태 코드 21/21·36/36 전부 일치**. 단 **필드 불일치 4건**(`GET /work-requests`, `GET /work-requests/{id}`, `GET /documents/{docId}`, 409·422 에러 포맷)이 새로 드러남 → §4-1 에 후속 과제로 추가 |
 | D3-2 | 설계 문서 최종 보완 | 각 담당 | **부분** | 문서 세트는 갖춰짐(`docs/` 41파일). 미결: D2-12 v2, D1-1 페르소나 시트, D1-4 Figma |
-| D3-3 | 발표 자료 6개 목차 | PM(A) | **부분** | `docs/08_presentation/pitch_outline_and_script.md` 92줄 — 슬라이드 16장 구성안 + 대본 + 시간 배분. **실제 슬라이드 파일(PPT/PDF) 레포에 없음** — 내 몫 |
+| D3-3 | 발표 자료 6개 목차 | PM(A) | **부분** | `docs/archive/pitch_outline_and_script.md` 92줄 — 슬라이드 16장 구성안 + 대본 + 시간 배분. **실제 슬라이드 파일(PPT/PDF) 레포에 없음** — 내 몫 |
 | D3-4 | Live Demo 시나리오·리허설 | FE(E)+PM(A) | **부분** | 시나리오 실재: `pitch_outline_and_script.md:69-87` 90초 데모. 리허설 절차: `e2e_test_checklist.md:76-121`(환경·브라우저·데이터리셋·Postman 백업 30초 전환·타이밍). **리허설 실시 기록 없음** |
 | D3-5 | 회고 (한계+로드맵+R&R별) | 전원 | **부분** | `docs/09_qa/retrospective_template.md` §1 한계 4항·§2 로드맵 4단계·§5 한줄요약 **작성 완료**. §3 R&R별 5명 **전원 공란**, §4 KPT **공란** |
 | D3-6 | Peer Review 질의 1개 | 전원 | **완료** | `docs/09_qa/qa_bank.md:51` §F "우리가 다른 조에 할 질문", `pitch_outline_and_script.md:88` "다른 조에 던질 질문(필수 1개)". 예상 질문 25개도 `qa_bank.md` A~E절에 준비됨 |

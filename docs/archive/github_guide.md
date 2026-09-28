@@ -200,7 +200,7 @@ docs/08_presentation/*.mp4
 # DevOps
 /.github/                           @shin-seohyun
 /.gitignore                         @shin-seohyun
-/docs/01_planning/github_guide.md   @shin-seohyun
+/docs/archive/github_guide.md   @shin-seohyun
 /docs/09_qa/                        @shin-seohyun
 /frontend/vite.config.js            @shin-seohyun
 /backend/.env.example               @shin-seohyun

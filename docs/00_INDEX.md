@@ -28,7 +28,7 @@
 | UI/UX 화면 흐름도 | **화면 9종** · Figma 제작 가이드 | `docs/03_wireframe/figma_build_guide.md` (319줄) | ✖ **Figma 산출물 0건** — Figma/Stitch 결정 중 |
 | 화면 ↔ API 매핑 | 9화면 × API 번호 매트릭스 | `CONTRACT.md` §7 | ☑ |
 | 개발환경 세팅 | Vue3+Vite / FastAPI / PostgreSQL(SQLite 폴백) | `frontend/`, `backend/` | ☑ |
-| 프로젝트 기본 구조 | 폴더 트리, `.gitignore`, PR 템플릿 | `README.md`, `docs/01_planning/github_guide.md`, `.github/` | ☑ 문서 / ✖ **브랜치·PR 실적용 없음** |
+| 프로젝트 기본 구조 | 폴더 트리, `.gitignore`, PR 템플릿 | `README.md`, `docs/archive/github_guide.md`, `.github/` | ☑ 문서 / ✖ **브랜치·PR 실적용 없음** |
 | FE-BE-DB 다이어그램 | 아키텍처 + 상태머신 + 시퀀스 | `docs/04_architecture/` | ⏳ v3.0 재작성 |
 
 ## 2일차 — 시스템 설계 & Scaffolding
@@ -49,12 +49,12 @@
 ## 3일차 — 검증 & 발표
 | 가이드 요구 | 산출물 | 위치 | 상태 |
 |---|---|---|---|
-| Project Pitch (6섹션 15분) | 구성안 + 대본 | `docs/08_presentation/pitch_outline_and_script.md`, `qa_reinforced.md` | 🔄 v3.0 대본 · 슬라이드 실물 미제작 |
+| Project Pitch (6섹션 15분) | 구성안 + 대본 | `docs/archive/pitch_outline_and_script.md`, `qa_reinforced.md` | 🔄 v3.0 대본 · 슬라이드 실물 미제작 |
 | Live Demo | 시나리오 + 백업 | 같은 파일 | 🔄 **클라이맥스 재설계** (체크리스트 409 폐지) |
 | 회고 · 향후 확장 | 한계 · 로드맵 · R&R별 | `docs/09_qa/retrospective_template.md` | ☐ §3·§4 공란 |
-| Q&A · Peer Review | 예상 질문 + 보강 | `docs/09_qa/qa_bank.md`, `docs/08_presentation/qa_reinforced.md` | ☑ |
-| 루브릭 자체 점검 | **73항목 실측 기입** | `docs/09_qa/self_review_rubric.md` | ☑ 2차 기입 · ⚠ **✖ 6건** |
-| Day2 진척 보드 | 30태스크 판정 + 잔여 일정 | `docs/09_qa/progress_board.md` | ☑ |
+| Q&A · Peer Review | 예상 질문 + 보강 | `docs/09_qa/qa_bank.md`, `docs/archive/qa_reinforced.md` | ☑ |
+| 루브릭 자체 점검 | **73항목 실측 기입** | `docs/archive/self_review_rubric.md` | ☑ 2차 기입 · ⚠ **✖ 6건** |
+| Day2 진척 보드 | 30태스크 판정 + 잔여 일정 | `docs/archive/progress_board.md` | ☑ |
 
 ## 검증 · 운영 산출물
 | 항목 | 위치 | 상태 |
