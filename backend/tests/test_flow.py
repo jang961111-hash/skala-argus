@@ -21,7 +21,7 @@ RUNS = "/api/v1/agent-runs"
 RESULTS = "/api/v1/agent-results"
 APPROVALS = "/api/v1/approvals"
 
-REQUEST_NO_RE = re.compile(r"^WR-\d{8}-\d{3}$")
+REQUEST_NO_RE = re.compile(r"^WR-\d{8}-\d{3,}$")
 UUID_RE = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$")
 KST_SUFFIX = "+09:00"
 
@@ -611,3 +611,29 @@ def test_fe_contract_alignment(client, engineer, safety):
     client.patch(WR + f"/{wr_id}/submit-approval", headers=engineer)
     approval = client.post(APPROVALS, json={"workRequestId": wr_id, "decision": "APPROVE"}, headers=safety).json()
     assert approval["id"] == approval["approvalId"]
+
+
+def test_request_no_keeps_counting_past_999(client, engineer):
+    """일련번호가 999를 넘으면 문자열 max 가 '999' 를 최댓값으로 골라 1000 을 재발급했다.
+
+    재현: 당일 번호가 -999, -1000 까지 있을 때 다음 번호는 -1001 이어야 한다.
+    """
+    from app.db.session import SessionLocal
+    from app.models import WorkRequest
+
+    ids = [
+        client.post(WR, json={"draft": True, "symptom": f"999 경계 {i}"}, headers=engineer).json()
+        for i in range(2)
+    ]
+    prefix = ids[0]["requestNo"].rsplit("-", 1)[0] + "-"
+    db = SessionLocal()
+    try:
+        for row, seq in zip(ids, (999, 1000)):
+            db.get(WorkRequest, row["id"]).request_no = f"{prefix}{seq}"
+        db.commit()
+    finally:
+        db.close()
+
+    r = client.post(WR, json={"draft": True, "symptom": "999 경계 다음"}, headers=engineer)
+    assert r.status_code == 201, r.text
+    assert r.json()["requestNo"] == f"{prefix}1001"
